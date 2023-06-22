@@ -37,7 +37,6 @@ class CookieRequestHeader:
 
         necessary_removed = {}
         for key, value in self.cookies.items():
-            print(self.domain, key, "is necessary")
             if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
                 necessary_removed[key] = value
 

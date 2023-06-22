@@ -26,7 +26,8 @@ def remove_necessary_interceptor(request):
     if request.headers.get("Cookie") is None:
         return
 
-    separated_url = tldextract.extract(request.url)
+    # Get domain from URL
+    separated_url = tldextract.extract(SITE_URL)
     domain = f'{separated_url.domain}.{separated_url.suffix}'
 
     cookie_header = CookieRequestHeader(domain, request.headers["Cookie"])  # TODO: Is the URL correct?
