@@ -14,6 +14,7 @@ echo 'Installing required packages via pip.'
 $CONDA_PREFIX/bin/pip install selenium-wire
 
 echo 'Creating directory structure.'
-mkdir screenshots
+mkdir -p screenshots
 
 echo 'Install finished successfully.'
+echo 'Run `conda activate cookie-classify` to activate environment.'
