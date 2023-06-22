@@ -37,6 +37,7 @@ def remove_necessary_interceptor(request):
     if modified_header != request.headers["Cookie"]:
         print("Original header: " + request.headers["Cookie"])
         print("Modified header: " + modified_header)
+        print()
 
     request.headers["Cookie"] = modified_header
 
