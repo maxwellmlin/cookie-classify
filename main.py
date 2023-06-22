@@ -5,6 +5,9 @@ from selenium.webdriver import FirefoxOptions
 
 from cookie_request_header import CookieRequestHeader
 
+import tldextract
+
+
 SITE_URL = "https://screenconnect.com"
 SCREENSHOTS_PATH = "./screenshots/"
 
@@ -23,9 +26,16 @@ def remove_necessary_interceptor(request):
     if request.headers.get("Cookie") is None:
         return
 
-    cookie_header = CookieRequestHeader(request.url, request.headers["Cookie"])  # TODO: Is the URL correct?
+    separated_url = tldextract.extract(request.url)
+    domain = f'{separated_url.domain}.{separated_url.suffix}'
+
+    cookie_header = CookieRequestHeader(domain, request.headers["Cookie"])  # TODO: Is the URL correct?
     cookie_header.remove_necessary()
     modified_header = cookie_header.get_header()
+
+    if modified_header != request.headers["Cookie"]:
+        print("Original header: " + request.headers["Cookie"])
+        print("Modified header: " + modified_header)
 
     request.headers["Cookie"] = modified_header
 
