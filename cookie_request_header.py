@@ -1,6 +1,4 @@
 from cookiescript import CookieScript
-from http.cookies import SimpleCookie
-# from urllib.parse import urlparse  # TODO: Do we need this?
 
 
 class CookieRequestHeader:
@@ -23,12 +21,13 @@ class CookieRequestHeader:
         `cookie_header_value` should be the name-value pairs of a cookie request header
         e.g., 'name=value; name2=value2; name3=value3'
         """
+        self.cookies = {}
 
-        cookies = SimpleCookie()
-        cookies.load(cookie_header_value)
+        cookies = cookie_header_value.split("; ")
+        for cookie in cookies:
+            key, value = cookie.split("=", 1)
+            self.cookies[key] = value
 
-        self.cookies = {key: value.value for key, value in cookies.items()}
-        # self.domain = urlparse(domain).netloc  # TODO: Do we need this?
         self.domain = domain
 
     def remove_necessary(self):
@@ -38,6 +37,7 @@ class CookieRequestHeader:
 
         necessary_removed = {}
         for key, value in self.cookies.items():
+            print(self.domain, key, "is necessary")
             if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
                 necessary_removed[key] = value
 
