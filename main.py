@@ -41,11 +41,12 @@ def remove_necessary_interceptor(request):
     request.headers["Cookie"] = modified_header
 
 
-SITE_URL = "https://google.com"
+SITE_URL = "https://bmj.com"
 DOMAIN = get_domain(SITE_URL)
 SCREENSHOTS_PATH = f"./screenshots/{DOMAIN}/"
 
-os.mkdir(SCREENSHOTS_PATH)
+if not os.path.exists(SCREENSHOTS_PATH):
+    os.mkdir(SCREENSHOTS_PATH)
 
 options = FirefoxOptions()
 options.add_argument("--headless")  # TODO: get native working
