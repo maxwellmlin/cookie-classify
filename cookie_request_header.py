@@ -1,55 +1,51 @@
 from cookiescript import CookieScript
 from http.cookies import SimpleCookie
-from urllib.parse import urlparse
+# from urllib.parse import urlparse  # TODO: Do we need this?
 
 
 class CookieRequestHeader:
     """
+    Related functions to parse and modify a cookie request header.
+
     See
     - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie
     - https://docs.python.org/3/library/http.cookies.html
     """
 
-    def __init__(self) -> None:
-        self.cookiescript = CookieScript()
+    cookiescript = CookieScript()
 
-        self.cookies = None  # dictionary mapping cookies keys to values
-        self.domain = None  # domain of cookie
-
-    def load_header(self, cookie_header_value, url):
+    def __init__(self, domain, cookie_header_value) -> None:
         """
         Load cookie request header as a dictionary.
 
-        `cookie_header_value` should be the name-value pairs of a Cookie request header
-        i.e., name=value; name2=value2; name3=value3
+        `domain` is the domain of the cookie
 
-        `url` is the url of the cookie
+        `cookie_header_value` should be the name-value pairs of a cookie request header
+        e.g., 'name=value; name2=value2; name3=value3'
         """
 
         cookies = SimpleCookie()
         cookies.load(cookie_header_value)
 
-        # Transform morsels to dictionary
-        cookies = {key: value.value for key, value in cookies.items()}
-
-        self.cookies = cookies
-        self.domain = urlparse(url).netloc  # TODO: Verify correctness
+        self.cookies = {key: value.value for key, value in cookies.items()}
+        # self.domain = urlparse(domain).netloc  # TODO: Do we need this?
+        self.domain = domain
 
     def remove_necessary(self):
         """
-        Remove all necessary cookies from self.cookies
+        Remove all necessary cookies from self.cookies.
         """
 
         necessary_removed = {}
-        for key, value in cookies.items():
-            if not self.cookiescript.get_cookie_class(self.domain, key) == 'Strictly Necessary':
+        for key, value in self.cookies.items():
+            if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
                 necessary_removed[key] = value
 
         self.cookies = necessary_removed
 
     def get_header(self):
         """
-        Return the self.cookies dictionary as a cookies request header
+        Return the self.cookies dictionary as a cookie request header.
         """
 
         header = "; ".join(
@@ -60,8 +56,9 @@ class CookieRequestHeader:
 
 
 if __name__ == "__main__":
-    data = "MUID=0B2C44AA60C46BD30A4A579261D66A9E; MR=0"
-    cookies = CookieRequestHeader()
-    cookies.load_header(data, "google.com")
+    # Test code
+    data = "MUID=0B2C44AA60C46BD30A4A579261D66A9E; MR=0; _dc_gtm_UA-54090495-1=necessary; hi=bye"
+    cookies = CookieRequestHeader("google.com", data)
+    cookies.remove_necessary()
 
     print(cookies.get_header())
