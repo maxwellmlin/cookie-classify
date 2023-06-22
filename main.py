@@ -41,6 +41,18 @@ def remove_necessary_interceptor(request):
     request.headers["Cookie"] = modified_header
 
 
+def remove_all_interceptor(request):
+    """
+    Interceptor that removes all cookies from a GET request.
+
+    `request` is the GET request.
+    """
+    if request.headers.get("Cookie") is None:
+        return
+
+    del request.headers["Cookie"]
+
+
 SITE_URL = "https://bmj.com"
 DOMAIN = get_domain(SITE_URL)
 SCREENSHOTS_PATH = f"./screenshots/{DOMAIN}/"
