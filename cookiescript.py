@@ -11,7 +11,7 @@ class CookieScript:
 
     def load_cookie_script(self, cookie_script_path="inputs/cookiescript.json"):
         """
-        Loads Cookie-Script JSON file as a dictionary.
+        Load Cookie-Script JSON file as a dictionary.
 
         `cookie_script_path` is the path of the Cookie-Script JSON file.
 
@@ -44,7 +44,7 @@ class CookieScript:
 
     def get_cookie_class(self, domain, cookie_key):
         """
-        Returns the class of the given cookie.
+        Return the class of the given cookie.
 
         `domain` is the 2nd-level and top-level domain (e.g., 'google.com')
         `cookie_key` is the name of the cookie
@@ -69,7 +69,7 @@ class CookieScript:
 
     def is_necessary(self, domain, cookie_key):
         """
-        Returns whether the given cookie is Strictly Necessary.
+        Return whether the given cookie is Strictly Necessary.
 
         `domain` is the 2nd-level and top-level domain (e.g., 'google.com')
         `cookie_key` is the name of the cookie
