@@ -36,3 +36,14 @@ class CookieScript:
                 cookiescript[website][cookie_key] = cookie
 
         return cookiescript
+
+    def get_cookie_class(self, domain, cookie_name):
+        if not (domain_cookies := self.cookie_script.get(domain)):
+            # domain not in cookie_script
+            return "Unclassified"
+
+        if not (cookie := domain_cookies.get(cookie_name)):
+            # cookie_name not in cookie_script
+            return "Unclassified"
+
+        return cookie["class"]
