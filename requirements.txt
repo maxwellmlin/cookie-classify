@@ -1,0 +1,4 @@
+selenium
+firefox
+geckodriver
+pip
