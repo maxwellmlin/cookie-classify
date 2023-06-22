@@ -7,14 +7,17 @@ from cookie_request_header import CookieRequestHeader
 
 import tldextract
 
+import os
 
-SITE_URL = "https://screenconnect.com"
-SCREENSHOTS_PATH = "./screenshots/"
 
-options = FirefoxOptions()
-options.add_argument("--headless")  # TODO: get native working
+def get_domain(url):
+    """
+    Return domain of URL.
 
-driver = webdriver.Firefox(options=options)
+    `url` is the URL to get the domain from.
+    """
+    separated_url = tldextract.extract(url)
+    return f'{separated_url.domain}.{separated_url.suffix}'
 
 
 def remove_necessary_interceptor(request):
@@ -26,11 +29,7 @@ def remove_necessary_interceptor(request):
     if request.headers.get("Cookie") is None:
         return
 
-    # Get domain from URL
-    separated_url = tldextract.extract(SITE_URL)
-    domain = f'{separated_url.domain}.{separated_url.suffix}'
-
-    cookie_header = CookieRequestHeader(domain, request.headers["Cookie"])  # TODO: Is the URL correct?
+    cookie_header = CookieRequestHeader(DOMAIN, request.headers["Cookie"])  # TODO: Is the URL correct?
     cookie_header.remove_necessary()
     modified_header = cookie_header.get_header()
 
@@ -41,6 +40,17 @@ def remove_necessary_interceptor(request):
 
     request.headers["Cookie"] = modified_header
 
+
+SITE_URL = "https://google.com"
+DOMAIN = get_domain(SITE_URL)
+SCREENSHOTS_PATH = f"./screenshots/{DOMAIN}/"
+
+os.mkdir(SCREENSHOTS_PATH)
+
+options = FirefoxOptions()
+options.add_argument("--headless")  # TODO: get native working
+
+driver = webdriver.Firefox(options=options)
 
 """
 Initial crawl to collect all site cookies
