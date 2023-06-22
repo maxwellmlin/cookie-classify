@@ -57,7 +57,7 @@ class CookieScript:
         - "Unclassified"
         """
 
-        if not (domain_cookies := self.cookie_script.get(domain)):
+        if not (domain_cookies := self.cookiescript.get(domain)):
             # domain not in cookie_script
             return "Unclassified"
 
