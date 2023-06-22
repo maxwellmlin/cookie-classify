@@ -1,4 +1,7 @@
 geckodriver.log
+.flake8
+playground.py
+screenshots
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
