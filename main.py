@@ -1,82 +1,37 @@
-#!/usr/bin/env python
-
-from seleniumwire import webdriver
-from selenium.webdriver import FirefoxOptions
-
-from cookie_request_header import CookieRequestHeader
-
-import tldextract
-
+from crawler import Crawler
+import interceptors
+import functools
+import utils
 import os
 
+if not os.path.exists('./data'):
+    os.mkdir('./data')
 
-def get_domain(url):
-    """
-    Return domain of URL.
+SITE_LIST_PATH = "inputs/sites/20sites.txt"
 
-    `url` is the URL to get the domain from.
-    """
-    separated_url = tldextract.extract(url)
-    return f'{separated_url.domain}.{separated_url.suffix}'
+sites = []
+with open(SITE_LIST_PATH) as file:
+    for line in file:
+        sites.append(line.strip())
 
+for site_url in sites:
+    crawler = Crawler()  # Reinstantiate crawler to clear cookies
 
-def remove_necessary_interceptor(request):
-    """
-    Interceptor that removes all necessary cookies from a GET request.
+    # Remove necessary cookies
+    interceptor = functools.partial(
+        interceptors.remove_necessary_interceptor,
+        domain=utils.get_domain(site_url),
+        logging=True
+    )
 
-    `request` is the GET request.
-    """
-    if request.headers.get("Cookie") is None:
-        return
+    data_path = f"./data/{utils.get_domain(site_url)}/"
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
 
-    cookie_header = CookieRequestHeader(DOMAIN, request.headers["Cookie"])  # TODO: Is the URL correct?
-    cookie_header.remove_necessary()
-    modified_header = cookie_header.get_header()
+    # Remove all cookies
+    # interceptor = interceptors.remove_all_interceptor
 
-    if modified_header != request.headers["Cookie"]:
-        print("Original header: " + request.headers["Cookie"])
-        print("Modified header: " + modified_header)
-        print()
+    # No inteceptor
+    # interceptor = interceptors.passthrough_interceptor
 
-    request.headers["Cookie"] = modified_header
-
-
-def remove_all_interceptor(request):
-    """
-    Interceptor that removes all cookies from a GET request.
-
-    `request` is the GET request.
-    """
-    if request.headers.get("Cookie") is None:
-        return
-
-    del request.headers["Cookie"]
-
-
-SITE_URL = "https://bmj.com"
-DOMAIN = get_domain(SITE_URL)
-SCREENSHOTS_PATH = f"./screenshots/{DOMAIN}/"
-
-if not os.path.exists(SCREENSHOTS_PATH):
-    os.mkdir(SCREENSHOTS_PATH)
-
-options = FirefoxOptions()
-options.add_argument("--headless")  # TODO: get native working
-
-driver = webdriver.Firefox(options=options)
-
-"""
-Initial crawl to collect all site cookies
-"""
-driver.get(SITE_URL)
-driver.save_full_page_screenshot(SCREENSHOTS_PATH + "initial_crawl.png")
-
-"""
-Second crawl without necessary cookies
-"""
-
-# Set the interceptor on the driver
-driver.request_interceptor = remove_necessary_interceptor
-
-driver.get(SITE_URL)
-driver.save_full_page_screenshot(SCREENSHOTS_PATH + "remove_necessary_crawl.png")
+    crawler.get_with_intercept(site_url, interceptor)
