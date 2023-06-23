@@ -15,8 +15,8 @@ class CookieScript:
 
         `cookie_script_path` is the path of the Cookie-Script JSON file.
 
-        To obtain a cookie from the dictionary, use:
-        cookie_data = cookiescript[domain][cookie_key]
+        To lookup the cookie_class from the dictionary, use:
+        cookie_class = cookiescript[domain][cookie_key]
         """
 
         object_list = []
@@ -38,7 +38,7 @@ class CookieScript:
             # Populate the nested dictionary with cookie data for the current website
             for cookie in cookies:
                 cookie_key = cookie.pop("cookieKey")
-                cookiescript[domain][cookie_key] = cookie
+                cookiescript[domain][cookie_key] = cookie['class']
 
         return cookiescript
 
@@ -61,11 +61,11 @@ class CookieScript:
             # domain not in cookie_script
             return "Unclassified"
 
-        if not (cookie := domain_cookies.get(cookie_key)):
+        if not (cookie_class := domain_cookies.get(cookie_key)):
             # cookie_key not in cookie_script
             return "Unclassified"
 
-        return cookie["class"]
+        return cookie_class
 
     def is_necessary(self, domain, cookie_key):
         """
