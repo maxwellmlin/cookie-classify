@@ -4,9 +4,6 @@ import functools
 import utils
 import os
 
-if not os.path.exists('./data'):
-    os.mkdir('./data')
-
 SITE_LIST_PATH = "inputs/sites/20sites.txt"
 
 sites = []

@@ -76,8 +76,3 @@ class CookieScript:
         """
 
         return self.get_cookie_class(domain, cookie_key) == "Strictly Necessary"
-
-
-if __name__ == "__main__":
-    print("checking for duplicates...")
-    cs = CookieScript()
