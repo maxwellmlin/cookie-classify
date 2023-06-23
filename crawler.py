@@ -29,13 +29,13 @@ class Crawler:
         """
         Screenshot with all cookies
         """
-        self.driver.get(url)
-        self.driver.save_full_page_screenshot(data_path + "initial_crawl.png")
+        self.driver.refresh()
+        self.driver.save_full_page_screenshot(data_path + "all_cookies.png")
 
         """
         Screenshot with intercept
         """
         self.driver.request_interceptor = interceptor
 
-        self.driver.get(url)
-        self.driver.save_full_page_screenshot(data_path + "remove_necessary_crawl.png")
+        self.driver.refresh()
+        self.driver.save_full_page_screenshot(data_path + "remove_necessary.png")

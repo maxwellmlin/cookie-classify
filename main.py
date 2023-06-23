@@ -21,6 +21,7 @@ for site_url in sites:
         logging=True
     )
 
+    # Create data folder
     data_path = f"./data/{utils.get_domain(site_url)}/"
     if not os.path.exists(data_path):
         os.mkdir(data_path)
@@ -31,4 +32,5 @@ for site_url in sites:
     # No inteceptor
     # interceptor = interceptors.passthrough_interceptor
 
+    # Shihan's algorithm
     crawler.get_with_intercept(site_url, interceptor)
