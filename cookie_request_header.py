@@ -31,9 +31,7 @@ class CookieRequestHeader:
         self.domain = domain
 
     def remove_necessary(self):
-        """
-        Remove all necessary cookies from self.cookies.
-        """
+        """Remove all necessary cookies from self.cookies."""
         necessary_removed = {}
         for key, value in self.cookies.items():
             if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
@@ -42,9 +40,7 @@ class CookieRequestHeader:
         self.cookies = necessary_removed
 
     def get_header(self):
-        """
-        Return the self.cookies dictionary as a cookie request header.
-        """
+        """Return the self.cookies dictionary as a cookie request header."""
         header = "; ".join(
             [str(key) + "=" + str(value) for key, value in self.cookies.items()]
         )

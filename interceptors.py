@@ -38,7 +38,5 @@ def remove_all_interceptor(request):
 
 
 def passthrough_interceptor(request):
-    """
-    Do nothing to the GET request.
-    """
+    """Do nothing to the GET request."""
     pass

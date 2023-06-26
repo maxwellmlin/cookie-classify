@@ -14,9 +14,7 @@ class Crawler:
         self.driver = webdriver.Firefox(options=options)
 
     def get_with_intercept(self, url, interceptor):
-        """
-        Shihan's algorithm
-        """
+        """Shihan's algorithm"""
         domain = utils.get_domain(url)
         data_path = f"./data/{domain}/"
 

@@ -2,9 +2,7 @@ import json
 
 
 class CookieScript:
-    """
-    Related functions for CookieScript database lookup.
-    """
+    """Related functions for CookieScript database lookup."""
 
     def __init__(self) -> None:
         self.data = self.load_cookie_script()
