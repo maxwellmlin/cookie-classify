@@ -17,7 +17,6 @@ class Crawler:
         """
         Shihan's algorithm
         """
-
         domain = utils.get_domain(url)
         data_path = f"./data/{domain}/"
 
