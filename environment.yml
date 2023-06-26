@@ -1,0 +1,12 @@
+name: cookie-classify
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - pip
+  - selenium
+  - firefox
+  - geckodriver
+  - pip:
+    - selenium-wire
+    - tldextract

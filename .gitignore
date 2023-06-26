@@ -3,6 +3,7 @@ geckodriver.log
 playground.py
 screenshots
 data
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

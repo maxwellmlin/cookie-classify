@@ -1,17 +1,12 @@
-# Immediately exit if any command has a non-zero exit status.
-set -e
+#!/bin/bash
 
-# Make conda available to shell script
+set -euo pipefail
+
+echo 'Initializing conda.'
 eval "$(conda shell.bash hook)"
 
 echo 'Creating/Overwriting `cookie-classify` conda environment.'
-conda create --name cookie-classify --file requirements.txt
-
-echo 'Activating environment.'
-conda activate cookie-classify
-
-echo 'Installing required packages via pip.'
-$CONDA_PREFIX/bin/pip install selenium-wire tldextract
+conda env create -f environment.yml
 
 echo 'Creating directory structure.'
 mkdir -p data
