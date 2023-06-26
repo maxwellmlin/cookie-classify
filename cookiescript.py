@@ -7,9 +7,10 @@ class CookieScript:
     """
 
     def __init__(self) -> None:
-        self.cookiescript = self.load_cookie_script()
+        self.data = self.load_cookie_script()
 
-    def load_cookie_script(self, cookie_script_path="inputs/databases/cookiescript.json"):
+    @staticmethod
+    def load_cookie_script(cookie_script_path="inputs/databases/cookiescript.json"):
         """
         Load Cookie-Script JSON file as a dictionary.
 
@@ -57,7 +58,7 @@ class CookieScript:
         - "Unclassified"
         """
 
-        if not (domain_cookies := self.cookiescript.get(domain)):
+        if not (domain_cookies := self.data.get(domain)):
             # domain not in cookie_script
             return "Unclassified"
 

@@ -29,7 +29,7 @@ for site_url in sites:
     # Remove all cookies
     # interceptor = interceptors.remove_all_interceptor
 
-    # No inteceptor
+    # No interceptor
     # interceptor = interceptors.passthrough_interceptor
 
     # Shihan's algorithm

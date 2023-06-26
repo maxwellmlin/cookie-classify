@@ -21,20 +21,14 @@ class Crawler:
         domain = utils.get_domain(url)
         data_path = f"./data/{domain}/"
 
-        """
-        Initial crawl to collect all site cookies
-        """
+        # Initial crawl to collect all site cookies
         self.driver.get(url)
 
-        """
-        Screenshot with all cookies
-        """
+        # Screenshot with all cookies
         self.driver.refresh()
         self.driver.save_full_page_screenshot(data_path + "all_cookies.png")
 
-        """
-        Screenshot with intercept
-        """
+        # Screenshot with intercept
         self.driver.request_interceptor = interceptor
 
         self.driver.refresh()

@@ -23,9 +23,9 @@ class CookieRequestHeader:
         """
         self.cookies = {}
 
-        cookies = cookie_header_value.split("; ")
-        for cookie in cookies:
-            key, value = cookie.split("=", 1)
+        raw_cookies = cookie_header_value.split("; ")
+        for cookie in raw_cookies:
+            key, value = cookie.split("=", 1) # Split at first '=' (since value may contain '=')
             self.cookies[key] = value
 
         self.domain = domain

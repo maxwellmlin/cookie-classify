@@ -1,9 +1,6 @@
 import tldextract
 
-"""
-Utility functions for cookie-classify.
-"""
-
+# Utility functions for cookie-classify.
 
 def get_domain(url):
     """
