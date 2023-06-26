@@ -19,7 +19,6 @@ class CookieScript:
         To lookup the cookie_class from the dictionary, use:
         cookie_class = cookiescript[domain][cookie_key]
         """
-
         object_list = []
         with open(cookie_script_path) as file:
             for line in file:
@@ -57,7 +56,6 @@ class CookieScript:
         - "Targeting"
         - "Unclassified"
         """
-
         if not (domain_cookies := self.data.get(domain)):
             # domain not in cookie_script
             return "Unclassified"
@@ -75,5 +73,4 @@ class CookieScript:
         `domain` is the 2nd-level and top-level domain (e.g., 'google.com')
         `cookie_key` is the name of the cookie
         """
-
         return self.get_cookie_class(domain, cookie_key) == "Strictly Necessary"
