@@ -142,8 +142,6 @@ class ImageShingles:
         Returns:
             int: Percentage of shingles that match.
         """
-        if self.width != other_shingles.width or self.height != other_shingles.height:
-            raise ValueError("Images must be the same size.")
         if self.chunk_size != other_shingles.chunk_size:
             raise ValueError("Shingles must have the same chunk size.")
 
@@ -153,4 +151,4 @@ class ImageShingles:
             if shingle in other_shingles.shingle_count:
                 matches += min(count, other_shingles.shingle_count[shingle])  # Add the number of matches
 
-        return matches / len(self.shingles)
+        return matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
