@@ -17,7 +17,7 @@ class Crawler:
         """
         Args:
             data_path (str): Path to store log files and save screenshots.
-        """        
+        """
         options = FirefoxOptions()
         options.add_argument("--headless")  # NOTE: native does not work
 
