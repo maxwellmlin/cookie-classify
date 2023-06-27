@@ -3,6 +3,7 @@
 from seleniumwire import webdriver
 import seleniumwire.request
 from selenium.webdriver import FirefoxOptions
+from selenium.common.exceptions import NoSuchElementException
 from typing import Callable
 import time
 
@@ -12,34 +13,39 @@ from image_shingles import ImageShingles
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self) -> None:
+    def __init__(self, data_path: str) -> None:
+        """
+        Args:
+            data_path (str): Path to store log files and save screenshots.
+        """        
         options = FirefoxOptions()
         options.add_argument("--headless")  # NOTE: native does not work
 
         self.driver = webdriver.Firefox(options=options)
         self.time_to_wait = 0  # seconds
+        self.data_path = data_path
 
     def get_with_intercept(self,
                            url: str,
-                           interceptor: Callable[[seleniumwire.request.Request], None],
-                           data_path: str) -> None:
+                           interceptor: Callable[[seleniumwire.request.Request], None]) -> None:
         """
         Shihan's algorithm.
 
-        Get a website to obtain all cookies. Then, refresh to load the website with all cookies.
+        Get a website and click the accept button to obtain all cookies.
+        Then, refresh to load the website with all cookies.
         Finally, refresh with an interceptor to remove cookies.
 
         Args:
             url (str): URL of the website to crawl.
             interceptor (Callable[[seleniumwire.request.Request], None]): Function that intercept requests.
-            data_path (str): Path to store log files and save screenshots.
         """
 
-        all_data_path = data_path + "all_cookies.png"
-        intercept_data_path = data_path + "intercept.png"
+        all_data_path = self.data_path + "all_cookies.png"
+        intercept_data_path = self.data_path + "intercept.png"
 
         # Initial crawl to collect all site cookies
         self.driver.get(url)
+        self.click_accept()  # Get all JavaScript cookies
         time.sleep(self.time_to_wait)
 
         # Screenshot with all cookies
@@ -59,7 +65,7 @@ class Crawler:
         intercept_shingles = ImageShingles(intercept_data_path, shingle_size)
 
         similarity = all_shingles.compare(intercept_shingles)
-        with open(data_path + "logs.txt", "a") as file:
+        with open(self.data_path + "logs.txt", "a") as file:
             file.write(f"Similarity: {similarity}\n")
 
     def save_viewport_screenshot(self, file_path: str):
@@ -75,3 +81,21 @@ class Crawler:
         # Save the screenshot to a file
         with open(file_path, 'wb') as file:
             file.write(screenshot)
+
+    def click_accept(self) -> None:
+        """Click the OneTrust accept button to accept all JavaScript cookies."""
+
+        try:
+            accept_button = self.driver.find_element_by_id("onetrust-accept-btn-handler")
+            accept_button.click()
+            success = True
+        except NoSuchElementException:
+            success = False
+
+        msg = "OneTrust accept button clicked" if success else "OneTrust accept button not found"
+        with open(self.data_path + "logs.txt", "a") as file:
+            file.write(f"{msg}\n")
+
+    def dispose(self) -> None:
+        """Safely ends the web driver."""
+        self.driver.Dispose()
