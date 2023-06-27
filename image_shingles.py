@@ -98,7 +98,7 @@ class ImageShingles:
         """
         hashes = []
 
-        for _, chunk in enumerate(chunks):
+        for chunk in chunks:
             # Convert chunk to bytes
             chunk_bytes = chunk.tobytes()
 
