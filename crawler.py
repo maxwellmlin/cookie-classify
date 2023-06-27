@@ -45,13 +45,13 @@ class Crawler:
         # Screenshot with all cookies
         self.driver.refresh()
         time.sleep(self.time_to_wait)
-        self.driver.save_full_page_screenshot(all_data_path)
+        self.save_viewport_screenshot(all_data_path)
 
         # Screenshot with intercept
         self.driver.request_interceptor = interceptor
         self.driver.refresh()
         time.sleep(self.time_to_wait)
-        self.driver.save_full_page_screenshot(intercept_data_path)
+        self.save_viewport_screenshot(intercept_data_path)
 
         # Compare screenshots using image shingles
         shingle_size = 40
