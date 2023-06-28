@@ -1,5 +1,6 @@
 import csv
 
+
 class OpenCookieDatabase:
     """Related functions for Open Cookie Database lookup."""
 
@@ -24,15 +25,15 @@ class OpenCookieDatabase:
 
         with open(data_path, 'r') as file:
             csv_reader = csv.reader(file)
-            
+
             # CSV lines are in the format:
             # "ID,Platform,Category,Cookie / Data Key name,Domain,Description,Retention period,Data Controller,User Privacy & GDPR Rights Portals,Wildcard match"
-            headers = next(csv_reader)
-            
+            next(csv_reader)
+
             for row in csv_reader:
                 cookie_key = row[3]
                 category = row[2]
-                
+
                 cookie_category_dict[cookie_key] = category
 
         return cookie_category_dict
@@ -51,10 +52,10 @@ class OpenCookieDatabase:
         if not (cookie_class := self.classes.get(cookie_key)):
             # cookie_key not in cookie_category_dict
             return "Unclassified"
-        
+
         return cookie_class
 
-    def is_necessary(self, cookie_key: str) -> bool:
+    def is_necessary(self, cookie_key: str, *args) -> bool:
         """
         Return whether the given cookie is Functional (equivalent to Strictly Necessary).
 
