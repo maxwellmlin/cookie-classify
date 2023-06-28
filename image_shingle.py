@@ -130,7 +130,7 @@ class ImageShingle:
 
         return map_
 
-    def compare(self, other_shingles: Self) -> int:
+    def compare(self, other_shingles: Self) -> float:
         """
         Compare two shingles and return the percentage of matches.
 
