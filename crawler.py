@@ -57,7 +57,7 @@ class Crawler:
         self.driver.request_interceptor = interceptor
         self.crawl_inner_pages(url, take_screenshots=True)
 
-    def crawl_inner_pages(url: str, depth: int = 2, take_screenshots: bool = False):
+    def crawl_inner_pages(url: str, depth: int = 1, take_screenshots: bool = False):
         """
         Crawl inner pages of website with a given depth.
 
@@ -81,7 +81,6 @@ class Crawler:
                 if neighbor not in visited:
                     visited.add(current_node)
                     to_visit_queue.append(neighbor)
-        
 
     def save_viewport_screenshot(self, file_path: str):
         """
