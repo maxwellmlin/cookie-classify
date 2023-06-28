@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import functools
-
+import time
 
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
@@ -9,8 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-
-import time
 
 from image_shingles import ImageShingle
 import interceptors
