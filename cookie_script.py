@@ -2,13 +2,13 @@ import json
 
 
 class CookieScript:
-    """Related functions for CookieScript database lookup."""
+    """Related functions for Cookie-Script database lookup."""
 
     def __init__(self) -> None:
         self.classes = self.load_database()
 
     @staticmethod
-    def load_database(data_path="inputs/databases/cookiescript.json") -> dict[str, dict[str, str]]:
+    def load_database(data_path="inputs/databases/cookie_script.json") -> dict[str, dict[str, str]]:
         """
         Load classes from Cookie-Script JSON file as a dictionary.
 

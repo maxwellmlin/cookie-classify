@@ -1,4 +1,4 @@
-# from cookiescript import CookieScript
+# from cookie_script import CookieScript
 from open_cookie_database import OpenCookieDatabase
 
 
