@@ -13,11 +13,11 @@ class CookieScript:
         Load classes from Cookie-Script JSON file as a dictionary.
 
         Args:
-            cookie_script_path (str, optional): Path of the Cookie-Script JSON file. 
+            cookie_script_path (str, optional): Path of the Cookie-Script JSON file.
             Defaults to "inputs/databases/cookiescript.json".
 
         Returns:
-            dict[str, dict[str, str]]: Classes from Cookie-Script JSON file as a dictionary. 
+            dict[str, dict[str, str]]: Classes from Cookie-Script JSON file as a dictionary.
             Lookup using `dict[domain][cookie_key]`.
             `domain` is the domain of the website.
             `cookie_key` is the name of the cookie.
