@@ -29,9 +29,9 @@ class OpenCookieDatabase:
 
             for row in csv_reader:
                 cookie_key = row[3]
-                category = row[2]
+                class_ = row[2]
 
-                cookie_category_dict[cookie_key] = category
+                cookie_category_dict[cookie_key] = class_
 
         return cookie_category_dict
 
@@ -47,19 +47,21 @@ class OpenCookieDatabase:
             "Preferences", "Analytics", or "Marketing".
         """
         if not (cookie_class := self.classes.get(cookie_key)):
-            # cookie_key not in cookie_category_dict
+            # cookie_key not in self.classes
             return "Unclassified"
 
         return cookie_class
 
     def is_necessary(self, cookie_key: str, *args) -> bool:
         """
-        Return whether the given cookie is Functional (equivalent to Strictly Necessary).
+        Return whether the given cookie is necessary.
+
+        For Open Cookie Database, "Functional" is equivalent to "Strictly Necessary".
 
         Args:
             cookie_key: Name of the cookie.
 
         Returns:
-            Whether the given cookie is Functional.
+            Whether the given cookie is necessary.
         """
         return self.get_cookie_class(cookie_key) == "Functional"
