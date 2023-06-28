@@ -45,13 +45,13 @@ class CookieScript:
 
         return classes
 
-    def get_cookie_class(self, domain: str, cookie_key: str) -> str:
+    def get_cookie_class(self, cookie_key: str, domain: str) -> str:
         """
         Return the class of the given cookie.
 
         Args:
-            domain (str): Domain of the website.
             cookie_key (str): Name of the cookie.
+            domain (str): Domain of the website.
 
         Returns:
             str: The class of the cookie. Class can be either "Strictly Necessary",
@@ -78,4 +78,4 @@ class CookieScript:
         Returns:
             bool: Whether the given cookie is Strictly Necessary.
         """
-        return self.get_cookie_class(domain, cookie_key) == "Strictly Necessary"
+        return self.get_cookie_class(cookie_key, domain) == "Strictly Necessary"

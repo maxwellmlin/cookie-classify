@@ -26,8 +26,6 @@ class OpenCookieDatabase:
         with open(data_path, 'r') as file:
             csv_reader = csv.reader(file)
 
-            # CSV lines are in the format:
-            # "ID,Platform,Category,Cookie / Data Key name,Domain,Description,Retention period,Data Controller,User Privacy & GDPR Rights Portals,Wildcard match"
             next(csv_reader)
 
             for row in csv_reader:
