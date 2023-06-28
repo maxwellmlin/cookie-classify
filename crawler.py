@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 
+import functools
+
+
 from seleniumwire import webdriver
-import seleniumwire.request
 from selenium.webdriver import FirefoxOptions
-from selenium.common.exceptions import NoSuchElementException
-from typing import Callable
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
 import time
 
-from image_shingles import ImageShingles
+from image_shingles import ImageShingle
+import interceptors
+import utils
 
 
 class Crawler:
@@ -22,12 +29,10 @@ class Crawler:
         options.add_argument("--headless")  # NOTE: native does not work
 
         self.driver = webdriver.Firefox(options=options)
-        self.time_to_wait = 0  # seconds
+        self.time_to_wait = 5  # seconds
         self.data_path = data_path
 
-    def get_with_intercept(self,
-                           url: str,
-                           interceptor: Callable[[seleniumwire.request.Request], None]) -> None:
+    def get_with_intercept(self, url: str) -> None:
         """
         Shihan's algorithm.
 
@@ -37,7 +42,6 @@ class Crawler:
 
         Args:
             url (str): URL of the website to crawl.
-            interceptor (Callable[[seleniumwire.request.Request], None]): Function that intercept requests.
         """
 
         all_data_path = self.data_path + "all_cookies.png"
@@ -45,8 +49,8 @@ class Crawler:
 
         # Initial crawl to collect all site cookies
         self.driver.get(url)
-        self.click_accept()  # Get all JavaScript cookies
         time.sleep(self.time_to_wait)
+        # self.click_accept()  # Get all JavaScript cookies
 
         # Screenshot with all cookies
         self.driver.refresh()
@@ -54,6 +58,11 @@ class Crawler:
         self.save_viewport_screenshot(all_data_path)
 
         # Screenshot with intercept
+        interceptor = functools.partial(
+            interceptors.remove_necessary_interceptor,
+            domain=utils.get_domain(url),
+            data_path=self.data_path,
+        )
         self.driver.request_interceptor = interceptor
         self.driver.refresh()
         time.sleep(self.time_to_wait)
@@ -61,12 +70,12 @@ class Crawler:
 
         # Compare screenshots using image shingles
         shingle_size = 40
-        all_shingles = ImageShingles(all_data_path, shingle_size)
-        intercept_shingles = ImageShingles(intercept_data_path, shingle_size)
+        all_shingles = ImageShingle(all_data_path, shingle_size)
+        intercept_shingles = ImageShingle(intercept_data_path, shingle_size)
 
         similarity = all_shingles.compare(intercept_shingles)
         with open(self.data_path + "logs.txt", "a") as file:
-            file.write(f"Similarity: {similarity}\n")
+            file.write(f"Similarity: {similarity}")
 
     def save_viewport_screenshot(self, file_path: str):
         """
@@ -84,18 +93,21 @@ class Crawler:
 
     def click_accept(self) -> None:
         """Click the OneTrust accept button to accept all JavaScript cookies."""
+        accept_ID = "onetrust-accept-btn-handler"
+        wait_time = 10  # seconds
 
         try:
-            accept_button = self.driver.find_element_by_id("onetrust-accept-btn-handler")
-            accept_button.click()
+            element = WebDriverWait(self.driver, wait_time).until(EC.presence_of_element_located((By.ID, accept_ID)))
+            element.click()
+
             success = True
-        except NoSuchElementException:
+        except TimeoutException:
             success = False
 
-        msg = "OneTrust accept button clicked" if success else "OneTrust accept button not found"
+        msg = "Accept button clicked" if success else f"Accept button not found after {wait_time} seconds"
         with open(self.data_path + "logs.txt", "a") as file:
-            file.write(f"{msg}\n")
+            file.write(f"{msg}\n\n")
 
-    def dispose(self) -> None:
-        """Safely ends the web driver."""
-        self.driver.Dispose()
+    def quit(self) -> None:
+        """Safely end the web driver."""
+        self.driver.quit()

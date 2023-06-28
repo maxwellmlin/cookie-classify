@@ -1,8 +1,6 @@
 import os
-import functools
 
 from crawler import Crawler
-import interceptors
 import utils
 
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
@@ -25,15 +23,8 @@ for site_url in sites:
     # Reinstantiate crawler to clear cookies
     crawler = Crawler(data_path)
 
-    # Remove necessary cookies
-    interceptor = functools.partial(
-        interceptors.remove_necessary_interceptor,
-        domain=utils.get_domain(site_url),
-        data_path=data_path,
-    )
-
     # Shihan's algorithm
-    crawler.get_with_intercept(site_url, interceptor)
+    crawler.get_with_intercept(site_url)
 
-    # Close crawler
-    crawler.Dispose()
+    # Safely close crawler
+    crawler.quit()

@@ -2,9 +2,7 @@ from cookiescript import CookieScript
 
 
 class CookieRequestHeader:
-    """
-    Related functions to parse and modify a cookie request header.
-    """
+    """Related functions to parse and modify a cookie request header."""
 
     cookiescript = CookieScript()
 
@@ -24,9 +22,7 @@ class CookieRequestHeader:
         self.domain = domain
 
     def remove_necessary(self) -> None:
-        """
-        Remove all necessary cookies from `self.cookies`.
-        """
+        """Remove all necessary cookies from `self.cookies`."""
         necessary_removed = {}
         for key, value in self.cookies.items():
             if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
@@ -35,9 +31,7 @@ class CookieRequestHeader:
         self.cookies = necessary_removed
 
     def get_header(self) -> str:
-        """
-        Return `self.cookies` as a cookie request header.
-        """
+        """Return `self.cookies` as a cookie request header."""
         header = "; ".join(
             [str(key) + "=" + str(value) for key, value in self.cookies.items()]
         )
