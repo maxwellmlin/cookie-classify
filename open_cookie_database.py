@@ -13,13 +13,12 @@ class OpenCookieDatabase:
         Load classes from Open Cookie Database CSV file as a dictionary.
 
         Args:
-            data_path (str, optional): Path of the Open Cookie Databse CSV file.
+            data_path: Path of the Open Cookie Databse CSV file.
             Defaults to "inputs/databases/open_cookie_database.csv".
 
         Returns:
-            dict[str, str]: Classes from Open Cookie Database CSV as a dictionary.
-            Lookup using `dict[cookie_key]`.
-            `cookie_key` is the name of the cookie.
+            Classes from Open Cookie Database CSV as a dictionary.
+            Lookup using `dict[cookie_key]`. `cookie_key` is the name of the cookie.
         """
         cookie_category_dict = {}
 
@@ -41,10 +40,10 @@ class OpenCookieDatabase:
         Return the class of the given cookie.
 
         Args:
-            cookie_key (str): Name of the cookie.
+            cookie_key: Name of the cookie.
 
         Returns:
-            str: The class of the cookie. Class can be either "Functional",
+            The class of the cookie. Class can be either "Functional",
             "Preferences", "Analytics", or "Marketing".
         """
         if not (cookie_class := self.classes.get(cookie_key)):
@@ -58,9 +57,9 @@ class OpenCookieDatabase:
         Return whether the given cookie is Functional (equivalent to Strictly Necessary).
 
         Args:
-            cookie_key (str): Name of the cookie.
+            cookie_key: Name of the cookie.
 
         Returns:
-            bool: Whether the given cookie is Functional.
+            Whether the given cookie is Functional.
         """
         return self.get_cookie_class(cookie_key) == "Functional"

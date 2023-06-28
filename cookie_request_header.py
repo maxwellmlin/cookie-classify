@@ -11,8 +11,8 @@ class CookieRequestHeader:
     def __init__(self, cookie_header_value: str, domain: str) -> None:
         """
         Args:
-            cookie_header_value (str): The header value of a cookie request header.
-            domain (str): The domain of the website.
+            cookie_header_value: The header value of a cookie request header.
+            domain: The domain of the website.
         """
         self.cookies = {}
 

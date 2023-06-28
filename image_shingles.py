@@ -16,8 +16,8 @@ class ImageShingle:
     def __init__(self, image_path: str, chunk_size: int):
         """
         Args:
-            image_path (str): Path to the image.
-            chunk_size (int): Width and height of each chunk.
+            image_path: Path to the image.
+            chunk_size: Width and height of each chunk.
         """
         self.chunk_size = chunk_size
         self.image = Image.open(image_path).convert("RGBA")  # Convert to RGBA mode (since we are using .png files)
@@ -37,7 +37,7 @@ class ImageShingle:
         except possibly at the bottom and right edges.
 
         Returns:
-            list[Image.Image]: List of chunks of the image.
+            List of chunks of the image.
         """
         chunks = []
 
@@ -91,10 +91,10 @@ class ImageShingle:
         Each shingle is the MD5 hash of a chunk.
 
         Args:
-            chunks (list[Image.Image]): Chunks of the image.
+            chunks: Chunks of the image.
 
         Returns:
-            list[str]: Shingles of the image.
+            Shingles of the image.
         """
         hashes = []
 
@@ -117,10 +117,10 @@ class ImageShingle:
         Return map of shingles to counts.
 
         Args:
-            shingles (list[str]): Shingles of the image.
+            shingles: Shingles of the image.
 
         Returns:
-            dict[str, int]: Map of shingles to counts.
+            Map of shingles to counts.
         """
         map_ = {}
         for shingle in shingles:
@@ -135,14 +135,14 @@ class ImageShingle:
         Compare two shingles and return the percentage of matches.
 
         Args:
-            other_shingles (Self): Another set of shingles.
+            other_shingles: Another set of shingles.
 
         Raises:
             ValueError: If the images are not the same size.
             ValueError: If the shingles do not have the same chunk size.
 
         Returns:
-            int: Percentage of shingles that match.
+            Percentage of shingles that match.
         """
         if self.chunk_size != other_shingles.chunk_size:
             raise ValueError("Shingles must have the same chunk size.")

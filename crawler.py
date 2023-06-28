@@ -21,7 +21,7 @@ class Crawler:
     def __init__(self, data_path: str) -> None:
         """
         Args:
-            data_path (str): Path to store log files and save screenshots.
+            data_path: Path to store log files and save screenshots.
         """
         options = FirefoxOptions()
         options.add_argument("--headless")  # NOTE: native does not work
@@ -39,7 +39,7 @@ class Crawler:
         Finally, refresh with an interceptor to remove cookies.
 
         Args:
-            url (str): URL of the website to crawl.
+            url: URL of the website to crawl.
         """
 
         # Initial crawl to collect all site cookies
@@ -64,9 +64,9 @@ class Crawler:
         TODO: _extended_summary_
 
         Args:
-            url (str): URL where traversal will begin.
-            depth (int, optional): Number of layers of the DFS. Defaults to 2.
-            take_screenshot (bool, optional): Defaults to False.
+            url: URL where traversal will begin.
+            depth: Number of layers of the DFS. Defaults to 2.
+            take_screenshot: Defaults to False.
         """
         # Extract the base domain from the URL
         domain = utils.get_domain(url)
@@ -121,7 +121,7 @@ class Crawler:
         Save a screenshot of the viewport to a file.
 
         Args:
-            file_path (str): Path to save the screenshot.
+            file_path: Path to save the screenshot.
         """
         # Take a screenshot of the viewport
         screenshot = self.driver.get_screenshot_as_png()

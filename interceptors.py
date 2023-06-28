@@ -8,9 +8,9 @@ def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: 
     Remove necessary cookies from a GET request.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
-        domain (str): Domain of the website.
-        data_path (str): The path to store log files.
+        request: A GET request.
+        domain: Domain of the website.
+        data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -33,7 +33,7 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     Removes all cookies from a GET request.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
+        request: A GET request.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -46,5 +46,5 @@ def passthrough_interceptor(request: seleniumwire.request.Request) -> None:
     Do nothing to a GET request.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
+        request: A GET request.
     """

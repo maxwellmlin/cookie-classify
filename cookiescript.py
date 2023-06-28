@@ -13,11 +13,11 @@ class CookieScript:
         Load classes from Cookie-Script JSON file as a dictionary.
 
         Args:
-            cookie_script_path (str, optional): Path of the Cookie-Script JSON file.
+            cookie_script_path: Path of the Cookie-Script JSON file.
             Defaults to "inputs/databases/cookiescript.json".
 
         Returns:
-            dict[str, dict[str, str]]: Classes from Cookie-Script JSON file as a dictionary.
+            Classes from Cookie-Script JSON file as a dictionary.
             Lookup using `dict[domain][cookie_key]`.
             `domain` is the domain of the website.
             `cookie_key` is the name of the cookie.
@@ -50,11 +50,11 @@ class CookieScript:
         Return the class of the given cookie.
 
         Args:
-            cookie_key (str): Name of the cookie.
-            domain (str): Domain of the website.
+            cookie_key: Name of the cookie.
+            domain: Domain of the website.
 
         Returns:
-            str: The class of the cookie. Class can be either "Strictly Necessary",
+            The class of the cookie. Class can be either "Strictly Necessary",
             "Performance", "Functionality", "Targeting", or "Unclassified".
         """
         if not (domain_cookies := self.classes.get(domain)):
@@ -72,10 +72,10 @@ class CookieScript:
         Return whether the given cookie is Strictly Necessary.
 
         Args:
-            cookie_key (str): Name of the cookie.
-            domain (str): Domain of the website.
+            cookie_key: Name of the cookie.
+            domain: Domain of the website.
 
         Returns:
-            bool: Whether the given cookie is Strictly Necessary.
+            Whether the given cookie is Strictly Necessary.
         """
         return self.get_cookie_class(cookie_key, domain) == "Strictly Necessary"
