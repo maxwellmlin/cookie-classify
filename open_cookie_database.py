@@ -25,7 +25,7 @@ class OpenCookieDatabase:
         with open(data_path, 'r') as file:
             csv_reader = csv.reader(file)
 
-            next(csv_reader)
+            next(csv_reader)  # skip header
 
             for row in csv_reader:
                 cookie_key = row[3]
