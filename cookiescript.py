@@ -5,10 +5,10 @@ class CookieScript:
     """Related functions for CookieScript database lookup."""
 
     def __init__(self) -> None:
-        self.classes = self.load_cookie_script()
+        self.classes = self.load_database()
 
     @staticmethod
-    def load_cookie_script(cookie_script_path="inputs/databases/cookiescript.json") -> dict[str, dict[str, str]]:
+    def load_database(data_path="inputs/databases/cookiescript.json") -> dict[str, dict[str, str]]:
         """
         Load classes from Cookie-Script JSON file as a dictionary.
 
@@ -23,7 +23,7 @@ class CookieScript:
             `cookie_key` is the name of the cookie.
         """
         object_list = []
-        with open(cookie_script_path) as file:
+        with open(data_path) as file:
             for line in file:
                 object_ = json.loads(line)
                 object_list.append(object_)
@@ -45,13 +45,13 @@ class CookieScript:
 
         return classes
 
-    def get_cookie_class(self, domain: str, cookie_key: str) -> str:
+    def get_cookie_class(self, cookie_key: str, domain: str) -> str:
         """
         Return the class of the given cookie.
 
         Args:
-            domain (str): Domain of the website.
             cookie_key (str): Name of the cookie.
+            domain (str): Domain of the website.
 
         Returns:
             str: The class of the cookie. Class can be either "Strictly Necessary",
@@ -78,4 +78,4 @@ class CookieScript:
         Returns:
             bool: Whether the given cookie is Strictly Necessary.
         """
-        return self.get_cookie_class(domain, cookie_key) == "Strictly Necessary"
+        return self.get_cookie_class(cookie_key, domain) == "Strictly Necessary"

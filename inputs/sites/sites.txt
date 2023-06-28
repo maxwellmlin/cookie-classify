@@ -1,7 +1,1 @@
-https://match.com
-https://avg.com
-https://bmj.com
-https://splunk.com
-https://kaltura.com
-https://cancer.org
-https://sabre.com
+https://screenconnect.com
