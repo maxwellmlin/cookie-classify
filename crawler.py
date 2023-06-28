@@ -2,6 +2,7 @@
 
 import functools
 import time
+from collections import deque
 
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
@@ -10,7 +11,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-from image_shingles import ImageShingle
 import interceptors
 import utils
 
@@ -41,18 +41,12 @@ class Crawler:
         Args:
             url (str): URL of the website to crawl.
         """
-        all_data_path = self.data_path + "all_cookies.png"
-        intercept_data_path = self.data_path + "intercept.png"
 
         # Initial crawl to collect all site cookies
-        self.driver.get(url)
-        time.sleep(self.time_to_wait)
-        # self.click_accept()  # Get all JavaScript cookies
+        self.crawl_inner_pages(url)
 
         # Screenshot with all cookies
-        self.driver.refresh()
-        time.sleep(self.time_to_wait)
-        self.save_viewport_screenshot(all_data_path)
+        self.crawl_inner_pages(url, take_screenshots=True)
 
         # Screenshot with intercept
         interceptor = functools.partial(
@@ -61,18 +55,33 @@ class Crawler:
             data_path=self.data_path,
         )
         self.driver.request_interceptor = interceptor
-        self.driver.refresh()
-        time.sleep(self.time_to_wait)
-        self.save_viewport_screenshot(intercept_data_path)
+        self.crawl_inner_pages(url, take_screenshots=True)
 
-        # Compare screenshots using image shingles
-        shingle_size = 40
-        all_shingles = ImageShingle(all_data_path, shingle_size)
-        intercept_shingles = ImageShingle(intercept_data_path, shingle_size)
+    def crawl_inner_pages(url: str, depth: int = 2, take_screenshots: bool = False):
+        """
+        Crawl inner pages of website with a given depth.
 
-        similarity = all_shingles.compare(intercept_shingles)
-        with open(self.data_path + "logs.txt", "a") as file:
-            file.write(f"Similarity: {similarity}")
+        TODO: _extended_summary_
+
+        Args:
+            url (str): URL where traversal will begin.
+            depth (int, optional): Number of layers of the DFS. Defaults to 2.
+            take_screenshots (bool, optional): Defaults to False.
+        """
+
+        to_visit_queue = deque()
+        to_visit_queue.append(url)
+        visited = set()
+
+        # DFS traversal
+        while to_visit_queue:
+            current_node = to_visit_queue.pop()
+
+            for neighbor in graph[current_node]:
+                if neighbor not in visited:
+                    visited.add(current_node)
+                    to_visit_queue.append(neighbor)
+        
 
     def save_viewport_screenshot(self, file_path: str):
         """
@@ -85,7 +94,7 @@ class Crawler:
         screenshot = self.driver.get_screenshot_as_png()
 
         # Save the screenshot to a file
-        with open(file_path, 'wb') as file:
+        with open(file_path, "wb") as file:
             file.write(screenshot)
 
     def click_accept(self) -> None:
