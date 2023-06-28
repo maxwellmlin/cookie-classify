@@ -13,12 +13,14 @@ class CookieScript:
         Load classes from Cookie-Script JSON file as a dictionary.
 
         Args:
-            cookie_script_path (str, optional): Path of the Cookie-Script JSON file. Defaults to "inputs/databases/cookiescript.json".
+            cookie_script_path (str, optional): Path of the Cookie-Script JSON file. 
+            Defaults to "inputs/databases/cookiescript.json".
 
         Returns:
-            dict[str, dict[str, str]]: Classes from Cookie-Script JSON file as a dictionary. Lookup using `dict[domain][cookie_key]`.
-            `domain` is the domain of the website (not the domain of the cookie).
-            `cookie_key` is the name of the cookie
+            dict[str, dict[str, str]]: Classes from Cookie-Script JSON file as a dictionary. 
+            Lookup using `dict[domain][cookie_key]`.
+            `domain` is the domain of the website.
+            `cookie_key` is the name of the cookie.
         """
         object_list = []
         with open(cookie_script_path) as file:
@@ -48,16 +50,12 @@ class CookieScript:
         Return the class of the given cookie.
 
         Args:
-            domain (str): Domain of the website (not the domain of the cookie).
+            domain (str): Domain of the website.
             cookie_key (str): Name of the cookie.
 
         Returns:
-            str: The class of the cookie. One of:
-            - "Strictly Necessary"
-            - "Performance"
-            - "Functionality"
-            - "Targeting"
-            - "Unclassified"
+            str: The class of the cookie. Class can be either "Strictly Necessary",
+            "Performance", "Functionality", "Targeting", or "Unclassified".
         """
         if not (domain_cookies := self.classes.get(domain)):
             # domain not in cookie_script
@@ -74,7 +72,7 @@ class CookieScript:
         Return whether the given cookie is Strictly Necessary.
 
         Args:
-            domain (str): Domain of the website (not the domain of the cookie).
+            domain (str): Domain of the website.
             cookie_key (str): Name of the cookie.
 
         Returns:

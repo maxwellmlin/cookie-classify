@@ -10,7 +10,7 @@ class CookieRequestHeader:
         """
         Args:
             cookie_header_value (str): The header value of a cookie request header.
-            domain (str): The domain of the website (not the domain of the cookie).
+            domain (str): The domain of the website.
         """
         self.cookies = {}
 
