@@ -27,7 +27,7 @@ class CookieRequestHeader:
         """Remove all necessary cookies from `self.cookies`."""
         necessary_removed = {}
         for key, value in self.cookies.items():
-            if not CookieRequestHeader.cookie_database.is_necessary(key, self.domain):
+            if not CookieRequestHeader.cookie_database.is_necessary(key, domain=self.domain):
                 necessary_removed[key] = value
 
         self.cookies = necessary_removed

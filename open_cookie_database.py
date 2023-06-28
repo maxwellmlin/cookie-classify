@@ -52,7 +52,7 @@ class OpenCookieDatabase:
 
         return cookie_class
 
-    def is_necessary(self, cookie_key: str, *args) -> bool:
+    def is_necessary(self, cookie_key: str, **kwargs) -> bool:
         """
         Return whether the given cookie is necessary.
 
