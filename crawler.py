@@ -46,7 +46,7 @@ class Crawler:
         self.crawl_inner_pages(url)
 
         # Screenshot with all cookies
-        self.crawl_inner_pages(url, take_screenshots=True)
+        self.crawl_inner_pages(url, screenshot_path=True)
 
         # Screenshot with intercept
         interceptor = functools.partial(
@@ -55,9 +55,9 @@ class Crawler:
             data_path=self.data_path,
         )
         self.driver.request_interceptor = interceptor
-        self.crawl_inner_pages(url, take_screenshots=True)
+        self.crawl_inner_pages(url, screenshot_path=True)
 
-    def crawl_inner_pages(url: str, depth: int = 1, take_screenshots: bool = False):
+    def crawl_inner_pages(self, url: str, depth: int = 1, take_screenshot: bool = False):
         """
         Crawl inner pages of website with a given depth.
 
@@ -66,21 +66,55 @@ class Crawler:
         Args:
             url (str): URL where traversal will begin.
             depth (int, optional): Number of layers of the DFS. Defaults to 2.
-            take_screenshots (bool, optional): Defaults to False.
+            take_screenshot (bool, optional): Defaults to False.
         """
+        # Extract the base domain from the URL
+        domain = utils.get_domain(url)
 
-        to_visit_queue = deque()
-        to_visit_queue.append(url)
-        visited = set()
+        # Start with the homepage URL
+        urls_to_visit = [(url, 0)]
 
-        # DFS traversal
-        while to_visit_queue:
-            current_node = to_visit_queue.pop()
+        count = 1
+        while urls_to_visit:
+            current_url, current_depth = urls_to_visit.pop(0)
 
-            for neighbor in graph[current_node]:
-                if neighbor not in visited:
-                    visited.add(current_node)
-                    to_visit_queue.append(neighbor)
+            # Terminate if the maximum depth has been reached
+            if current_depth > depth:
+                continue
+
+            # Visit the current URL
+            self.driver.get(current_url)
+
+            # TODO: Organize screenshots better
+            """
+            Something like this:
+            domain/index/name.png
+
+            index: 0, 1, 2, ...
+                - each index maps to the same url
+
+            name:
+                - all_cookies.png
+                - intercept.png
+            """
+
+            if screenshot_path:
+                self.save_viewport_screenshot(self.data_path + f"{count}.png")
+                count += 1
+
+            # Find all the links on the page
+            links = self.driver.find_elements_by_tag_name('a')  # links: list of WebElement objects ('a' == anchor tags)
+
+            for link in links:
+                href = link.get_attribute('href')
+                # Check if the link has the same domain
+                if utils.get_domain(href) == domain:
+                    # Click on the link
+                    link.click()
+                    # Add the inner link to the list of URLs to visit
+                    urls_to_visit.append((self.driver.current_url, current_depth + 1))
+                    # Return to the previous page to continue clicking other links
+                    self.driver.back()
 
     def save_viewport_screenshot(self, file_path: str):
         """
