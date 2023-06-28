@@ -23,8 +23,8 @@ for site_url in sites:
     # Reinstantiate crawler to clear cookies
     crawler = Crawler(data_path)
 
-    # Shihan's algorithm
-    crawler.get_with_intercept(site_url)
+    # Crawl website
+    crawler.crawl(site_url)
 
     # Safely close crawler
     crawler.quit()

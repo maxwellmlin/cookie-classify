@@ -30,9 +30,9 @@ class Crawler:
         self.time_to_wait = 5  # seconds
         self.data_path = data_path
 
-    def get_with_intercept(self, url: str) -> None:
+    def crawl(self, url: str) -> None:
         """
-        Shihan's algorithm.
+        Crawl website.
 
         Get a website and click the accept button to obtain all cookies.
         Then, refresh to load the website with all cookies.
