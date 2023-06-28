@@ -90,7 +90,11 @@ class Crawler:
             file.write(screenshot)
 
     def click_accept(self) -> None:
-        """Click the OneTrust accept button to accept all JavaScript cookies."""
+        """
+        Click the OneTrust accept button to accept all JavaScript cookies.
+
+        BUG: The driver does not always find the accept button.
+        """
         accept_ID = "onetrust-accept-btn-handler"
         wait_time = 10  # seconds
 
