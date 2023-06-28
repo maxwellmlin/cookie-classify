@@ -41,7 +41,6 @@ class Crawler:
         Args:
             url (str): URL of the website to crawl.
         """
-
         all_data_path = self.data_path + "all_cookies.png"
         intercept_data_path = self.data_path + "intercept.png"
 
