@@ -4,7 +4,7 @@ from cookiescript import CookieScript
 class CookieRequestHeader:
     """Related functions to parse and modify a cookie request header."""
 
-    cookiescript = CookieScript()
+    cookie_database = CookieScript()
 
     def __init__(self, cookie_header_value: str, domain: str) -> None:
         """
@@ -25,7 +25,7 @@ class CookieRequestHeader:
         """Remove all necessary cookies from `self.cookies`."""
         necessary_removed = {}
         for key, value in self.cookies.items():
-            if not CookieRequestHeader.cookiescript.is_necessary(self.domain, key):
+            if not CookieRequestHeader.cookie_database.is_necessary(key, self.domain):
                 necessary_removed[key] = value
 
         self.cookies = necessary_removed

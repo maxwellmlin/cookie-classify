@@ -67,13 +67,13 @@ class CookieScript:
 
         return cookie_class
 
-    def is_necessary(self, domain: str, cookie_key: str) -> bool:
+    def is_necessary(self, cookie_key: str, domain: str) -> bool:
         """
         Return whether the given cookie is Strictly Necessary.
 
         Args:
-            domain (str): Domain of the website.
             cookie_key (str): Name of the cookie.
+            domain (str): Domain of the website.
 
         Returns:
             bool: Whether the given cookie is Strictly Necessary.
