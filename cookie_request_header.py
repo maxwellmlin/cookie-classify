@@ -5,6 +5,7 @@ from open_cookie_database import OpenCookieDatabase
 class CookieRequestHeader:
     """Related functions to parse and modify a cookie request header."""
 
+    # cookie_database = CookieScript()
     cookie_database = OpenCookieDatabase()
 
     def __init__(self, cookie_header_value: str, domain: str) -> None:
