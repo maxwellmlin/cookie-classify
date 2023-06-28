@@ -5,7 +5,7 @@ import hashlib
 from typing import Self
 
 
-class ImageShingles:
+class ImageShingle:
     """
     Image shingles are a way to compare two images for similarity. The idea is to break the image
     into chunks, compute a hash for each chunk, and then compare the hashes between images.

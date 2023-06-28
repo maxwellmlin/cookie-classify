@@ -9,7 +9,7 @@ def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: 
 
     Args:
         request (seleniumwire.request.Request): A GET request.
-        domain (str): Domain of the website (not the domain of the cookie).
+        domain (str): Domain of the website.
         data_path (str): The path to store log files.
     """
     if request.headers.get("Cookie") is None:

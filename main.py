@@ -1,11 +1,12 @@
 import os
-import functools
 
 from crawler import Crawler
-import interceptors
 import utils
 
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+
+if not os.path.exists("crawls"):
+    os.mkdir("crawls")
 
 # Get list of sites to crawl
 sites = []
@@ -20,14 +21,10 @@ for site_url in sites:
         os.mkdir(data_path)
 
     # Reinstantiate crawler to clear cookies
-    crawler = Crawler()
-
-    # Remove necessary cookies
-    interceptor = functools.partial(
-        interceptors.remove_necessary_interceptor,
-        domain=utils.get_domain(site_url),
-        data_path=data_path,
-    )
+    crawler = Crawler(data_path)
 
     # Shihan's algorithm
-    crawler.get_with_intercept(site_url, interceptor, data_path)
+    crawler.get_with_intercept(site_url)
+
+    # Safely close crawler
+    crawler.quit()
