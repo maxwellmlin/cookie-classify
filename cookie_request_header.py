@@ -4,7 +4,7 @@ from cookiescript import CookieScript
 class CookieRequestHeader:
     """Related functions to parse and modify a cookie request header."""
 
-    cookie_database = CookieScript()
+    cookie_database = CookieScript() # FIXME: change to opencookieDB
 
     def __init__(self, cookie_header_value: str, domain: str) -> None:
         """
