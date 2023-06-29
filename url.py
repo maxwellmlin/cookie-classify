@@ -30,9 +30,6 @@ class URL(object):
     def __hash__(self):
         return hash(self.parts_to_compare)
 
-    def __str__(self) -> str:
-        return self.url
-
 
 if __name__ == "__main__":
     url1 = URL("https://www.google.com:123/El+Ni%C3%B1o/hi?q=hello+world#fragment")
