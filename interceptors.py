@@ -1,3 +1,5 @@
+from typing import Optional
+
 import seleniumwire.request
 
 from cookie_request_header import CookieRequestHeader
@@ -67,12 +69,20 @@ def passthrough_interceptor(request: seleniumwire.request.Request) -> None:
     """
 
 
-def set_referer_interceptor(request: seleniumwire.request.Request, referer) -> None:
+def set_referer_interceptor(request: seleniumwire.request.Request, referer: Optional[str], data_path: str) -> None:
     """
     Set the referer header of a GET request.
 
     Args:
         request: A GET request.
-        referer: The new referer value.
+        referer: The new referer value. If None, do nothing.
+        data_path: The path to store log files.
     """
+    if referer is None:
+        return
+
+    with open(data_path + "logs.txt", "a") as file:
+        file.write(f"GET Request URL: {request.url}\n")
+        file.write(f"Modified Referer Header: {referer}\n\n")
+
     request.headers["Referer"] = referer
