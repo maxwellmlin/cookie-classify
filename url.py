@@ -1,4 +1,5 @@
 from urllib.parse import urlparse, unquote_plus
+import utils
 
 
 class URL(object):
@@ -9,10 +10,9 @@ class URL(object):
 
         parts = urlparse(url)
 
-        # Parts to compare
         # NOTE: We assume the same webpage is served regardless of
         # scheme, params, query, and fragment
-        self.parts = parts._replace(
+        self.parts_to_compare = parts._replace(
             scheme="",
             netloc=parts.hostname,  # removes port, username, and password
             path=unquote_plus(parts.path),  # replaces %xx escapes and plus signs
@@ -21,11 +21,14 @@ class URL(object):
             fragment=""
         )
 
+    def same_domain(self, other):
+        return utils.get_domain(self.url) == utils.get_domain(other.url)
+
     def __eq__(self, other):
-        return self.parts == other.parts
+        return self.parts_to_compare == other.parts
 
     def __hash__(self):
-        return hash(self.parts)
+        return hash(self.parts_to_compare)
 
     def __str__(self) -> str:
         return self.url
