@@ -104,7 +104,7 @@ class Crawler:
             self.driver.get(current_url.url)
             current_url = URL(self.driver.current_url)  # get the actual url after redirects
 
-            print(f"Visiting {current_url.url} at depth {current_depth}")
+            print(f"Visiting {current_url.url} at depth {current_depth}.")
 
             # Terminate if the maximum depth has been reached or if the domain has changed
             if current_depth > depth or utils.get_domain(current_url.url) != domain:
