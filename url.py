@@ -25,7 +25,7 @@ class URL(object):
         return utils.get_domain(self.url) == utils.get_domain(other.url)
 
     def __eq__(self, other):
-        return self.parts_to_compare == other.parts
+        return self.parts_to_compare == other.parts_to_compare
 
     def __hash__(self):
         return hash(self.parts_to_compare)
@@ -34,4 +34,7 @@ class URL(object):
 if __name__ == "__main__":
     url1 = URL("https://www.google.com:123/El+Ni%C3%B1o/hi?q=hello+world#fragment")
     url2 = URL("http://www.google.com/El Niño/hi")
-    print(url1 == url2)
+    foo = {}
+    foo[url1] = 'url1'
+    foo[url2] = 'url2'
+    print(foo[url1])
