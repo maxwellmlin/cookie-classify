@@ -5,6 +5,7 @@ from collections import deque
 from enum import Enum
 from pathlib import Path
 from typing import Optional
+import os
 
 import seleniumwire.request
 from seleniumwire import webdriver
@@ -63,10 +64,10 @@ class Crawler:
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: Domain name changed from {domain} to '{domain_after_redirect}.'\n\n")
+                file.write(f"WARNING: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
         if url_after_redirect != url:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: URL changed from {url} to '{url_after_redirect}.'\n\n")
+                file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Initial crawl to collect all site cookies
         self.crawl_inner_pages(url_after_redirect, CrawlType.FIRST_RUN)
@@ -104,8 +105,6 @@ class Crawler:
             self.driver.get(current_url.url)
             current_url = URL(self.driver.current_url)  # get the actual url after redirects
 
-            print(f"Visiting {current_url.url} at depth {current_depth}.")
-
             # Terminate if the maximum depth has been reached or if the domain has changed
             if current_depth > depth or utils.get_domain(current_url.url) != domain:
                 continue
@@ -117,6 +116,12 @@ class Crawler:
                 self.next_uid += 1
                 self.uids[current_url] = uid
                 Path(self.data_path + f"{uid}/").mkdir(parents=True, exist_ok=True)
+
+            msg = f"Visiting {current_url.url} (UID: {uid}) at depth {current_depth}."
+            print(msg)
+            if not os.path.isfile(self.data_path + f"{uid}/logs.txt"):
+                with open(self.data_path + f"{uid}/logs.txt", "a") as file:
+                    file.write(msg + "\n\n")
 
             if crawl_type == CrawlType.LOG_INTERCEPT:
                 # Intercept cookie header and set the referer
