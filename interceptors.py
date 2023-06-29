@@ -36,13 +36,13 @@ def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: 
     cookie_header.remove_necessary()
 
     # Add to log file if cookie header is modified
-    if cookie_header != request.headers["Cookie"]:
+    if cookie_header.get_header() != request.headers["Cookie"]:
         with open(data_path + "logs.txt", "a") as file:
             file.write(f"GET Request URL: {request.url}\n")
             file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
-            file.write(f"Modified Cookie Header: {cookie_header}\n\n")
+            file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
 
-    request.headers["Cookie"] = cookie_header
+    request.headers["Cookie"] = cookie_header.get_header()
 
 
 def remove_all_interceptor(request: seleniumwire.request.Request) -> None:

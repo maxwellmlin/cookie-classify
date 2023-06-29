@@ -39,9 +39,3 @@ class CookieRequestHeader:
         )
 
         return header
-
-    def __ne__(self, __value: object) -> bool:
-        return self.get_header() != __value
-
-    def __str__(self) -> str:
-        return self.get_header()
