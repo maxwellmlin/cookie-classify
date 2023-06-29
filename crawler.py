@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import functools
-import time
 from collections import deque
+from enum import Enum
+from pathlib import Path
+from typing import Optional
 
+import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
@@ -13,6 +16,13 @@ from selenium.common.exceptions import TimeoutException
 
 import interceptors
 import utils
+from url import URL
+
+
+class CrawlType(Enum):
+    FIRST_RUN = 0  # Initial run
+    LOG_NORMAL = 1  # Screenshot all cookies
+    LOG_INTERCEPT = 2  # Screenshot only necessary
 
 
 class Crawler:
@@ -30,6 +40,9 @@ class Crawler:
         self.time_to_wait = 5  # seconds
         self.data_path = data_path
 
+        self.uids: dict[URL, int] = {}  # map url to a unique id
+        self.next_uid = 1
+
     def crawl(self, url: str) -> None:
         """
         Crawl website.
@@ -42,79 +55,117 @@ class Crawler:
             url: URL of the website to crawl.
         """
 
+        # Check if `url` results in redirects
+        domain = utils.get_domain(url)
+        self.driver.get(url)
+        url_after_redirect = self.driver.current_url
+        domain_after_redirect = utils.get_domain(url_after_redirect)
+
+        if domain_after_redirect != domain:
+            with open(self.data_path + "logs.txt", "a") as file:
+                file.write(f"WARNING: Domain name changed from {domain} to '{domain_after_redirect}.'\n\n")
+        if url_after_redirect != url:
+            with open(self.data_path + "logs.txt", "a") as file:
+                file.write(f"WARNING: URL changed from {url} to '{url_after_redirect}.'\n\n")
+
         # Initial crawl to collect all site cookies
-        self.crawl_inner_pages(url)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.FIRST_RUN)
 
         # Screenshot with all cookies
-        self.crawl_inner_pages(url, screenshot_path=True)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_NORMAL)
 
         # Screenshot with intercept
-        interceptor = functools.partial(
-            interceptors.remove_necessary_interceptor,
-            domain=utils.get_domain(url),
-            data_path=self.data_path,
-        )
-        self.driver.request_interceptor = interceptor
-        self.crawl_inner_pages(url, screenshot_path=True)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_INTERCEPT)
 
-    def crawl_inner_pages(self, url: str, depth: int = 1, take_screenshot: bool = False):
+    def crawl_inner_pages(self, start_node: str, crawl_type: CrawlType, depth: int = 2):
         """
         Crawl inner pages of website with a given depth.
 
-        TODO: _extended_summary_
+        Screenshot folder structure: domain/uid/name.png
+        where each url has a unique uid and name is either:
+        "all_cookies" or "intercept".
+        The domain is the domain of the url (before any redirect)
+        to ensure consistency with the site list.
 
         Args:
-            url: URL where traversal will begin.
-            depth: Number of layers of the DFS. Defaults to 2.
-            take_screenshot: Defaults to False.
+            start_node: URL where traversal will begin.
+            crawl_type: Affects intercept and screenshot behavior: TODO: expand
+            depth: Number of layers of the DFS. Defaults to 1.
         """
-        # Extract the base domain from the URL
-        domain = utils.get_domain(url)
 
-        # Start with the homepage URL
-        urls_to_visit = [(url, 0)]
+        domain = utils.get_domain(start_node)
 
-        count = 1
+        # Start with the landing page
+        urls_to_visit: deque[tuple[URL, int]] = deque()
+        urls_to_visit.append((URL(start_node), 0))
+        previous: dict[URL, Optional[str]] = {URL(start_node): None}  # map url to previous url
         while urls_to_visit:
-            current_url, current_depth = urls_to_visit.pop(0)
+            current_url, current_depth = urls_to_visit.pop()  # DFS
+            self.driver.get(current_url.url)
+            current_url = URL(self.driver.current_url)  # get the actual url after redirects
 
-            # Terminate if the maximum depth has been reached
-            if current_depth > depth:
+            print(f"Visiting {current_url.url} at depth {current_depth}")
+
+            # Terminate if the maximum depth has been reached or if the domain has changed
+            if current_depth > depth or utils.get_domain(current_url.url) != domain:
                 continue
 
+            if current_url in self.uids:
+                uid = self.uids[current_url]
+            else:
+                uid = self.next_uid
+                self.next_uid += 1
+                self.uids[current_url] = uid
+                Path(self.data_path + f"{uid}/").mkdir(parents=True, exist_ok=True)
+
+            if crawl_type == CrawlType.LOG_INTERCEPT:
+                # Intercept cookie header and set the referer
+                remove_necessary_interceptor = functools.partial(
+                    interceptors.remove_necessary_interceptor,
+                    domain=domain,
+                    data_path=self.data_path + f"{uid}/",
+                )
+                referer_interceptor = functools.partial(
+                    interceptors.set_referer_interceptor,
+                    referer=previous.get(current_url),
+                    data_path=self.data_path + f"{uid}/"
+                )
+
+                def interceptor(request: seleniumwire.request.Request):
+                    remove_necessary_interceptor(request)
+                    referer_interceptor(request)
+
+            else:
+                # Just set the referer
+                interceptor = functools.partial(
+                    interceptors.set_referer_interceptor,
+                    referer=previous.get(current_url),
+                    data_path=self.data_path + f"{uid}/"
+                )
+            self.driver.request_interceptor = interceptor
+
             # Visit the current URL
-            self.driver.get(current_url)
+            self.driver.get(current_url.url)
 
-            # TODO: Organize screenshots better
-            """
-            Something like this:
-            domain/index/name.png
+            # Save a screenshot of the viewport
+            if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
+                self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type}.png")
 
-            index: 0, 1, 2, ...
-                - each index maps to the same url
+            # Find all the anchor elements (links) on the page
+            a_elements = self.driver.find_elements(By.TAG_NAME, 'a')
+            hrefs = [link.get_attribute('href') for link in a_elements if link.get_attribute('href')]
 
-            name:
-                - all_cookies.png
-                - intercept.png
-            """
+            # Visit neighbors
+            for href in hrefs:
+                if href is None:
+                    continue
 
-            if screenshot_path:
-                self.save_viewport_screenshot(self.data_path + f"{count}.png")
-                count += 1
+                self.driver.get(href)
+                href_after_redirect = URL(self.driver.current_url)
 
-            # Find all the links on the page
-            links = self.driver.find_elements_by_tag_name('a')  # links: list of WebElement objects ('a' == anchor tags)
-
-            for link in links:
-                href = link.get_attribute('href')
-                # Check if the link has the same domain
-                if utils.get_domain(href) == domain:
-                    # Click on the link
-                    link.click()
-                    # Add the inner link to the list of URLs to visit
-                    urls_to_visit.append((self.driver.current_url, current_depth + 1))
-                    # Return to the previous page to continue clicking other links
-                    self.driver.back()
+                if href_after_redirect not in previous:
+                    previous[href_after_redirect] = current_url.url
+                    urls_to_visit.append((href_after_redirect, current_depth + 1))
 
     def save_viewport_screenshot(self, file_path: str):
         """
