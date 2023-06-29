@@ -2,6 +2,23 @@ import seleniumwire.request
 
 from cookie_request_header import CookieRequestHeader
 
+"""
+Interceptors for seleniumwire.
+
+NOTE: Many of these functions are general functions and must be partially applied when used as an interceptor.
+All interceptors must have the following signature: (request: seleniumwire.request.Request) -> None
+
+For example, to use the remove_necessary_interceptor, use:
+```python3
+interceptor = functools.partial(
+    interceptors.remove_necessary_interceptor,
+    domain="example.com",
+    data_path="./crawls/example.com/",
+)
+driver.request_interceptor = interceptor
+```
+"""
+
 
 def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: str, data_path: str) -> None:
     """
@@ -48,3 +65,14 @@ def passthrough_interceptor(request: seleniumwire.request.Request) -> None:
     Args:
         request: A GET request.
     """
+
+
+def set_referer_interceptor(request: seleniumwire.request.Request, referer) -> None:
+    """
+    Set the referer header of a GET request.
+
+    Args:
+        request: A GET request.
+        referer: The new referer value.
+    """
+    request.headers["Referer"] = referer
