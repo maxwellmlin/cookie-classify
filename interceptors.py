@@ -3,12 +3,13 @@ from typing import Optional
 import seleniumwire.request
 
 from cookie_request_header import CookieRequestHeader
+from url import URL
 
 """
 Interceptors for seleniumwire.
 
 NOTE: Many of these functions are general functions and must be partially applied when used as an interceptor.
-All interceptors must have the following signature: (request: seleniumwire.request.Request) -> None
+All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
 
 For example, to use the remove_necessary_interceptor, use:
 ```python3
@@ -44,6 +45,7 @@ def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: 
             file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
             file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
 
+    del request.headers["Cookie"]
     request.headers["Cookie"] = cookie_header.get_header()
 
 
@@ -60,29 +62,27 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     del request.headers["Cookie"]
 
 
-def passthrough_interceptor(request: seleniumwire.request.Request) -> None:
+def set_referer_interceptor(request: seleniumwire.request.Request, url: str, referer: Optional[str], data_path: str) -> None:
     """
-    Do nothing to a GET request.
+    Spoof the referer header of a GET request to imitate a link click.
+
+    If request.url matches url, then the referer header is modified to referer.
 
     Args:
         request: A GET request.
-    """
-
-
-def set_referer_interceptor(request: seleniumwire.request.Request, referer: Optional[str], data_path: str) -> None:
-    """
-    Set the referer header of a GET request.
-
-    Args:
-        request: A GET request.
+        url: The URL of the website being crawled.
         referer: The new referer value. If None, do nothing.
         data_path: The path to store log files.
     """
     if referer is None:
         return
 
-    with open(data_path + "logs.txt", "a") as file:
-        file.write(f"GET Request URL: {request.url}\n")
-        file.write(f"Modified Referer Header: {referer}\n\n")
+    # TODO: Why do some websites not change the referer header?
+    if URL(request.url) == URL(url):
+        del request.headers["Referer"]
+        request.headers["Referer"] = referer
 
-    request.headers["Referer"] = referer
+        with open(data_path + "logs.txt", "a") as file:
+            file.write(f"GET Request URL: {request.url}\n")
+            file.write(f"Original Referer Header: {request.headers['Referer']}\n")
+            file.write(f"Modified Referer Header: {referer}\n\n")

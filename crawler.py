@@ -6,6 +6,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 import os
+import validators
+import time
+import requests
 
 import seleniumwire.request
 from seleniumwire import webdriver
@@ -38,8 +41,13 @@ class Crawler:
         options.add_argument("--headless")  # NOTE: native does not work
 
         self.driver = webdriver.Firefox(options=options)
-        self.time_to_wait = 5  # seconds
+        self.time_to_wait = 10  # seconds
+        self.total_get_attempts = 3
         self.data_path = data_path
+
+        self.headers = {
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
+        }
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 1
@@ -58,8 +66,8 @@ class Crawler:
 
         # Check if `url` results in redirects
         domain = utils.get_domain(url)
-        self.driver.get(url)
-        url_after_redirect = self.driver.current_url
+        response = requests.get(url, headers=self.headers)
+        url_after_redirect = response.url
         domain_after_redirect = utils.get_domain(url_after_redirect)
 
         if domain_after_redirect != domain:
@@ -94,19 +102,29 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 1.
         """
 
-        domain = utils.get_domain(start_node)
+        if depth < 0:
+            raise ValueError("Depth must be non-negative.")
+
+        print(f"Beginning {crawl_type}.")
 
         # Start with the landing page
-        urls_to_visit: deque[tuple[URL, int]] = deque()
-        urls_to_visit.append((URL(start_node), 0))
+        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])
         previous: dict[URL, Optional[str]] = {URL(start_node): None}  # map url to previous url
+
+        domain = utils.get_domain(start_node)
+
         while urls_to_visit:
             current_url, current_depth = urls_to_visit.pop()  # DFS
-            self.driver.get(current_url.url)
-            current_url = URL(self.driver.current_url)  # get the actual url after redirects
 
-            # Terminate if the maximum depth has been reached or if the domain has changed
-            if current_depth > depth or utils.get_domain(current_url.url) != domain:
+            # Check if the url is valid
+            if not validators.url(current_url.url):
+                continue
+
+            response = requests.get(current_url.url, headers=self.headers)
+            current_url = URL(response.url)
+
+            # Terminate if the domain has changed (after redirect)
+            if utils.get_domain(current_url.url) != domain:
                 continue
 
             if current_url in self.uids:
@@ -123,54 +141,61 @@ class Crawler:
                 with open(self.data_path + f"{uid}/logs.txt", "a") as file:
                     file.write(msg + "\n\n")
 
-            if crawl_type == CrawlType.LOG_INTERCEPT:
-                # Intercept cookie header and set the referer
-                remove_necessary_interceptor = functools.partial(
-                    interceptors.remove_necessary_interceptor,
-                    domain=domain,
-                    data_path=self.data_path + f"{uid}/",
-                )
+            def interceptor(request: seleniumwire.request.Request):
                 referer_interceptor = functools.partial(
                     interceptors.set_referer_interceptor,
+                    url=current_url.url,
                     referer=previous.get(current_url),
                     data_path=self.data_path + f"{uid}/"
                 )
+                referer_interceptor(request)  # Intercept referer to previous page
 
-                def interceptor(request: seleniumwire.request.Request):
-                    remove_necessary_interceptor(request)
-                    referer_interceptor(request)
+                if crawl_type == CrawlType.LOG_INTERCEPT:
+                    remove_necessary_interceptor = functools.partial(
+                        interceptors.remove_necessary_interceptor,
+                        domain=domain,
+                        data_path=self.data_path + f"{uid}/",
+                    )
+                    remove_necessary_interceptor(request)  # Intercept cookies
 
-            else:
-                # Just set the referer
-                interceptor = functools.partial(
-                    interceptors.set_referer_interceptor,
-                    referer=previous.get(current_url),
-                    data_path=self.data_path + f"{uid}/"
-                )
             self.driver.request_interceptor = interceptor
 
-            # Visit the current URL
-            self.driver.get(current_url.url)
+            # Visit the current URL with multiple attempts
+            attempt = 0
+            for attempt in range(self.total_get_attempts):
+                try:
+                    self.driver.get(current_url.url)
+                    break  # If successful, break out of the loop
+
+                except TimeoutException:
+                    print(f"TimeoutException on attempt {attempt}/{self.total_get_attempts}: {current_url.url}.")
+            if attempt == self.total_get_attempts - 1:
+                print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping...")
+                continue
 
             # Save a screenshot of the viewport
             if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
+                time.sleep(self.time_to_wait)
                 self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type}.png")
+
+            # Don't need to visit neighbors if we're at the maximum depth
+            if current_depth == depth:
+                continue
 
             # Find all the anchor elements (links) on the page
             a_elements = self.driver.find_elements(By.TAG_NAME, 'a')
-            hrefs = [link.get_attribute('href') for link in a_elements if link.get_attribute('href')]
+            hrefs = [link.get_attribute('href') for link in a_elements]
 
             # Visit neighbors
             for href in hrefs:
-                if href is None:
+                if href is None or utils.get_domain(href) != domain:
                     continue
 
-                self.driver.get(href)
-                href_after_redirect = URL(self.driver.current_url)
+                href = URL(href)
 
-                if href_after_redirect not in previous:
-                    previous[href_after_redirect] = current_url.url
-                    urls_to_visit.append((href_after_redirect, current_depth + 1))
+                if href not in previous:
+                    previous[href] = current_url.url
+                    urls_to_visit.append((href, current_depth + 1))
 
     def save_viewport_screenshot(self, file_path: str):
         """
