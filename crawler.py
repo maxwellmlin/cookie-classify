@@ -41,7 +41,7 @@ class Crawler:
         options.add_argument("--headless")  # NOTE: native does not work
 
         self.driver = webdriver.Firefox(options=options)
-        self.time_to_wait = 10  # seconds
+        self.time_to_wait = 5  # seconds
         self.total_get_attempts = 3
         self.data_path = data_path
 
@@ -173,7 +173,7 @@ class Crawler:
                 print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping...")
                 continue
 
-            # Save a screenshot of the viewport
+            # Save a screenshot of the viewport  # TODO: save full page screenshot
             if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
                 time.sleep(self.time_to_wait)
                 self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type}.png")

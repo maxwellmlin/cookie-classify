@@ -41,7 +41,7 @@ def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: 
     # Add to log file if cookie header is modified
     if cookie_header.get_header() != request.headers["Cookie"]:
         with open(data_path + "logs.txt", "a") as file:
-            file.write(f"GET Request URL: {request.url}\n")
+            file.write(f"Removing Necessary Cookies from GET Request: {request.url}\n")
             file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
             file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
 
@@ -79,10 +79,8 @@ def set_referer_interceptor(request: seleniumwire.request.Request, url: str, ref
 
     # TODO: Why do some websites not change the referer header?
     if URL(request.url) == URL(url):
+        with open(data_path + "logs.txt", "a") as file:
+            file.write(f"Injecting Referer Header: {referer}\n\n")
+
         del request.headers["Referer"]
         request.headers["Referer"] = referer
-
-        with open(data_path + "logs.txt", "a") as file:
-            file.write(f"GET Request URL: {request.url}\n")
-            file.write(f"Original Referer Header: {request.headers['Referer']}\n")
-            file.write(f"Modified Referer Header: {referer}\n\n")
