@@ -5,3 +5,5 @@ crawls
 __pycache__
 archive
 screenshots
+settings.json
+.mypy_cache

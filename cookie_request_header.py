@@ -1,18 +1,15 @@
-# from cookiescript import CookieScript
-from open_cookie_database import OpenCookieDatabase
+from cookie_database import CookieDatabase, CookieClass
 
 
 class CookieRequestHeader:
     """Related functions to parse and modify a cookie request header."""
 
-    # cookie_database = CookieScript()
-    cookie_database = OpenCookieDatabase()
+    cookie_database = CookieDatabase.load_open_cookie_database()
 
-    def __init__(self, cookie_header_value: str, domain: str) -> None:
+    def __init__(self, cookie_header_value: str) -> None:
         """
         Args:
-            cookie_header_value (str): The header value of a cookie request header.
-            domain (str): The domain of the website.
+            cookie_header_value: The header value of a cookie request header.
         """
         self.cookies = {}
 
@@ -21,16 +18,16 @@ class CookieRequestHeader:
             key, value = cookie.split("=", 1)  # Split at first '=' (since value may contain '=')
             self.cookies[key] = value
 
-        self.domain = domain
+    def remove_by_class(self, blacklist: tuple[CookieClass]) -> None:
+        """
+        Remove all cookies with a class in blacklist from `self.cookies`.
 
-    def remove_necessary(self) -> None:
-        """Remove all necessary cookies from `self.cookies`."""
-        necessary_removed = {}
-        for key, value in self.cookies.items():
-            if not CookieRequestHeader.cookie_database.is_necessary(key, self.domain):
-                necessary_removed[key] = value
-
-        self.cookies = necessary_removed
+        Args:
+            blacklist: A tuple of cookie classes to remove.
+        """
+        for key in list(self.cookies.keys()):
+            if CookieRequestHeader.cookie_database.get_cookie_class(key) in blacklist:
+                del self.cookies[key]
 
     def get_header(self) -> str:
         """Return `self.cookies` as a cookie request header."""
@@ -39,9 +36,3 @@ class CookieRequestHeader:
         )
 
         return header
-
-    def __ne__(self, __value: object) -> bool:
-        return self.get_header() != __value
-
-    def __str__(self) -> str:
-        return self.get_header()

@@ -1,31 +1,53 @@
+from typing import Optional
+
 import seleniumwire.request
 
 from cookie_request_header import CookieRequestHeader
+from url import URL
+from cookie_database import CookieClass
+
+"""
+Interceptors for seleniumwire.
+
+NOTE: Many of these functions are general functions and must be partially applied when used as an interceptor.
+All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
+
+For example, to use the remove_cookie_class_interceptor, use:
+```python3
+interceptor = functools.partial(
+    interceptors.remove_cookie_class_interceptor,
+    blacklist=blacklist,  # A tuple of cookie classes to remove
+    data_path=data_path,  # The path to store log files
+)
+driver.request_interceptor = interceptor
+```
+"""
 
 
-def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: str, data_path: str) -> None:
+def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass], data_path: str) -> None:
     """
-    Remove necessary cookies from a GET request.
+    Remove cookies by class from a GET request.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
-        domain (str): Domain of the website.
-        data_path (str): The path to store log files.
+        request: A GET request.
+        blacklist: A tuple of cookie classes to remove.
+        data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
 
-    cookie_header = CookieRequestHeader(request.headers["Cookie"], domain)
-    cookie_header.remove_necessary()
+    cookie_header = CookieRequestHeader(request.headers["Cookie"])
+    cookie_header.remove_by_class(blacklist)
 
     # Add to log file if cookie header is modified
-    if cookie_header != request.headers["Cookie"]:
+    if cookie_header.get_header() != request.headers["Cookie"]:
         with open(data_path + "logs.txt", "a") as file:
-            file.write(f"GET Request URL: {request.url}\n")
+            file.write(f"GET Request: {request.url}\n")
             file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
-            file.write(f"Modified Cookie Header: {cookie_header}\n\n")
+            file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
 
-    request.headers["Cookie"] = cookie_header
+    del request.headers["Cookie"]
+    request.headers["Cookie"] = cookie_header.get_header()
 
 
 def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
@@ -33,7 +55,7 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     Removes all cookies from a GET request.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
+        request: A GET request.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -41,10 +63,24 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     del request.headers["Cookie"]
 
 
-def passthrough_interceptor(request: seleniumwire.request.Request) -> None:
+def set_referer_interceptor(request: seleniumwire.request.Request, url: str, referer: Optional[str], data_path: str) -> None:
     """
-    Do nothing to a GET request.
+    Spoof the referer header of a GET request to imitate a link click.
+
+    If request.url matches url, then the referer header is modified to referer.
 
     Args:
-        request (seleniumwire.request.Request): A GET request.
+        request: A GET request.
+        url: The URL of the website being crawled.
+        referer: The new referer value. If None, do nothing.
+        data_path: The path to store log files.
     """
+    if referer is None:
+        return
+
+    if URL(request.url) == URL(url):
+        with open(data_path + "logs.txt", "a") as file:
+            file.write(f"Injecting Referer Header: {referer}\n\n")
+
+        del request.headers["Referer"]
+        request.headers["Referer"] = referer
