@@ -4,6 +4,7 @@ import seleniumwire.request
 
 from cookie_request_header import CookieRequestHeader
 from url import URL
+from cookie_database import CookieClass
 
 """
 Interceptors for seleniumwire.
@@ -23,25 +24,25 @@ driver.request_interceptor = interceptor
 """
 
 
-def remove_necessary_interceptor(request: seleniumwire.request.Request, domain: str, data_path: str) -> None:
+def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass], data_path: str) -> None:
     """
-    Remove necessary cookies from a GET request.
+    Remove cookies by class from a GET request.
 
     Args:
         request: A GET request.
-        domain: Domain of the website.
+        blacklist: A tuple of cookie classes to remove.
         data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
 
-    cookie_header = CookieRequestHeader(request.headers["Cookie"], domain)
-    cookie_header.remove_necessary()
+    cookie_header = CookieRequestHeader(request.headers["Cookie"])
+    cookie_header.remove_by_class(blacklist)
 
     # Add to log file if cookie header is modified
     if cookie_header.get_header() != request.headers["Cookie"]:
         with open(data_path + "logs.txt", "a") as file:
-            file.write(f"Removing Necessary Cookies from GET Request: {request.url}\n")
+            file.write(f"GET Request: {request.url}\n")
             file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
             file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
 

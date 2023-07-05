@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-
 import functools
 from collections import deque
 from enum import Enum
 from pathlib import Path
 from typing import Optional
 import os
-import validators
 import time
 import requests
 
@@ -18,15 +15,16 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+from cookie_database import CookieClass
 import interceptors
 import utils
 from url import URL
 
 
 class CrawlType(Enum):
-    FIRST_RUN = 0  # Initial run
-    LOG_NORMAL = 1  # Screenshot all cookies
-    LOG_INTERCEPT = 2  # Screenshot only necessary
+    FIRST_RUN = "first_run"  # Gather cookies
+    LOG_NORMAL = "normal"  # Screenshot all cookies
+    LOG_INTERCEPT = "intercept"  # Screenshot only necessary
 
 
 class Crawler:
@@ -52,7 +50,7 @@ class Crawler:
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 1
 
-    def crawl(self, url: str) -> None:
+    def crawl(self, url: str, depth: int = 2) -> None:
         """
         Crawl website.
 
@@ -62,6 +60,7 @@ class Crawler:
 
         Args:
             url: URL of the website to crawl.
+            depth: Number of layers of the DFS. Defaults to 2.
         """
 
         # Check if `url` results in redirects
@@ -78,13 +77,13 @@ class Crawler:
                 file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Initial crawl to collect all site cookies
-        self.crawl_inner_pages(url_after_redirect, CrawlType.FIRST_RUN)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.FIRST_RUN, depth)
 
         # Screenshot with all cookies
-        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_NORMAL)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_NORMAL, depth)
 
         # Screenshot with intercept
-        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_INTERCEPT)
+        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_INTERCEPT, depth)
 
     def crawl_inner_pages(self, start_node: str, crawl_type: CrawlType, depth: int = 2):
         """
@@ -99,13 +98,13 @@ class Crawler:
         Args:
             start_node: URL where traversal will begin.
             crawl_type: Affects intercept and screenshot behavior: TODO: expand
-            depth: Number of layers of the DFS. Defaults to 1.
+            depth: Number of layers of the DFS. Defaults to 2.
         """
 
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        print(f"Beginning {crawl_type}.")
+        print(f"Starting '{crawl_type.name}'.")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])
@@ -116,12 +115,12 @@ class Crawler:
         while urls_to_visit:
             current_url, current_depth = urls_to_visit.pop()  # DFS
 
-            # Check if the url is valid
-            if not validators.url(current_url.url):
+            try:
+                response = requests.get(current_url.url, headers=self.headers)
+                current_url = URL(response.url)
+            except Exception as e:
+                print(f"'{e}' on {current_url.url}. Skipping...")
                 continue
-
-            response = requests.get(current_url.url, headers=self.headers)
-            current_url = URL(response.url)
 
             # Terminate if the domain has changed (after redirect)
             if utils.get_domain(current_url.url) != domain:
@@ -135,7 +134,7 @@ class Crawler:
                 self.uids[current_url] = uid
                 Path(self.data_path + f"{uid}/").mkdir(parents=True, exist_ok=True)
 
-            msg = f"Visiting {current_url.url} (UID: {uid}) at depth {current_depth}."
+            msg = f"Visiting '{current_url.url}' (UID: {uid}) at depth {current_depth}."
             print(msg)
             if not os.path.isfile(self.data_path + f"{uid}/logs.txt"):
                 with open(self.data_path + f"{uid}/logs.txt", "a") as file:
@@ -151,12 +150,21 @@ class Crawler:
                 referer_interceptor(request)  # Intercept referer to previous page
 
                 if crawl_type == CrawlType.LOG_INTERCEPT:
-                    remove_necessary_interceptor = functools.partial(
-                        interceptors.remove_necessary_interceptor,
-                        domain=domain,
+
+                    blacklist = tuple([
+                        CookieClass.STRICTLY_NECESSARY,
+                        # CookieClass.PERFORMANCE,
+                        # CookieClass.FUNCTIONALITY,
+                        # CookieClass.TARGETING,
+                        # CookieClass.UNCLASSIFIED
+                    ])
+
+                    remove_cookie_class_interceptor = functools.partial(
+                        interceptors.remove_cookie_class_interceptor,
+                        blacklist=blacklist,
                         data_path=self.data_path + f"{uid}/",
                     )
-                    remove_necessary_interceptor(request)  # Intercept cookies
+                    remove_cookie_class_interceptor(request)  # Intercept cookies
 
             self.driver.request_interceptor = interceptor
 
@@ -176,7 +184,7 @@ class Crawler:
             # Save a screenshot of the viewport  # TODO: save full page screenshot
             if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
                 time.sleep(self.time_to_wait)
-                self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type}.png")
+                self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type.value}.png")
 
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:
