@@ -12,3 +12,5 @@ dependencies:
     - selenium-wire
     - tldextract
     - Pillow
+    - mypy
+    - types-requests
