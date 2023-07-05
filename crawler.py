@@ -39,13 +39,11 @@ class Crawler:
         options.add_argument("--headless")  # TODO: native does not work
 
         self.driver = webdriver.Firefox(options=options)
+
         self.time_to_wait = 5  # seconds
         self.total_get_attempts = 3
-        self.data_path = data_path
 
-        self.headers = {
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0'
-        }
+        self.data_path = data_path
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
@@ -101,7 +99,7 @@ class Crawler:
         to ensure consistency with the site list.
 
         Args:
-            start_node: URL where traversal will begin.
+            start_node: URL where traversal will begin. Future crawls will be constrained to this domain.
             crawl_type: Affects intercept and screenshot behavior: TODO: expand
             depth: Number of layers of the DFS. Defaults to 2.
         """
@@ -112,12 +110,13 @@ class Crawler:
         print(f"Starting '{crawl_type.name}'.")
 
         # Start with the landing page
-        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])
+        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
         previous: dict[URL, Optional[str]] = {URL(start_node): None}  # map url to previous url
         redirects: set[URL] = set()  # set of URLs after redirect(s)
 
         domain = utils.get_domain(start_node)
 
+        # Graph search loop
         while urls_to_visit:
             current_url, current_depth = urls_to_visit.pop()  # DFS
 
@@ -130,8 +129,10 @@ class Crawler:
 
             # Lookup uid
             uid = self.uids[current_url]
-            if uid == -1:
+            if uid == -1:  # Indicates a duplicate URL that was discovered after redirection
                 continue
+            
+            uid_data_path = self.data_path + f"{uid}/"
 
             # Log site visit
             msg = f"Visiting '{current_url.url}' (UID: {uid}) at depth {current_depth}."
@@ -140,13 +141,13 @@ class Crawler:
                 with open(self.data_path + f"{uid}/logs.txt", "a") as file:
                     file.write(msg + "\n\n")
 
-            # Set request interceptor
+            # Define request interceptor
             def interceptor(request: seleniumwire.request.Request):
                 referer_interceptor = functools.partial(
                     interceptors.set_referer_interceptor,
                     url=current_url.url,
                     referer=previous.get(current_url),
-                    data_path=self.data_path + f"{uid}/"
+                    data_path=uid_data_path
                 )
                 referer_interceptor(request)  # Intercept referer to previous page
 
@@ -162,10 +163,11 @@ class Crawler:
                     remove_cookie_class_interceptor = functools.partial(
                         interceptors.remove_cookie_class_interceptor,
                         blacklist=blacklist,
-                        data_path=self.data_path + f"{uid}/",
+                        data_path=uid_data_path
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
+            # Set request interceptor
             self.driver.request_interceptor = interceptor
 
             # Visit the current URL with multiple attempts
@@ -176,27 +178,33 @@ class Crawler:
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
-                    print(f"TimeoutException on attempt {attempt}/{self.total_get_attempts}: {current_url.url}.")
+                    print(f"TimeoutException on attempt {attempt}/{self.total_get_attempts} for '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
                 print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping...")
                 continue
 
+            # Wait for redirects and dynamic content
             time.sleep(self.time_to_wait)
 
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
             if after_redirect in redirects:
-                print("Already visited. Skipping...")
+                print("Redirect to duplicate site. Skipping...")
 
-                shutil.rmtree(self.data_path + f"{uid}/")
+                shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Mark as duplicate
                 continue
 
             redirects.add(after_redirect)
 
+            # Account for domain name changes
+            if after_redirect.domain() != domain:
+                print("Redirect to different domain. Skipping...")
+                continue
+
             # Save a screenshot of the viewport  # TODO: save full page screenshot
             if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
-                self.save_viewport_screenshot(self.data_path + f"{uid}/{crawl_type.value}.png")
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
 
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:
@@ -209,6 +217,10 @@ class Crawler:
             # Visit neighbors
             for neighbor in hrefs:
                 if neighbor is None or utils.get_domain(neighbor) != domain:
+                    # NOTE: Potential for false negatives if the href domain
+                    # is not the same as the current domain but redirects to the current domain.
+                    # However, this is unlikely to occur in practice and
+                    # we do not want to visit every href present on the page (`self.time_to_wait` penalty).
                     continue
 
                 neighbor = URL(neighbor)
