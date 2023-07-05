@@ -21,8 +21,14 @@ class URL(object):
             fragment=""
         )
 
-    def same_domain(self, other):
-        return utils.get_domain(self.url) == utils.get_domain(other.url)
+    def domain(self):
+        """
+        Return domain of URL.
+
+        Returns:
+            Domain of `self.url`.
+        """
+        return utils.get_domain(self.url)
 
     def __eq__(self, other):
         return self.parts_to_compare == other.parts_to_compare
