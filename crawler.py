@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 import os
 import time
-import requests
 import shutil
 
 import seleniumwire.request
@@ -37,7 +36,7 @@ class Crawler:
             data_path: Path to store log files and save screenshots.
         """
         options = FirefoxOptions()
-        options.add_argument("--headless")  # NOTE: native does not work
+        options.add_argument("--headless")  # TODO: native does not work
 
         self.driver = webdriver.Firefox(options=options)
         self.time_to_wait = 5  # seconds
@@ -65,11 +64,17 @@ class Crawler:
         """
 
         # Check if `url` results in redirects
-        # NOTE: Does not handle JavaScript redirects
+        options = FirefoxOptions()
+        options.add_argument("--headless")
+        temp_driver = webdriver.Firefox(options=options)
+        temp_driver.get(url)
+        time.sleep(self.time_to_wait)
+
         domain = utils.get_domain(url)
-        response = requests.get(url, headers=self.headers)
-        url_after_redirect = response.url
+        url_after_redirect = temp_driver.current_url
         domain_after_redirect = utils.get_domain(url_after_redirect)
+
+        temp_driver.quit()
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
@@ -116,18 +121,17 @@ class Crawler:
         while urls_to_visit:
             current_url, current_depth = urls_to_visit.pop()  # DFS
 
-            # Lookup uid for current url
-            if current_url in self.uids:
-                uid = self.uids[current_url]
-                if uid == -1:
-                    # Skip this url
-                    # '-1' indicates a duplicate that was discovered after redirect(s)
-                    continue
-            else:
-                uid = self.next_uid
+            # Create uid for current url if it does not exist
+            if current_url not in self.uids:
+                self.uids[current_url] = self.next_uid
+                Path(self.data_path + f"{self.next_uid}/").mkdir(parents=True, exist_ok=True)
+
                 self.next_uid += 1
-                self.uids[current_url] = uid
-                Path(self.data_path + f"{uid}/").mkdir(parents=True, exist_ok=True)
+
+            # Lookup uid
+            uid = self.uids[current_url]
+            if uid == -1:
+                continue
 
             # Log site visit
             msg = f"Visiting '{current_url.url}' (UID: {uid}) at depth {current_depth}."
