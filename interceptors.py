@@ -12,12 +12,12 @@ Interceptors for seleniumwire.
 NOTE: Many of these functions are general functions and must be partially applied when used as an interceptor.
 All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
 
-For example, to use the remove_necessary_interceptor, use:
+For example, to use the remove_cookie_class_interceptor, use:
 ```python3
 interceptor = functools.partial(
-    interceptors.remove_necessary_interceptor,
-    domain="example.com",
-    data_path="./crawls/example.com/",
+    interceptors.remove_cookie_class_interceptor,
+    blacklist=blacklist,  # A tuple of cookie classes to remove
+    data_path=data_path,  # The path to store log files
 )
 driver.request_interceptor = interceptor
 ```
