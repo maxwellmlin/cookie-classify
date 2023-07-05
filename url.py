@@ -1,4 +1,4 @@
-from urllib.parse import urlparse, unquote_plus
+from urllib.parse import urlparse, unquote_plus, parse_qsl
 import utils
 
 
@@ -17,7 +17,7 @@ class URL(object):
             netloc=parts.hostname,  # removes port, username, and password
             path=unquote_plus(parts.path),  # replaces %xx escapes and plus signs
             params="",
-            query="",  # TODO: is query important?
+            query=frozenset(parse_qsl(parts.query)),
             fragment=""
         )
 
@@ -40,7 +40,7 @@ class URL(object):
 if __name__ == "__main__":
     url1 = URL("https://www.google.com:123/El+Ni%C3%B1o/hi?q=hello+world#fragment")
     url2 = URL("http://www.google.com/El Niño/hi")
-    foo = {}
-    foo[url1] = 'url1'
-    foo[url2] = 'url2'
-    print(foo[url1])
+
+    url1 = URL("https://www.google.com?hello2=world2&hello1=world1")
+    url2 = URL("https://www.google.com?hello1=world2&hello2=world2")
+    print(url1 == url2)
