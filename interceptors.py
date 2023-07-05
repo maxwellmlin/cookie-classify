@@ -78,7 +78,6 @@ def set_referer_interceptor(request: seleniumwire.request.Request, url: str, ref
     if referer is None:
         return
 
-    # TODO: Why do some websites not change the referer header?
     if URL(request.url) == URL(url):
         with open(data_path + "logs.txt", "a") as file:
             file.write(f"Injecting Referer Header: {referer}\n\n")
