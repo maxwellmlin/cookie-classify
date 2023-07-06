@@ -288,8 +288,8 @@ class Crawler:
 
         data = json.loads(self.driver.har)
 
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=4)
 
         del self.driver.requests
 
