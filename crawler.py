@@ -215,7 +215,7 @@ class Crawler:
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
 
             # Save HAR file
-            if self.save_har:
+            if self.save_har and crawl_type != CrawlType.FIRST_RUN:
                 self.save_har_to_disk(uid_data_path + f"{crawl_type.value}.json")
 
             # Don't need to visit neighbors if we're at the maximum depth
