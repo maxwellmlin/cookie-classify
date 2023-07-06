@@ -6,6 +6,7 @@ from typing import Optional
 import os
 import time
 import shutil
+import json
 
 import seleniumwire.request
 from seleniumwire import webdriver
@@ -30,15 +31,22 @@ class CrawlType(Enum):
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self, data_path: str) -> None:
+    def __init__(self, data_path: str, save_har: bool = False) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
+            save_har: Whether to save HAR data. Defaults to False.
         """
         options = FirefoxOptions()
         options.add_argument("--headless")  # TODO: native does not work
 
-        self.driver = webdriver.Firefox(options=options)
+        seleniumwire_options = {}
+        if save_har:
+            seleniumwire_options['enable_har'] = True
+
+        self.save_har = save_har
+
+        self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
 
         self.time_to_wait = 5  # seconds
         self.total_get_attempts = 3
@@ -131,7 +139,7 @@ class Crawler:
             uid = self.uids[current_url]
             if uid == -1:  # Indicates a duplicate URL that was discovered after redirection
                 continue
-            
+
             uid_data_path = self.data_path + f"{uid}/"
 
             # Log site visit
@@ -206,6 +214,10 @@ class Crawler:
             if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
 
+            # Save HAR file
+            if self.save_har:
+                self.save_har_to_disk(uid_data_path + f"{crawl_type.value}.json")
+
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:
                 continue
@@ -263,6 +275,23 @@ class Crawler:
         msg = "Accept button clicked" if success else f"Accept button not found after {wait_time} seconds"
         with open(self.data_path + "logs.txt", "a") as file:
             file.write(f"{msg}\n\n")
+
+    def save_har_to_disk(self, file_path: str) -> None:
+        """
+        Save HAR file to `file_path` and clear previously captured HAR entries.
+
+        Args:
+            file_path: Path to save the HAR file. The file extension should be `.json`.
+        """
+        if not file_path.lower().endswith(".json"):
+            raise ValueError("File extension must be `.json`.")
+
+        data = json.loads(self.driver.har)
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+        del self.driver.requests
 
     def quit(self) -> None:
         """Safely end the web driver."""

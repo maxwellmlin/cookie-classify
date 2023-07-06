@@ -21,10 +21,10 @@ for site_url in sites:
         os.mkdir(data_path)
 
     # Reinstantiate crawler to clear cookies
-    crawler = Crawler(data_path)
+    crawler = Crawler(data_path, save_har=True)
 
     # Crawl website
-    crawler.crawl(site_url)
+    crawler.crawl(site_url, depth=0)
 
     # Safely close crawler
     crawler.quit()
