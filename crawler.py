@@ -178,6 +178,9 @@ class Crawler:
             # Set request interceptor
             self.driver.request_interceptor = interceptor
 
+            # Remove previous HAR entries
+            del self.driver.requests
+
             # Visit the current URL with multiple attempts
             attempt = 0
             for attempt in range(self.total_get_attempts):
@@ -278,7 +281,10 @@ class Crawler:
 
     def save_har_to_disk(self, file_path: str) -> None:
         """
-        Save HAR file to `file_path` and clear previously captured HAR entries.
+        Save current HAR file to `file_path`.
+
+        NOTE: Requests continually get logged to the same HAR file.
+        To start logging a new HAR file, use: `del self.driver.requests`.
 
         Args:
             file_path: Path to save the HAR file. The file extension should be `.json`.
@@ -290,8 +296,6 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
-
-        del self.driver.requests
 
     def quit(self) -> None:
         """Safely end the web driver."""
