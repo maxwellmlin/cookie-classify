@@ -3,7 +3,7 @@ import os
 from crawler import Crawler
 import utils
 
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
 
 if not os.path.exists("crawls"):
     os.mkdir("crawls")

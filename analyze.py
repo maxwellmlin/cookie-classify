@@ -1,6 +1,7 @@
 import json
 import os
 import utils
+import csv
 
 
 def detect_tracking(blocklist, url_list):
@@ -39,7 +40,7 @@ def get_urls_from_har(file: str) -> list[str]:
     for entry in data['log']['entries']:
         request = entry['request']
         
-        if url := request.get('url'):
+        if (url := request.get('url')) and request.get("cookies"):
             all_urls.append(url)
 
     return all_urls
@@ -68,13 +69,88 @@ def get_tracking_sites(list_path: str = "inputs/blocklists/") -> set[str]:
 
     return tracking_sites
 
+def get_directories(root: str) -> list[str]:
+    """
+    Return a list of directories in a given root directory.
+
+    Args:
+        root: Path to the root directory.
+
+    Returns:
+        A list of directories.
+    """    
+    dirs = []
+    for item in os.listdir(root):
+        path = os.path.join(root, item)
+        if os.path.isdir(path):
+            dirs.append(path)
+    
+    return dirs
 
 # Create set of tracking sites from aggregation of 4 blocklists
 trackings_sites = get_tracking_sites()
 
-# TODO: run crawl with tracking/targeting cookies removed, then analyze HAR files to see which (if any) tracking cookies remain
-urls = get_urls_from_har("crawls/myflixer.to/0/normal.json")
+def analyze_har(har_path: str):
+    """
+    Return a list of tracking cookies detected in the specified HAR file.
 
-parsed_json = detect_tracking(trackings_sites, urls)
-print(parsed_json)
-print(len(parsed_json))
+    Args:
+        har_path: Path to the HAR file.
+
+    Returns:
+        A list of detected tracking cookies.
+    """    
+    urls = get_urls_from_har(har_path)
+    detected_list = detect_tracking(trackings_sites, urls)
+    return detected_list
+
+
+domain_paths = get_directories("crawls/")
+for site in domain_paths:
+    inner_site_paths = get_directories(site)
+    
+    for inner_site_path in inner_site_paths:
+        normal_har_path = f"{inner_site_path}/normal.json"
+        detected_list_normal = analyze_har(normal_har_path)
+
+        # Create file if it doesn't exist; if it exists then write a row for each inner site path with a count of the number of trackers.
+        normal_file = "trackers_in_normal.csv"
+        normal_file_exists = os.path.isfile(normal_file)
+
+        with open(normal_file, mode='a', newline='') as file:
+            writer = csv.writer(file)
+
+            if not normal_file_exists:
+                writer.writerow(['Inner Site Path', 'Length of Detected List'])
+                writer.writerow([inner_site_path, len(detected_list_normal)]) 
+
+        
+        # Repeat for files generated after run with intercept.
+        intercept_har_path = f"{inner_site_path}/intercept.json"
+        detected_list_intercept = analyze_har(intercept_har_path)
+
+        intercept_file = "trackers_in_intercept.csv"
+        intercept_file_exists = os.path.isfile(intercept_file)
+
+        with open(intercept_file, mode='a', newline='') as file:
+            writer = csv.writer(file)
+
+            if not intercept_file_exists:
+                writer.writerow(['Inner Site Path', 'Length of Detected List'])
+                writer.writerow([inner_site_path, len(detected_list_intercept)]) 
+
+        
+        if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
+            # Requires both normal and intercept HAR files to exist
+            continue
+        
+
+
+
+
+
+
+
+
+
+
