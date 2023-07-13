@@ -10,7 +10,12 @@ dependencies:
   - geckodriver
   - pip:
     - selenium-wire
+    - selenium==4.2.0
     - tldextract
     - Pillow
     - mypy
     - types-requests
+    - beautifulsoup4
+    - pandas
+    - pyopenssl==22.0.0
+    - cryptography==38.0.4

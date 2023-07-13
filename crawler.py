@@ -7,6 +7,7 @@ import os
 import time
 import shutil
 import json
+import bannerdetection as bc
 
 import seleniumwire.request
 from seleniumwire import webdriver
@@ -32,6 +33,18 @@ class BannerType(Enum):
     ACCEPT_ONLY = 0
     ACCEPT_REJECT = 1
     ACCEPT_SETTINGS = 2
+
+
+class Data:
+    url = ""
+    ttw = 0
+    sql_addr = None
+    status = None
+    index = None
+    banners = []
+    banners_data = []
+    CMP = {}
+    openwpm = True
 
 
 class Crawler:
@@ -284,6 +297,24 @@ class Crawler:
         msg = "Accept button clicked" if success else f"Accept button not found after {wait_time} seconds"
         with open(self.data_path + "logs.txt", "a") as file:
             file.write(f"{msg}\n\n")
+            
+    def bannerclick(self, domain, url):
+        global driver  # :(
+        driver = self.driver
+        # banners = bc.run_banner_detection(Data)
+        # print(banners)
+        # Data.banners = banners
+        # Data.banners_data = bc.extract_banners_data(banners)
+        # bc.interact_with_banners(Data, 1)  # choice 1. accept 2. reject
+        # cd.set_webdriver(webdriver)
+        # Data.CMP = cd.run_cmp_detection()
+        # Data.sql_addr = manager_params.storage_controller_address
+        # bc.set_data_in_db_error(Data)
+        
+        # TODO: do we need this?
+        # bc.halt_for_sleep(Data)
+        self.driver.get(url)
+        bc.run_all_for_domain(domain, url, self.driver)
 
     def save_har_to_disk(self, file_path: str) -> None:
         """

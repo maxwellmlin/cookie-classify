@@ -24,7 +24,11 @@ for site_url in sites:
     crawler = Crawler(data_path, save_har=True)
 
     # Crawl website
-    crawler.crawl(site_url, depth=0)
+    # crawler.crawl(site_url, depth=0)
+    
+    site_url = f"https://{site_url}"
+    domain = utils.get_domain(site_url)
+    crawler.bannerclick(domain, site_url)
 
     # Safely close crawler
     crawler.quit()

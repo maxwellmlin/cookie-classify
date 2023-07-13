@@ -3,17 +3,17 @@ import argparse
 import random
 import time
 
-from PIL import Image # FIXME: could remove this since we have screenshotting in crawler.py
+from PIL import Image
 
 try:
     from .utility.utilityMethods import *
     from .config import *
-    from . import cmpdetection as cd
+    # from . import cmpdetection as cd
 except ImportError as E:
-    print("run the module as a script")
+    # print("run the module as a script")
     from utility.utilityMethods import *
     from config import *
-    import cmpdetection as cd
+    # import cmpdetection as cd
 
 rej_flag = False
 
@@ -51,7 +51,7 @@ def run_webdriver(page_load_timeout=TIME_OUT, profile=None):
             # path = None
         profile = webdriver.FirefoxProfile(
             path)
-    desired, prof = avoid_bot_detection(profile, MOBILE_AGENT) # TODO: import from utilityMethods.py
+    desired, prof = avoid_bot_detection(profile, MOBILE_AGENT)
     # options.set_preference("browser.privatebrowsing.autostart", True)
     # options.add_argument("--incognito")
     options.headless = HEADLESS
@@ -116,25 +116,28 @@ def set_data_dir_name(dir_name):
 # 2
 def init(headless=HEADLESS, input_file=None, num_browsers=NUM_BROWSERS, num_repetitions=1, domains_file=None, web_driver=None, v_db=None,
     b_db=None, h_db=None):  # initialize bannerdetection by setting url file and webdriver instance
-    global domains, driver, file, input_files_dir
-    url_dir = "." + input_files_dir
-    if web_driver is None:
-        if CHROME:
-            driver = run_chrome()
-        else:
-            driver = run_webdriver()
-    else:
-        driver = web_driver
-    if domains_file is None:
-        file = url_dir+urls_file
-    else:
-        file = url_dir+domains_file
-    create_data_dirs()
-    if os.path.isfile(file):
-        domains = file_to_list(file)
-    # set_database(v_db, b_db, h_db)
-    if input_file:
-        file = input_file
+    # global domains, driver, file, input_files_dir
+    # url_dir = "." + input_files_dir
+    # if web_driver is None:
+    #     if CHROME:
+    #         driver = run_chrome()
+    #     else:
+    #         driver = run_webdriver()
+    # else:
+    #     driver = web_driver
+    # if domains_file is None:
+    #     file = url_dir+urls_file
+    # else:
+    #     file = url_dir+domains_file
+    # create_data_dirs()
+    # if os.path.isfile(file):
+    #     domains = file_to_list(file)
+    # # set_database(v_db, b_db, h_db)
+    # if input_file:
+    #     file = input_file
+    global domains
+    with open(file, "r") as f:
+        domains = [line.strip() for line in f]
 
 # 9
 def get_domains():
@@ -234,12 +237,12 @@ def open_domain_page(domain, sleep=TEST_MODE_SLEEP):
             time.sleep(sleep)
             break
         except TimeoutException as ex:
-            with open(log_file, 'a+') as f:
-                print("failed to get (TimeOut): " + url + " " + ex.__str__(), file=f)
+            # with open(log_file, 'a+') as f:
+            print("failed to get (TimeOut): " + url + " " + ex.__str__())
             this_status = 1
         except WebDriverException as ex:
-            with open(log_file, 'a+') as f:
-                print("failed to get (unreachable): " + url + " " + ex.__str__(), file=f)
+            # with open(log_file, 'a+') as f:
+            print("failed to get (unreachable): " + url + " " + ex.__str__())
             this_status = 2
         finally:
             mode += 1
@@ -290,37 +293,37 @@ def detect_banners(data):  # return banners of the current running url
     global driver, this_url, this_domain, this_status, visit_db, this_lang, this_index
     banners = []
     inc_counter()
-    try:
-        if ZOOMING:
-            zoom_out(3)
-        if not data.url:
-            return banners
-        this_index = data.index
-        this_url = data.url
-        this_domain = data.domain
-        this_lang = None
-        banners = find_cookie_banners()
+    # try:
+    if ZOOMING:
+        zoom_out(3)
+    if not data.url:
+        return banners
+    this_index = data.index
+    this_url = data.url
+    this_domain = data.domain
+    this_lang = None
+    banners = find_cookie_banners()
 
-        this_lang = page_lang(driver)
-        if ATTEMPTS and not banners:
-            for att in range(ATTEMPTS):
-                time.sleep(ATTEMPT_STEP)
-                if not banners:
-                    banners = find_cookie_banners()
-                else:
-                    return banners
-                data.ttw = (att + 1) * ATTEMPT_STEP
-        if not banners and TRANSLATION:
-            if "en" not in this_lang and is_in_langlist(this_lang):   # if no banner is found and the language of site is not english then translate the page and check again
-                translate_page(driver)
-                banners = find_cookie_banners(translate=True)
-                this_status = 3
-                data.status = this_status
-    except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed to continue detecting banner for domain: " + this_domain + " " + ex.__str__(), file=f)
-        this_status = -1
-        data.status = this_status
+    this_lang = page_lang(driver)
+    if ATTEMPTS and not banners:
+        for att in range(ATTEMPTS):
+            time.sleep(ATTEMPT_STEP)
+            if not banners:
+                banners = find_cookie_banners()
+            else:
+                return banners
+            data.ttw = (att + 1) * ATTEMPT_STEP
+    if not banners and TRANSLATION:
+        if "en" not in this_lang and is_in_langlist(this_lang):   # if no banner is found and the language of site is not english then translate the page and check again
+            translate_page(driver)
+            banners = find_cookie_banners(translate=True)
+            this_status = 3
+            data.status = this_status
+    # except Exception as ex:
+    #     # with open(log_file, 'a+') as f:
+    #     print("failed to continue detecting banner for domain: " + this_domain + " " + ex.__str__())
+    #     this_status = -1
+    #     data.status = this_status
     return banners
 
 
@@ -363,9 +366,8 @@ def interact_with_banner(banner_item, choice, status, i, total_search=False):
     try:
         banner = get_banner_obj(banner_item)
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed in switching frame for : " + this_url + " in interact with banner. " + ex.__str__(),
-                  file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed in switching frame for : " + this_url + " in interact with banner. " + ex.__str__())
         driver.switch_to.default_content()
         return
     try:
@@ -414,8 +416,8 @@ def interact_with_banner(banner_item, choice, status, i, total_search=False):
             status['btn_set_status'] = 1
             take_current_page_sc(suffix="_Xnc_after" + str(i + 1))
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed in interact with banner for : " + this_url + "  " + ex.__str__(), file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed in interact with banner for : " + this_url + "  " + ex.__str__())
         driver.switch_to.default_content()
 
     return flag
@@ -487,8 +489,8 @@ def take_current_page_sc(data=None, directory=None, suffix=""):
         try:
             driver.save_screenshot(directory + get_sc_file_name(index, url) + suffix + ".png")
         except Exception as ex:
-            with open(log_file, 'a+') as f:
-                print("failed to take screenshot for domain: " + data.domain + " " + ex.__str__(), file=f)
+            # with open(log_file, 'a+') as f:
+            print("failed to take screenshot for domain: " + data.domain + " " + ex.__str__())
 
 # 14
 def inc_counter():
@@ -501,8 +503,8 @@ def take_banner_sc(banner_item, data, j=None):
         try:
             banner = get_banner_obj(banner_item)
         except Exception as ex:
-            with open(log_file, 'a+') as f:
-                print("failed in switching in banner_sc section for : " + this_url + " " + ex.__str__(), file=f)
+            # with open(log_file, 'a+') as f:
+            print("failed in switching in banner_sc section for : " + this_url + " " + ex.__str__())
             return
         if j is not None:
             if CHROME:
@@ -535,8 +537,8 @@ def extract_banner_data(banner_item):
     try:
         banner = get_banner_obj(banner_item)
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed in switching frame for : " + this_url + " in exctact banner data. " + ex.__str__(), file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed in switching frame for : " + this_url + " in exctact banner data. " + ex.__str__())
         driver.switch_to.default_content()
         return
     try:
@@ -553,8 +555,8 @@ def extract_banner_data(banner_item):
         else:
             banner_data["iFrame"] = False
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed in extracting banner for : " + this_url + " " + ex.__str__(), file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed in extracting banner for : " + this_url + " " + ex.__str__())
         return
 
     return banner_data
@@ -574,8 +576,8 @@ def get_data_dicts(banner_data):
         banner_db.loc[banner_db.shape[0], b_row_dict.keys()] = b_row_dict.values()
         html_db.loc[html_db.shape[0], h_row_dict.keys()] = h_row_dict.values()
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed to continue extracting banner data for domain: " + this_url + " " + ex.__str__(), file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed to continue extracting banner data for domain: " + this_url + " " + ex.__str__())
     finally:
         return b_row_dict, h_row_dict
 
@@ -586,9 +588,8 @@ def take_banners_sc(banners, data):
             try:
                 take_banner_sc(banner_item, data, j)
             except Exception as ex:
-                with open(log_file, 'a+') as f:
-                    print("failed to continue in taking banner sc for domain: " + this_url + " " + ex.__str__(),
-                          file=f)
+                # with open(log_file, 'a+') as f:
+                print("failed to continue in taking banner sc for domain: " + this_url + " " + ex.__str__())
     elif NOBANNER_SC:
         take_current_page_sc(data, nobanner_sc_dir)
 
@@ -607,8 +608,8 @@ def set_data_in_db_error(data):
     try:
         set_data_in_db(data)
     except Exception as ex:
-        with open(log_file, 'a+') as f:
-            print("failed to continue setting data in DB for domain: " + this_domain + " " + ex.__str__(), file=f)
+        # with open(log_file, 'a+') as f:
+        print("failed to continue setting data in DB for domain: " + this_domain + " " + ex.__str__())
 
 # 19
 def set_data_in_db(data):
@@ -642,8 +643,8 @@ def set_data_in_db(data):
             if SAVE_HTML:
                 data.save_record_in_sql("htmls", h_dict)
 
-    CMP_dict = cd.extract_CMP_data(data.CMP)
-    v_dict.update(CMP_dict)
+    # CMP_dict = cd.extract_CMP_data(data.CMP)
+    # v_dict.update(CMP_dict)
     if data.openwpm:
         data.save_record_in_sql("visits", v_dict)
 
@@ -685,7 +686,7 @@ def run_banner_detection(data):
     return banners
 
 
-def save_database():
+def save_database(): 
     global visit_db, banner_db, html_db
     if visit_db is not None:
         visit_db.to_csv(data_dir + '/visits.csv', index=False)
@@ -693,11 +694,11 @@ def save_database():
         html_db.to_csv(data_dir + '/htmls.csv', index=False)
 
         init_str = "(saving) visits_db id is: {},\n db is: {}".format(id(visit_db), visit_db)
-        with open(data_dir + "/sites.txt", 'a+') as f:
-            print(init_str, file=f)
+        # with open(data_dir + "/sites.txt", 'a+') as f:
+        print(init_str)
 
 # 1 TODO: remove this later
-def set_mode(file_name, var, run_mode=0):
+def set_mode(file_name, run_mode=0):
     global season_dir, custom_dir, time_dir, time_or_custom, data_dir, nobanner_sc_dir, sc_file_name, log_file, banners_log_file
     if run_mode:
         DETECT_MODE = run_mode  # fixed = 1, z-index = 2, custom set = 0
@@ -705,9 +706,9 @@ def set_mode(file_name, var, run_mode=0):
             custom_dir = "fixed"
         elif run_mode == 2:
             custom_dir = "zindex"
-        time_or_custom = custom_dir
-    else: # TODO: import datetime
-        time_or_custom = datetime.now().date().__str__() + datetime.now().strftime(" %H-%M-%S").__str__() + "--" + file_name + "-" + var
+        # time_or_custom = custom_dir
+    # else: # TODO: import datetime
+    #     time_or_custom = datetime.now().date().__str__() + datetime.now().strftime(" %H-%M-%S").__str__() + "--" + file_name + "-" + var
 
     data_dir = season_dir + time_or_custom
     nobanner_sc_dir = "nobanner/"
@@ -730,54 +731,57 @@ def run_all(dmns=None):   # this function is used for run the banner detection m
         close_driver()
 
 # 11
-def run_all_for_domain(DMN, URL):
+def run_all_for_domain(DMN, URL, driver_):
+    global driver
+    driver = driver_
     global counter
-    try:
-        class Data:
-            url = URL
-            domain = DMN
-            banners = []
-            banners_data = []
-            CMP = {}
-            index = None
-            ttw = 0   # time to wait (to show the banner)
-            status = None
-            btn_status = None
-            openwpm = False
-            btn_status = {"btn_status": None, "btn_set_status": None}
-            nc_cmp_name = None
-            interact_time = None
-            start_time = datetime.now()
-            finish_time = 0
+    # try:
+    class Data:
+        url = URL
+        domain = DMN
+        banners = []
+        banners_data = []
+        CMP = {}
+        index = None
+        ttw = 0   # time to wait (to show the banner)
+        status = None
+        btn_status = None
+        openwpm = False
+        btn_status = {"btn_status": None, "btn_set_status": None}
+        nc_cmp_name = None
+        interact_time = None
+        start_time = datetime.now()
+        finish_time = 0
 
-        Data.index = visit_db.shape[0]
-        if BANNERCLICK:
-            banners = run_banner_detection(Data)
-            Data.banners = banners
-            Data.banners_data = extract_banners_data(banners)
-        if CMPDETECTION:
-            Data.CMP = cd.run_cmp_detection()
-        if BANNERINTERACTION:
-            interact_with_banners(Data, CHOICE)
-        set_data_in_db(Data)
-        halt_for_sleep(Data)
+    Data.index = visit_db.shape[0]
+    if BANNERCLICK:
+        banners = run_banner_detection(Data)
+        print(banners)
+        Data.banners = banners
+        Data.banners_data = extract_banners_data(banners)
+    # if CMPDETECTION:
+    #     Data.CMP = cd.run_cmp_detection()
+    if BANNERINTERACTION:
+        interact_with_banners(Data, CHOICE)
+    # set_data_in_db(Data)
+    halt_for_sleep(Data)
 
-    except MemoryError as ex:
-        visit_db.loc[visit_db.index[-1], 'status'] = -1
-        with open(log_file, 'a+') as f:
-            print('Memory Error happened for: ' + DMN + "  " + ex.__str__(),
-                  file=f)
-    except InvalidSessionIdException as ex:
-        visit_db.loc[visit_db.index[-1], 'status'] = -1
-        with open(log_file, 'a+') as f:
-            print('InvalidSessionIdException happened for: ' + DMN + "  " + ex.__str__(),
-                  file=f)
-        raise
-    except Exception as ex:
-        visit_db.loc[visit_db.index[-1], 'status'] = -1
-        with open(log_file, 'a+') as f:
-            print('Exception happened for: ' + DMN + "  " + ex.__str__(),
-                  file=f)
+    # except MemoryError as ex:
+    #     visit_db.loc[visit_db.index[-1], 'status'] = -1
+    #     with open(log_file, 'a+') as f:
+    #         print('Memory Error happened for: ' + DMN + "  " + ex.__str__(),
+    #               file=f)
+    # except InvalidSessionIdException as ex:
+    #     visit_db.loc[visit_db.index[-1], 'status'] = -1
+    #     with open(log_file, 'a+') as f:
+    #         print('InvalidSessionIdException happened for: ' + DMN + "  " + ex.__str__(),
+    #               file=f)
+    #     raise
+    # except Exception as ex:
+    #     # visit_db.loc[visit_db.index[-1], 'status'] = -1
+    #     # with open(log_file, 'a+') as f:
+    #     print('Exception happened for: ' + DMN + "  " + ex.__str__())
+        #           file=f)
     # finally:
     #     if not (counter % 100):
     #         print(str(counter) + ' websites have been crawled successfully! The last one was: ', domain)
@@ -792,14 +796,13 @@ def close_driver():
 # start
 if __name__ == '__main__':          # this function is used for run the banner detection module only (Not through OpenWPM)
     
-    files = ["detectedBanner.txt"] # FIXME: sites/detectedBanner.txt
+    file = "inputs/sites/detectedBanner.txt"
 
     try:
-        for f in files:
-            set_mode(f, variable, 0)
-            init(f)
-            cd.init(driver, get_database()[0])
-            run_all()
+        # set_mode(file, 0)
+        init(file)
+        # cd.init(driver, get_database()[0])            
+        run_all()
     except:
         if driver:
             close_driver()
