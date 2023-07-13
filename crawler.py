@@ -28,6 +28,12 @@ class CrawlType(Enum):
     LOG_INTERCEPT = "intercept"  # Screenshot only necessary
 
 
+class BannerType(Enum):
+    ACCEPT_ONLY = 0
+    ACCEPT_REJECT = 1
+    ACCEPT_SETTINGS = 2
+
+
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
