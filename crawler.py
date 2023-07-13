@@ -214,8 +214,8 @@ class Crawler:
                 continue
 
             # Save a screenshot of the viewport  # TODO: save full page screenshot
-            # if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
-            #     self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
+            if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
 
             # Save HAR file
             if self.save_har and crawl_type != CrawlType.FIRST_RUN:
