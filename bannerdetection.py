@@ -1,4 +1,3 @@
-# TODO: add utilityMethods.py to directory
 
 import argparse
 import random
@@ -116,7 +115,7 @@ def set_data_dir_name(dir_name):
 
 # 2
 def init(headless=HEADLESS, input_file=None, num_browsers=NUM_BROWSERS, num_repetitions=1, domains_file=None, web_driver=None, v_db=None,
-         b_db=None, h_db=None):  # initialize bannerdetection by setting url file and webdriver instance
+    b_db=None, h_db=None):  # initialize bannerdetection by setting url file and webdriver instance
     global domains, driver, file, input_files_dir
     url_dir = "." + input_files_dir
     if web_driver is None:
@@ -136,34 +135,6 @@ def init(headless=HEADLESS, input_file=None, num_browsers=NUM_BROWSERS, num_repe
     # set_database(v_db, b_db, h_db)
     if input_file:
         file = input_file
-    init_str = f"""Crawl initialized for: {file} in {datetime.now().strftime("%H-%M-%S").__str__()}
-    START_POINT:STEP_SIZE: {START_POINT}:{STEP_SIZE}
-    headless: {headless}
-    input_file: {input_file}
-    num_browsers: {num_browsers}
-    num_repetitions: {num_repetitions}
-    timeout: {TIME_OUT}
-    translation: {TRANSLATION}
-    delay_time: {SLEEP_TIME}
-    ATTEMPTS:ATTEMPT_STEP: {ATTEMPTS}:{ATTEMPT_STEP}
-    Chrome: {CHROME}
-    openwpm.xpi: {XPI}
-    Watchdog: {WATCHDOG}
-    interaction choice: {"ALL"}
-    non explicit: {NON_EXPLICIT}
-    SIMPLE_DETECTION: {SIMPLE_DETECTION}
-    search for reject btn in setting: {REJ_IN_SET}
-    NC_ADDON: {NC_ADDON}
-    mobile agent: {MOBILE_AGENT}
-    CMP detection: {CMPDETECTION}
-    banner interaction: {BANNERINTERACTION} \n\n""" + "__"*30 + "\n"
-    print(init_str)
-
-    try:
-        with open(log_file, 'a+') as f:
-            print(init_str, file=f)
-    except:
-        pass
 
 # 9
 def get_domains():
@@ -182,7 +153,7 @@ def create_data_dirs():
         os.makedirs(nobanner_sc_dir)
 
 # 6
-def file_to_list(path):
+def file_to_list(path): # for getting a list of domains
     file = set_urls_file(path)
     global domains
     while True:
@@ -276,7 +247,7 @@ def open_domain_page(domain, sleep=TEST_MODE_SLEEP):
     this_url = url
     return url
 
-# 14 (recursive)
+# 14
 def find_cookie_banners(translate=False, stale_flag=False):
     global driver, this_lang
     try:
@@ -328,14 +299,7 @@ def detect_banners(data):  # return banners of the current running url
         this_url = data.url
         this_domain = data.domain
         this_lang = None
-        start_time = datetime.now()
         banners = find_cookie_banners()
-        finish_time = datetime.now()
-        completion_time = finish_time - start_time
-        # with open(banners_log_file, 'a+') as f:
-        #     init_str = this_domain + " banner detection finished within: " + str(
-        #         completion_time.microseconds)
-        #     print(init_str, file=f)
 
         this_lang = page_lang(driver)
         if ATTEMPTS and not banners:
@@ -713,14 +677,11 @@ def interact_with_banners(data, choice):  # choices: 1.accept 2.reject
         data.interact_time = time.time() * 1000
 
 # 12
-def run_banner_detection(data, sc=SCREENSHOT):
+def run_banner_detection(data):
     global num_banners, driver, this_start_time
     data.domain = get_current_domain(driver, data.url)
     banners = detect_banners(data)
     num_banners = len(banners)
-    if sc:
-        take_current_page_sc(data)
-        take_banners_sc(banners, data)
     return banners
 
 
@@ -735,9 +696,9 @@ def save_database():
         with open(data_dir + "/sites.txt", 'a+') as f:
             print(init_str, file=f)
 
-# 1
+# 1 TODO: remove this later
 def set_mode(file_name, var, run_mode=0):
-    global season_dir, custom_dir, time_dir, time_or_custom, data_dir, sc_dir, nobanner_sc_dir, sc_file_name, log_file, banners_log_file
+    global season_dir, custom_dir, time_dir, time_or_custom, data_dir, nobanner_sc_dir, sc_file_name, log_file, banners_log_file
     if run_mode:
         DETECT_MODE = run_mode  # fixed = 1, z-index = 2, custom set = 0
         if run_mode == 1:
@@ -749,8 +710,7 @@ def set_mode(file_name, var, run_mode=0):
         time_or_custom = datetime.now().date().__str__() + datetime.now().strftime(" %H-%M-%S").__str__() + "--" + file_name + "-" + var
 
     data_dir = season_dir + time_or_custom
-    sc_dir = data_dir + "/screenshots/"
-    nobanner_sc_dir = sc_dir + "nobanner/"
+    nobanner_sc_dir = "nobanner/"
     sc_file_name = ""
     log_file = data_dir + '/logs.txt'
     banners_log_file = data_dir + '/banners_log.txt'
@@ -831,20 +791,9 @@ def close_driver():
 
 # start
 if __name__ == '__main__':          # this function is used for run the banner detection module only (Not through OpenWPM)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", nargs='+',
-                        help="list of file paths contains URLs that will be run sequentially (attached to the name of data folder)")
-    parser.add_argument("-v", "--variable", help="variable of run (attached to the name of data folder)")
-    parser.add_argument('--headless', action='store_true', help="start on headless mode")
-    args = parser.parse_args()
-    files = args.file
-    variable = args.variable
-    HEADLESS = args.headless
+    
+    files = ["detectedBanner.txt"] # FIXME: sites/detectedBanner.txt
 
-    if not files:
-        files = [urls_file, "AlexaTop1kGlobal.txt", "addon_urls.txt"] # FIXME: change to detectedbanner.txt
-        files = [urls_file]
-        variable = 'test'
     try:
         for f in files:
             set_mode(f, variable, 0)
