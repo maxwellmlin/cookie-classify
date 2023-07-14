@@ -22,28 +22,11 @@ import utils
 from url import URL
 
 
-class CrawlType(Enum):
-    FIRST_RUN = "first_run"  # Gather cookies
-    LOG_NORMAL = "normal"  # Screenshot all cookies
-    LOG_INTERCEPT = "intercept"  # Screenshot only necessary
-
-
-class BannerType(Enum):
-    ACCEPT_ONLY = 0
-    ACCEPT_REJECT = 1
-    ACCEPT_SETTINGS = 2
-
-
-class Data:
-    url = ""
-    ttw = 0
-    sql_addr = None
-    status = None
-    index = None
-    banners = []
-    banners_data = []
-    CMP = {}
-    openwpm = True
+class InteractionType(Enum):
+    # Enum values correspond to BannerClick's `CHOICE` variable
+    NO_ACTION = 0
+    ACCEPT = 1
+    REJECT = 2
 
 
 class Crawler:
@@ -107,16 +90,36 @@ class Crawler:
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
-        # Initial crawl to collect all site cookies
-        self.crawl_inner_pages(url_after_redirect, CrawlType.FIRST_RUN, depth)
+        # Normal crawl
+        self.crawl_inner_pages(
+            url_after_redirect,
+            crawl_name="normal",
+            depth=depth,
+        )
 
-        # Screenshot with all cookies
-        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_NORMAL, depth)
+        # Click reject crawl
+        blacklist = tuple([
+            # CookieClass.STRICTLY_NECESSARY,
+            # CookieClass.PERFORMANCE,
+            # CookieClass.FUNCTIONALITY,
+            # CookieClass.TARGETING,
+            # CookieClass.UNCLASSIFIED
+        ])
+        self.crawl_inner_pages(
+            url_after_redirect,
+            crawl_name="click_reject",
+            depth=depth,
+            interaction_type=InteractionType.REJECT,
+            cookie_blacklist=blacklist
+        )
 
-        # Screenshot with intercept
-        self.crawl_inner_pages(url_after_redirect, CrawlType.LOG_INTERCEPT, depth)
-
-    def crawl_inner_pages(self, start_node: str, crawl_type: CrawlType, depth: int = 2):
+    def crawl_inner_pages(
+            self,
+            start_node: str,
+            crawl_name: str = "",
+            depth: int = 2,
+            interaction_type: InteractionType = InteractionType.NO_ACTION,
+            cookie_blacklist: tuple[CookieClass] = ()):
         """
         Crawl inner pages of website with a given depth.
 
@@ -126,14 +129,19 @@ class Crawler:
 
         Args:
             start_node: URL where traversal will begin. Future crawls will be constrained to this domain.
-            crawl_type: Affects intercept and screenshot behavior: TODO: expand
+            crawl_name: Name of the crawl, used for path names. Defaults to "", where no data is saved.
             depth: Number of layers of the DFS. Defaults to 2.
+            interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
+            cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
         """
 
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        print(f"Starting '{crawl_type.name}'.")
+        if crawl_name:
+            print(f"Starting '{crawl_name}'.")
+        else:
+            print("Starting crawl without saving data.")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
@@ -177,18 +185,10 @@ class Crawler:
                 )
                 referer_interceptor(request)  # Intercept referer to previous page
 
-                if crawl_type == CrawlType.LOG_INTERCEPT:
-                    blacklist = tuple([
-                        CookieClass.STRICTLY_NECESSARY,
-                        # CookieClass.PERFORMANCE,
-                        # CookieClass.FUNCTIONALITY,
-                        # CookieClass.TARGETING,
-                        # CookieClass.UNCLASSIFIED
-                    ])
-
+                if cookie_blacklist:
                     remove_cookie_class_interceptor = functools.partial(
                         interceptors.remove_cookie_class_interceptor,
-                        blacklist=blacklist,
+                        blacklist=cookie_blacklist,
                         data_path=uid_data_path
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
@@ -232,12 +232,17 @@ class Crawler:
                 continue
 
             # Save a screenshot of the viewport  # TODO: save full page screenshot
-            if crawl_type in (CrawlType.LOG_NORMAL, CrawlType.LOG_INTERCEPT):
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_type.value}.png")
+            if crawl_name:
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
+
+            if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
+                if interaction_type.val:
+                    bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.val)
+                    self.save_viewport_screenshot(uid_data_path + "after_click.png")
 
             # Save HAR file
-            if self.save_har and crawl_type != CrawlType.FIRST_RUN:
-                self.save_har_to_disk(uid_data_path + f"{crawl_type.value}.json")
+            if self.save_har and crawl_name:
+                self.save_har_to_disk(uid_data_path + f"{crawl_name}.json")
 
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:
@@ -275,24 +280,6 @@ class Crawler:
         # Save the screenshot to a file
         with open(file_path, "wb") as file:
             file.write(screenshot)
-
-    def bannerclick(self, domain, url):
-        global driver  # :(
-        driver = self.driver
-        # banners = bc.run_banner_detection(Data)
-        # print(banners)
-        # Data.banners = banners
-        # Data.banners_data = bc.extract_banners_data(banners)
-        # bc.interact_with_banners(Data, 1)  # choice 1. accept 2. reject
-        # cd.set_webdriver(webdriver)
-        # Data.CMP = cd.run_cmp_detection()
-        # Data.sql_addr = manager_params.storage_controller_address
-        # bc.set_data_in_db_error(Data)
-
-        # TODO: do we need this?
-        # bc.halt_for_sleep(Data)
-        self.driver.get(url)
-        bc.run_all_for_domain(domain, url, self.driver)
 
     def save_har_to_disk(self, file_path: str) -> None:
         """

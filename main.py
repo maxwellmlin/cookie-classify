@@ -23,12 +23,11 @@ for site_url in sites:
     # Reinstantiate crawler to clear cookies
     crawler = Crawler(data_path, save_har=True)
 
-    # Crawl website
-    # crawler.crawl(site_url, depth=0)
-
+    # TODO: this is a temp fix for detectedBanner.txt
     site_url = f"https://{site_url}"
-    domain = utils.get_domain(site_url)
-    crawler.bannerclick(domain, site_url)
+
+    # Crawl website
+    crawler.crawl(site_url, depth=0)
 
     # Safely close crawler
     crawler.quit()

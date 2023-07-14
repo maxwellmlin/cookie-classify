@@ -407,7 +407,7 @@ def interact_with_banner(banner_item, choice, status, i, total_search=False):
         if type(banner_item) is tuple:
             driver.switch_to.default_content()
         if flag:
-            take_current_page_sc(suffix=suffix(choice) + "_after" + str(i+1))
+            # take_current_page_sc(suffix=suffix(choice) + "_after" + str(i+1))
             if choice == 1 or choice == 2:
                 status['btn_status'] = choice * explicit_coeff
             elif choice == 3:
@@ -697,7 +697,7 @@ def save_database():
         # with open(data_dir + "/sites.txt", 'a+') as f:
         print(init_str)
 
-# 1 TODO: remove this later
+# 1
 def set_mode(file_name, run_mode=0):
     global season_dir, custom_dir, time_dir, time_or_custom, data_dir, nobanner_sc_dir, sc_file_name, log_file, banners_log_file
     if run_mode:
@@ -731,7 +731,9 @@ def run_all(dmns=None):   # this function is used for run the banner detection m
         close_driver()
 
 # 11
-def run_all_for_domain(DMN, URL, driver_):
+def run_all_for_domain(DMN, URL, driver_, choice):
+    global CHOICE
+    CHOICE = choice
     global driver
     driver = driver_
     global counter
@@ -756,9 +758,9 @@ def run_all_for_domain(DMN, URL, driver_):
     Data.index = visit_db.shape[0]
     if BANNERCLICK:
         banners = run_banner_detection(Data)
-        print(banners)
         Data.banners = banners
         Data.banners_data = extract_banners_data(banners)
+        
     # if CMPDETECTION:
     #     Data.CMP = cd.run_cmp_detection()
     if BANNERINTERACTION:
@@ -794,7 +796,7 @@ def close_driver():
     reset()
 
 # start
-if __name__ == '__main__':          # this function is used for run the banner detection module only (Not through OpenWPM)
+if __name__ == '__main__':          # this function is used to run the banner detection module only (Not through OpenWPM)
     
     file = "inputs/sites/detectedBanner.txt"
 
