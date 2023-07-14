@@ -30,7 +30,7 @@ def detect_tracking(blocklist, url_list):
 def get_urls_from_har(file: str) -> list[str]:
     """
     Returns a list of cookies from an HAR file.
-    [HAR Specificication](http://www.softwareishard.com/blog/har-12-spec/).
+    [HAR Specification](http://www.softwareishard.com/blog/har-12-spec/).
 
     Args:
         file: Path to the HAR file.
@@ -129,14 +129,13 @@ for site in domain_paths:
 
             if not normal_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-            
-            writer.writerow([inner_site_path, len(detected_list_normal)])
+                writer.writerow([inner_site_path, len(detected_list_normal)])
 
         # Repeat for files generated after run with intercept.
-        intercept_har_path = f"{inner_site_path}/intercept.json"
+        intercept_har_path = f"{inner_site_path}/after_reject.json"
         detected_list_intercept = analyze_har(intercept_har_path)
 
-        intercept_file = "analysis/trackers_in_intercept.csv"
+        intercept_file = "analysis/trackers_after_reject.csv"
         intercept_file_exists = os.path.isfile(intercept_file)
 
         with open(intercept_file, mode="a", newline="") as file:
@@ -144,8 +143,7 @@ for site in domain_paths:
 
             if not intercept_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-                
-            writer.writerow([inner_site_path, len(detected_list_intercept)])
+                writer.writerow([inner_site_path, len(detected_list_intercept)])
 
         if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
             # Requires both normal and intercept HAR files to exist
