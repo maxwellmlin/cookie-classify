@@ -1,4 +1,5 @@
 import functools
+import inspect
 from collections import deque
 from enum import Enum
 from pathlib import Path
@@ -87,19 +88,33 @@ class Crawler:
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
-        # Normal crawl
+        # Collect cookies
+        self.crawl_inner_pages(
+            url_after_redirect,
+            crawl_name="",
+            depth=depth,
+        )
+
+        # Log
         self.crawl_inner_pages(
             url_after_redirect,
             crawl_name="normal",
             depth=depth,
         )
 
-        # Click reject crawl
+        # Click reject
         self.crawl_inner_pages(
             url_after_redirect,
-            crawl_name="click_reject",
-            depth=depth,
+            crawl_name="",
+            depth=0,
             interaction_type=InteractionType.REJECT,
+        )
+
+        # Log
+        self.crawl_inner_pages(
+            url_after_redirect,
+            crawl_name="after_reject",
+            depth=depth,
         )
 
         # blacklist = tuple([
