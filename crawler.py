@@ -98,20 +98,20 @@ class Crawler:
         )
 
         # Click reject crawl
-        blacklist = tuple([
-            # CookieClass.STRICTLY_NECESSARY,
-            # CookieClass.PERFORMANCE,
-            # CookieClass.FUNCTIONALITY,
-            # CookieClass.TARGETING,
-            # CookieClass.UNCLASSIFIED
-        ])
         self.crawl_inner_pages(
             url_after_redirect,
             crawl_name="click_reject",
             depth=depth,
             interaction_type=InteractionType.REJECT,
-            cookie_blacklist=blacklist
         )
+
+        # blacklist = tuple([
+        #     CookieClass.STRICTLY_NECESSARY,
+        #     CookieClass.PERFORMANCE,
+        #     CookieClass.FUNCTIONALITY,
+        #     CookieClass.TARGETING,
+        #     CookieClass.UNCLASSIFIED
+        # ])
 
     def crawl_inner_pages(
             self,
@@ -236,8 +236,8 @@ class Crawler:
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
 
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
-                if interaction_type.val:
-                    bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.val)
+                if interaction_type.value:
+                    bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
                     self.save_viewport_screenshot(uid_data_path + "after_click.png")
 
             # Save HAR file
