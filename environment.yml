@@ -17,5 +17,4 @@ dependencies:
     - types-requests
     - beautifulsoup4
     - pandas
-    # - pyopenssl==22.0.0
-    # - cryptography==38.0.4
+    - validators
