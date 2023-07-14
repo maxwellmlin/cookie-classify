@@ -25,7 +25,7 @@ for site_url in sites:
 
     # Crawl website
     # crawler.crawl(site_url, depth=0)
-    
+
     site_url = f"https://{site_url}"
     domain = utils.get_domain(site_url)
     crawler.bannerclick(domain, site_url)

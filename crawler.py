@@ -7,14 +7,12 @@ import os
 import time
 import shutil
 import json
-import bannerdetection as bc
+import bannerclick.bannerdetection as bc
 
 import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 from cookie_database import CookieClass
@@ -277,27 +275,6 @@ class Crawler:
         with open(file_path, "wb") as file:
             file.write(screenshot)
 
-    def click_accept(self) -> None:
-        """
-        Click the OneTrust accept button to accept all JavaScript cookies.
-
-        BUG: The driver does not always find the accept button.
-        """
-        accept_ID = "onetrust-accept-btn-handler"
-        wait_time = 10  # seconds
-
-        try:
-            element = WebDriverWait(self.driver, wait_time).until(EC.presence_of_element_located((By.ID, accept_ID)))
-            element.click()
-
-            success = True
-        except TimeoutException:
-            success = False
-
-        msg = "Accept button clicked" if success else f"Accept button not found after {wait_time} seconds"
-        with open(self.data_path + "logs.txt", "a") as file:
-            file.write(f"{msg}\n\n")
-            
     def bannerclick(self, domain, url):
         global driver  # :(
         driver = self.driver
@@ -310,7 +287,7 @@ class Crawler:
         # Data.CMP = cd.run_cmp_detection()
         # Data.sql_addr = manager_params.storage_controller_address
         # bc.set_data_in_db_error(Data)
-        
+
         # TODO: do we need this?
         # bc.halt_for_sleep(Data)
         self.driver.get(url)

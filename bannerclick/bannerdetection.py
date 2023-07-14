@@ -11,7 +11,7 @@ try:
     # from . import cmpdetection as cd
 except ImportError as E:
     # print("run the module as a script")
-    from utility.utilityMethods import *
+    from .utility.utilityMethods import *
     from config import *
     # import cmpdetection as cd
 
