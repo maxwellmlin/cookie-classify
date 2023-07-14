@@ -21,7 +21,7 @@ for site_url in sites:
         os.mkdir(data_path)
 
     # Reinstantiate crawler to clear cookies
-    crawler = Crawler(data_path, save_har=True)
+    crawler = Crawler(data_path)
 
     # TODO: this is a temp fix for detectedBanner.txt
     site_url = f"https://{site_url}"

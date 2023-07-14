@@ -32,20 +32,17 @@ class InteractionType(Enum):
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self, data_path: str, save_har: bool = False) -> None:
+    def __init__(self, data_path: str) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
-            save_har: Whether to save HAR data. Defaults to False.
         """
         options = FirefoxOptions()
         options.add_argument("--headless")  # TODO: native does not work
 
-        seleniumwire_options = {}
-        if save_har:
-            seleniumwire_options['enable_har'] = True
-
-        self.save_har = save_har
+        seleniumwire_options = {
+            'enable_har': True,
+        }
 
         self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
 
@@ -119,7 +116,7 @@ class Crawler:
             crawl_name: str = "",
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
-            cookie_blacklist: tuple[CookieClass] = ()):
+            cookie_blacklist: tuple[CookieClass, ...] = ()):
         """
         Crawl inner pages of website with a given depth.
 
@@ -241,8 +238,8 @@ class Crawler:
                     self.save_viewport_screenshot(uid_data_path + "after_click.png")
 
             # Save HAR file
-            if self.save_har and crawl_name:
-                self.save_har_to_disk(uid_data_path + f"{crawl_name}.json")
+            if crawl_name:
+                self.save_har(uid_data_path + f"{crawl_name}.json")
 
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:
@@ -281,7 +278,7 @@ class Crawler:
         with open(file_path, "wb") as file:
             file.write(screenshot)
 
-    def save_har_to_disk(self, file_path: str) -> None:
+    def save_har(self, file_path: str) -> None:
         """
         Save current HAR file to `file_path`.
 

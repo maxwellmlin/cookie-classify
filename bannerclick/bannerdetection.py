@@ -400,7 +400,8 @@ def interact_with_banner(banner_item, choice, status, i, total_search=False):
                     flag = interact_with_banner(el, choice, status, i, total_search=True)  # this total_search causes click on wrong reject btns like: statista.com, politico.com, sap.com
             set_flag = False
             if NC_ADDON and not flag:
-                set_flag = interact_with_cmp_banner(el)
+                pass
+                # set_flag = interact_with_cmp_banner(el)  # never-consent
             if set_flag:
                 addon_detection = True
 
@@ -414,7 +415,7 @@ def interact_with_banner(banner_item, choice, status, i, total_search=False):
                 status['btn_set_status'] = choice * explicit_coeff
         if addon_detection:
             status['btn_set_status'] = 1
-            take_current_page_sc(suffix="_Xnc_after" + str(i + 1))
+            # take_current_page_sc(suffix="_Xnc_after" + str(i + 1))
     except Exception as ex:
         # with open(log_file, 'a+') as f:
         print("failed in interact with banner for : " + this_url + "  " + ex.__str__())
@@ -591,7 +592,8 @@ def take_banners_sc(banners, data):
                 # with open(log_file, 'a+') as f:
                 print("failed to continue in taking banner sc for domain: " + this_url + " " + ex.__str__())
     elif NOBANNER_SC:
-        take_current_page_sc(data, nobanner_sc_dir)
+        pass
+        # take_current_page_sc(data, nobanner_sc_dir)
 
 # 17
 def extract_banners_data(banners):
