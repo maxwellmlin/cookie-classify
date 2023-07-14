@@ -6,14 +6,15 @@ from typing import Optional
 import os
 import time
 import shutil
+import validators
 import json
+
 import bannerclick.bannerdetection as bc
 
 import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
 
 from cookie_database import CookieClass
 import interceptors
@@ -145,7 +146,7 @@ class Crawler:
         while urls_to_visit:
             current_url, current_depth = urls_to_visit.pop()  # DFS
 
-            # Create uid for current url if it does not exist
+            # Create uid for `current_url` if it does not exist
             if current_url not in self.uids:
                 self.uids[current_url] = self.next_uid
                 Path(self.data_path + f"{self.next_uid}/").mkdir(parents=True, exist_ok=True)
@@ -205,8 +206,8 @@ class Crawler:
                     self.driver.get(current_url.url)
                     break  # If successful, break out of the loop
 
-                except TimeoutException:
-                    print(f"TimeoutException on attempt {attempt}/{self.total_get_attempts} for '{current_url.url}'.")
+                except Exception as e:
+                    print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
                 print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping...")
                 continue
@@ -248,7 +249,7 @@ class Crawler:
 
             # Visit neighbors
             for neighbor in hrefs:
-                if neighbor is None or utils.get_domain(neighbor) != domain:
+                if neighbor is None or utils.get_domain(neighbor) != domain or not validators.url(neighbor):
                     # NOTE: Potential for false negatives if the href domain
                     # is not the same as the current domain but redirects to the current domain.
                     # However, this is unlikely to occur in practice and
