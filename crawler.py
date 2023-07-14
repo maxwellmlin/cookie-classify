@@ -1,5 +1,4 @@
 import functools
-import inspect
 from collections import deque
 from enum import Enum
 from pathlib import Path
@@ -278,7 +277,7 @@ class Crawler:
 
             # Visit neighbors
             for neighbor in hrefs:
-                if neighbor is None or utils.get_domain(neighbor) != domain or not validators.url(neighbor):
+                if neighbor is None or utils.get_domain(neighbor) != domain or not validators.url(neighbor):  # type: ignore
                     # NOTE: Potential for false negatives if the href domain
                     # is not the same as the current domain but redirects to the current domain.
                     # However, this is unlikely to occur in practice and
