@@ -456,7 +456,8 @@ def click_on_btns(btns: list[WebElement], file_name, sc):
     for j, btn in enumerate(btns):
         btn_png_file = file_name + ".png"
         if sc:
-            btn.screenshot(btn_png_file)
+            pass
+            # btn.screenshot(btn_png_file)
         flag = click_and_check(btn, file_name)
         if flag:
             break

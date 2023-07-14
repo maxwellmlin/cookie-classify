@@ -163,10 +163,7 @@ class Crawler:
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        if crawl_name:
-            print(f"Starting '{crawl_name}'.")
-        else:
-            print("Starting crawl without saving data.")
+        print(f"Starting traversal with arguments: '{locals()}'.")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
@@ -198,7 +195,7 @@ class Crawler:
             print(msg)
             if not os.path.isfile(self.data_path + f"{uid}/logs.txt"):
                 with open(self.data_path + f"{uid}/logs.txt", "a") as file:
-                    file.write(msg + "\n\n")
+                    file.write(msg + "\n")
 
             # Define request interceptor
             def interceptor(request: seleniumwire.request.Request):
@@ -264,7 +261,7 @@ class Crawler:
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
                 if interaction_type.value:
                     bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    self.save_viewport_screenshot(uid_data_path + "after_click.png")
+                    # self.save_viewport_screenshot(uid_data_path + "after_click.png")  # TODO: remove later
 
             # Save HAR file
             if crawl_name:
