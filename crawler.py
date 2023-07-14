@@ -77,13 +77,14 @@ class Crawler:
         attempt = 0
         for attempt in range(self.total_get_attempts):
             try:
-                self.driver.get(url)
+                temp_driver.get(url)
                 break  # If successful, break out of the loop
 
             except Exception as e:
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
             print(f"{self.total_get_attempts} attempts failed for {url}. Skipping entire website...")
+            temp_driver.quit()
             return
 
         time.sleep(self.time_to_wait)
