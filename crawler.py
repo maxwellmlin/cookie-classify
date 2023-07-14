@@ -72,7 +72,20 @@ class Crawler:
         options = FirefoxOptions()
         options.add_argument("--headless")
         temp_driver = webdriver.Firefox(options=options)
-        temp_driver.get(url)
+
+        # Visit the current URL with multiple attempts
+        attempt = 0
+        for attempt in range(self.total_get_attempts):
+            try:
+                self.driver.get(url)
+                break  # If successful, break out of the loop
+
+            except Exception as e:
+                print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
+        if attempt == self.total_get_attempts - 1:
+            print(f"{self.total_get_attempts} attempts failed for {url}. Skipping entire website...")
+            return
+
         time.sleep(self.time_to_wait)
 
         domain = utils.get_domain(url)
@@ -175,7 +188,7 @@ class Crawler:
 
             # Lookup uid
             uid = self.uids[current_url]
-            if uid == -1:  # Indicates a duplicate URL that was discovered after redirection
+            if uid == -1:  # Indicates a duplicate URL that was discovered after redirection or a website that is down
                 continue
 
             uid_data_path = self.data_path + f"{uid}/"
@@ -219,9 +232,10 @@ class Crawler:
                     break  # If successful, break out of the loop
 
                 except Exception as e:
-                    print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for '{current_url.url}'.")
+                    print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
-                print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping...")
+                print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page...")
+                self.uids[current_url] = -1  # Website appears to be down, skip in future runs
                 continue
 
             # Wait for redirects and dynamic content
