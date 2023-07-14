@@ -1,0 +1,98 @@
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 1/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 2/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 3/3 for 'https://www.teads.com/'.
+3 attempts failed for https://www.teads.com/. Skipping...
+Starting crawl without saving data.
+Visiting 'https://www.teads.com/' (UID: 0) at depth 0.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 1/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 2/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 3/3 for 'https://www.teads.com/'.
+3 attempts failed for https://www.teads.com/. Skipping...
+Starting 'after_reject'.
+Visiting 'https://www.teads.com/' (UID: 0) at depth 0.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 1/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 2/3 for 'https://www.teads.com/'.
+'Message: Reached error page: about:neterror?e=nssFailure2&u=https%3A//www.teads.com/&c=UTF-8&d=The%20connection%20to%20www.teads.com%20was%20interrupted%20while%20the%20page%20was%20loading.
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:183:5
+UnknownError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:541:5
+checkReadyState@chrome://remote/content/marionette/navigate.sys.mjs:61:24
+onNavigation@chrome://remote/content/marionette/navigate.sys.mjs:329:39
+emit@resource://gre/modules/EventEmitter.sys.mjs:154:20
+receiveMessage@chrome://remote/content/marionette/actors/MarionetteEventsParent.sys.mjs:35:25
+' on attempt 3/3 for 'https://www.teads.com/'.
+3 attempts failed for https://www.teads.com/. Skipping...
+Killed
