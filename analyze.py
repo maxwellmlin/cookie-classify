@@ -129,7 +129,8 @@ for site in domain_paths:
 
             if not normal_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-                writer.writerow([inner_site_path, len(detected_list_normal)])
+                
+            writer.writerow([inner_site_path, len(detected_list_normal)])
 
         # Repeat for files generated after run with intercept.
         intercept_har_path = f"{inner_site_path}/after_reject.json"
@@ -143,7 +144,8 @@ for site in domain_paths:
 
             if not intercept_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-                writer.writerow([inner_site_path, len(detected_list_intercept)])
+                
+            writer.writerow([inner_site_path, len(detected_list_intercept)])
 
         if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
             # Requires both normal and intercept HAR files to exist
