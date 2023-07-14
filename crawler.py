@@ -193,8 +193,8 @@ class Crawler:
             # Log site visit
             msg = f"Visiting '{current_url.url}' (UID: {uid}) at depth {current_depth}."
             print(msg)
-            if not os.path.isfile(self.data_path + f"{uid}/logs.txt"):
-                with open(self.data_path + f"{uid}/logs.txt", "a") as file:
+            if not os.path.isfile(uid_data_path + "logs.txt"):
+                with open(uid_data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
             # Define request interceptor
@@ -260,8 +260,10 @@ class Crawler:
 
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
                 if interaction_type.value:
-                    bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    # self.save_viewport_screenshot(uid_data_path + "after_click.png")  # TODO: remove later
+                    status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                    if status is None:
+                        with open(uid_data_path + "logs.txt", "a") as file:
+                            file.write("Click failed?" + "\n")
 
             # Save HAR file
             if crawl_name:

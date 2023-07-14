@@ -769,6 +769,8 @@ def run_all_for_domain(DMN, URL, driver_, choice):
         interact_with_banners(Data, CHOICE)
     # set_data_in_db(Data)
     halt_for_sleep(Data)
+    
+    return Data.btn_status['btn_status']
 
     # except MemoryError as ex:
     #     visit_db.loc[visit_db.index[-1], 'status'] = -1
