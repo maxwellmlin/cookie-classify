@@ -18,12 +18,25 @@ Activate the environment with:
 conda activate cookie-classify
 ```
 
+---
+
+To uninstall, run:
+```bash
+./uninstall.sh
+```
+
 ## Usage
 
-To crawl the list of sites in `/inputs/sites/sites.txt`, run:
+To crawl the list of sites in `inputs/sites/sites.txt`, run:
 
 ```bash
 python3 main.py
 ```
 
-View logs and screenshots in the `/crawls` folder.
+Logs and screenshots are saved in the `crawls` folder.
+
+To analyze `crawls`, run
+
+```bash
+python3 analyze.py
+```
