@@ -140,13 +140,18 @@ class Crawler:
         #     CookieClass.UNCLASSIFIED
         # ])
 
+        self.driver.quit()
+
+        with open("crawls/success.txt", "a") as file:
+            file.write(f"{domain}\n")
+
     def crawl_inner_pages(
             self,
             start_node: str,
             crawl_name: str = "",
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
-            cookie_blacklist: tuple[CookieClass, ...] = ()):
+            cookie_blacklist: tuple[CookieClass, ...] = ()) -> Optional[bool]:
         """
         Crawl inner pages of website with a given depth.
 
@@ -160,6 +165,10 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
+
+        Returns:
+            If interaction_type is not InteractionType.NO_ACTION, returns True if the button was found and clicked, False otherwise.
+            Else, returns None.
         """
 
         if depth < 0:
@@ -327,7 +336,3 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
-
-    def quit(self) -> None:
-        """Safely end the web driver."""
-        self.driver.quit()

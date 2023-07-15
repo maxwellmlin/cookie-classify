@@ -3,6 +3,8 @@ import os
 from crawler import Crawler
 import utils
 
+import multiprocessing as mp
+
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 
 if not os.path.exists("crawls"):
@@ -26,8 +28,8 @@ for site_url in sites:
     # TODO: this is a temp fix for detectedBanner.txt
     site_url = f"https://{site_url}"
 
-    # Crawl website
-    crawler.crawl(site_url, depth=0)
-
-    # Safely close crawler
-    crawler.quit()
+    # Start crawler
+    # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
+    process = mp.Process(target=crawler.crawl, args=(site_url, 0))
+    process.start()
+    process.join()
