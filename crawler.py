@@ -32,10 +32,12 @@ class InteractionType(Enum):
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self, data_path: str) -> None:
+    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
+            time_to_wait: Time to wait after visiting a page. Defaults to 5 seconds.
+            total_get_attempts: Number of attempts to get a website. Defaults to 3.
         """
         options = FirefoxOptions()
         options.add_argument("--headless")  # TODO: native does not work
@@ -46,8 +48,8 @@ class Crawler:
 
         self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
 
-        self.time_to_wait = 5  # seconds
-        self.total_get_attempts = 3
+        self.time_to_wait = time_to_wait
+        self.total_get_attempts = total_get_attempts
 
         self.data_path = data_path
 
@@ -233,6 +235,7 @@ class Crawler:
             if attempt == self.total_get_attempts - 1:
                 print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page...")
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
+                del self.driver.request_interceptor
                 continue
 
             # Wait for redirects and dynamic content
@@ -290,6 +293,8 @@ class Crawler:
                 if neighbor not in previous:
                     previous[neighbor] = current_url.url
                     urls_to_visit.append((neighbor, current_depth + 1))
+
+            del self.driver.request_interceptor
 
     def save_viewport_screenshot(self, file_path: str):
         """
