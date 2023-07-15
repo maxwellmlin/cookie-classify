@@ -261,9 +261,8 @@ class Crawler:
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
                 if interaction_type.value:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    if status is None:
-                        with open(uid_data_path + "logs.txt", "a") as file:
-                            file.write(f"btn_status={status}" + "\n")
+                    with open(uid_data_path + "logs.txt", "a") as file:
+                        file.write(f"btn_status={status}" + "\n")
 
             # Save HAR file
             if crawl_name:
