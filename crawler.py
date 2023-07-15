@@ -263,7 +263,7 @@ class Crawler:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
                     if status is None:
                         with open(uid_data_path + "logs.txt", "a") as file:
-                            file.write("Click failed?" + "\n")
+                            file.write(f"btn_status={status}" + "\n")
 
             # Save HAR file
             if crawl_name:
