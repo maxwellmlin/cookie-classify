@@ -84,7 +84,7 @@ class Crawler:
             except Exception as e:
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
-            msg = f"{self.total_get_attempts} attempts failed for {url}. Skipping entire website..."
+            msg = f"{self.total_get_attempts} attempts failed for {url}. Skipping..."
             print(msg)
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(msg + "\n")
@@ -238,8 +238,8 @@ class Crawler:
             if attempt == self.total_get_attempts - 1:
                 msg = f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page..."
                 print(msg)
-                with open(uid_data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+
+                shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
                 del self.driver.request_interceptor
                 continue
