@@ -84,7 +84,10 @@ class Crawler:
             except Exception as e:
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
-            print(f"{self.total_get_attempts} attempts failed for {url}. Skipping entire website...")
+            msg = f"{self.total_get_attempts} attempts failed for {url}. Skipping entire website..."
+            print(msg)
+            with open(self.data_path + "logs.txt", "a") as file:
+                file.write(msg + "\n")
             temp_driver.quit()
             return
 
@@ -140,16 +143,13 @@ class Crawler:
         #     CookieClass.UNCLASSIFIED
         # ])
 
-        with open("crawls/success.txt", "a") as file:
-            file.write(f"{domain}\n")
-
     def crawl_inner_pages(
             self,
             start_node: str,
             crawl_name: str = "",
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
-            cookie_blacklist: tuple[CookieClass, ...] = ()) -> Optional[bool]:
+            cookie_blacklist: tuple[CookieClass, ...] = ()):
         """
         Crawl inner pages of website with a given depth.
 
@@ -163,10 +163,6 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
-
-        Returns:
-            If interaction_type is not InteractionType.NO_ACTION, returns True if the button was found and clicked, False otherwise.
-            Else, returns None.
         """
 
         if depth < 0:
@@ -240,7 +236,10 @@ class Crawler:
                 except Exception as e:
                     print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
-                print(f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page...")
+                msg = f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page..."
+                print(msg)
+                with open(uid_data_path + "logs.txt", "a") as file:
+                    file.write(msg + "\n")
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
                 del self.driver.request_interceptor
                 continue
@@ -273,6 +272,10 @@ class Crawler:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
                     with open(uid_data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
+
+                    if status:
+                        with open("crawls/success.txt", "a") as file:
+                            file.write(f"{domain}\n")
 
             # Save HAR file
             if crawl_name:
