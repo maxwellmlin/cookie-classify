@@ -52,6 +52,8 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.data_path = data_path
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
