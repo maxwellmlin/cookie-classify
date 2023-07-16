@@ -275,7 +275,7 @@ class Crawler:
 
                     if status:
                         with open("crawls/success.txt", "a") as file:
-                            file.write(f"{domain}\n")
+                            file.write(f"{self.data_path}\n")
 
             # Save HAR file
             if crawl_name:
