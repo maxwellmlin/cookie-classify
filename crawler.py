@@ -103,10 +103,10 @@ class Crawler:
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
+                file.write(f"NOTE: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
         if url_after_redirect != url:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
+                file.write(f"NOTE: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Collect cookies
         self.crawl_inner_pages(
