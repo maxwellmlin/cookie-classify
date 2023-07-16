@@ -140,8 +140,6 @@ class Crawler:
         #     CookieClass.UNCLASSIFIED
         # ])
 
-        self.driver.quit()
-
         with open("crawls/success.txt", "a") as file:
             file.write(f"{domain}\n")
 
@@ -336,3 +334,7 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
+
+    def quit(self) -> None:
+        """Safely end the web driver."""
+        self.driver.quit()

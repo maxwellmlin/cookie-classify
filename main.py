@@ -5,6 +5,13 @@ import utils
 
 import multiprocessing as mp
 
+
+def worker(data_path, site_url, depth):
+    crawler = Crawler(data_path)
+    crawler.crawl(site_url, depth)
+    crawler.quit()
+
+
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 
 if not os.path.exists("crawls"):
@@ -22,14 +29,10 @@ for site_url in sites:
     if not os.path.exists(data_path):
         os.mkdir(data_path)
 
-    # Reinstantiate crawler to clear cookies
-    crawler = Crawler(data_path)
-
     # TODO: this is a temp fix for detectedBanner.txt
     site_url = f"https://{site_url}"
 
-    # Start crawler
     # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
-    process = mp.Process(target=crawler.crawl, args=(site_url, 0))
+    process = mp.Process(target=worker, args=(data_path, site_url, 0))
     process.start()
     process.join()
