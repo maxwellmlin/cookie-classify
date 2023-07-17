@@ -111,9 +111,16 @@ def analyze_har(har_path: str):
     detected_list = detect_tracking(trackings_sites, urls)
     return detected_list
 
+success_file_path = "inputs/sites/success.txt"
+with open(success_file_path, "r") as success_file:
+    success_lines = success_file.readlines()
 
 domain_paths = get_directories("crawls/")
 for site in domain_paths:
+    # Skip if site is not in success.txt
+    if not any(site in line for line in success_lines):
+        continue
+
     inner_site_paths = get_directories(site)
 
     for inner_site_path in inner_site_paths:
