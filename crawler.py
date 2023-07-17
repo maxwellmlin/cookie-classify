@@ -29,6 +29,10 @@ class InteractionType(Enum):
     REJECT = 2
 
 
+class BannerClickStatus(Enum):
+    FAIL = 0
+
+
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
@@ -123,12 +127,22 @@ class Crawler:
         )
 
         # Click reject
-        self.crawl_inner_pages(
+        bc_status = self.crawl_inner_pages(
             url_after_redirect,
             crawl_name="",
             depth=0,
             interaction_type=InteractionType.REJECT,
         )
+
+        if bc_status == BannerClickStatus.FAIL:
+            # Delete all data
+            for uid in self.uids.values():
+                if uid == -1:
+                    continue
+
+                shutil.rmtree(self.data_path + f"{uid}/")
+
+            return
 
         # Log
         self.crawl_inner_pages(
@@ -151,7 +165,7 @@ class Crawler:
             crawl_name: str = "",
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
-            cookie_blacklist: tuple[CookieClass, ...] = ()):
+            cookie_blacklist: tuple[CookieClass, ...] = ()) -> Optional[BannerClickStatus]:
         """
         Crawl inner pages of website with a given depth.
 
@@ -165,6 +179,9 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
+
+        Returns:
+            BannerClickStatus.FAIL if the accept/reject button was not clicked successfully.
         """
 
         if depth < 0:
@@ -275,9 +292,10 @@ class Crawler:
                     with open(uid_data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
 
-                    if status:
-                        with open("crawls/success.txt", "a") as file:
-                            file.write(f"{self.data_path}\n")
+                    if not status:
+                        with open(self.data_path + "logs.txt", "a") as file:
+                            file.write("WARNING: BannerClick failed to click accept/reject button.\n")
+                            return BannerClickStatus.FAIL
 
             # Save HAR file
             if crawl_name:

@@ -12,7 +12,7 @@ def worker(data_path, site_url, depth):
     crawler.quit()
 
 
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
 
 if not os.path.exists("crawls"):
     os.mkdir("crawls")
@@ -23,14 +23,17 @@ with open(SITE_LIST_PATH) as file:
     for line in file:
         sites.append(line.strip())
 
-for site_url in sites:
-    # TODO: this is a temp fix for detectedBanner.txt
-    site_url = f"https://{site_url}"
+with mp.Pool(processes=mp.cpu_count() * 4) as pool:
+    processes = []
 
-    # Create data folder
-    data_path = f"crawls/{utils.get_domain(site_url)}/"
+    for site_url in sites:
+        # TODO: this is a temp fix for detectedBanner.txt
+        site_url = f"https://{site_url}"
 
-    # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
-    process = mp.Process(target=worker, args=(data_path, site_url, 0))
-    process.start()
-    process.join()
+        # Create data folder
+        data_path = f"crawls/{utils.get_domain(site_url)}/"
+
+        args = (data_path, site_url, 0)
+        processes.append(args)
+
+    pool.starmap(worker, processes)
