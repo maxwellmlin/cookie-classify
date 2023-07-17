@@ -123,7 +123,7 @@ for site in domain_paths:
         if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
             # Requires both normal and intercept HAR files to exist
             continue
-        
+
         detected_list_normal = analyze_har(normal_har_path)
 
         # Create file if it doesn't exist; if it exists then write a row for each inner site path with a count of the number of trackers.
@@ -135,7 +135,7 @@ for site in domain_paths:
 
             if not normal_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-                
+
             writer.writerow([inner_site_path, len(detected_list_normal)])
             file1.flush()
 
@@ -150,8 +150,6 @@ for site in domain_paths:
 
             if not intercept_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
-                
+
             writer.writerow([inner_site_path, len(detected_list_intercept)])
             file2.flush()
-
-
