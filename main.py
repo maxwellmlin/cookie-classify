@@ -23,7 +23,7 @@ with open(SITE_LIST_PATH) as file:
     for line in file:
         sites.append(line.strip())
 
-with mp.Pool(processes=mp.cpu_count() * 2) as pool:
+with mp.Pool(processes=mp.cpu_count()) as pool:
     processes = []
 
     for site_url in sites:
@@ -33,7 +33,7 @@ with mp.Pool(processes=mp.cpu_count() * 2) as pool:
         # Create data folder
         data_path = f"crawls/{utils.get_domain(site_url)}/"
 
-        args = (data_path, site_url, 0)
+        args = (data_path, site_url, 2)
         processes.append(args)
 
     pool.starmap(worker, processes)
