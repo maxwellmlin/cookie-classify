@@ -5,30 +5,41 @@ def compare_trackers():
     no_trackers_after_reject = []  # List of inner site paths with trackers in normal crawl, but no trackers after rejection
     increased_trackers = []  # List of inner site paths with more trackers after rejection than in normal crawl
     never_trackers = []  # List of inner site paths with no trackers in either normal or rejection crawl
-    violating_sites = []  # List of inner site paths with trackers in rejection
+    violating_sites = []  # List of inner site paths with trackers after we click the reject button
 
     with open('analysis/trackers_after_reject.csv', 'r') as reject_file, open('analysis/trackers_in_normal.csv', 'r') as normal_file:
         read_reject = csv.reader(reject_file)
         read_normal = csv.reader(normal_file)
+
+        # Skip header
         next(read_reject)
         next(read_normal)
 
-        for row in read_normal:
-            inner_site_path, length_detected_list = row
-            length_detected_list_reject = get_length_detected_list(read_reject, inner_site_path)
+        # Since both csvs are sorted by inner site path, we can just iterate through both at the same time
+        for normal, after_reject in zip(read_normal, read_reject):
+            inner_site_path, num_trackers_normal = normal
+            _, num_trackers_reject = after_reject
+
+            if inner_site_path != _:
+                raise RuntimeError("Inner site paths do not match")
+
+            num_trackers_normal = int(num_trackers_normal)
+            num_trackers_reject = int(num_trackers_reject)
+
+            # length_detected_list_reject = get_length_detected_list(read_reject, inner_site_path)
 
             site_url = inner_site_path.replace('crawls/', '').replace('/0', '')
 
-            if int(length_detected_list) > 0 and length_detected_list_reject == '0':  # if there are trackers in normal crawl, but not after reject
+            if num_trackers_normal > 0 and num_trackers_reject == 0:  # if there are trackers in normal crawl, but not after reject
                 no_trackers_after_reject.append(site_url)
 
-            if int(length_detected_list) < int(length_detected_list_reject):  # if there are more trackers after reject than in normal crawl
+            if num_trackers_normal < num_trackers_reject:  # if there are more trackers after reject than in normal crawl
                 increased_trackers.append(site_url)
 
-            if int(length_detected_list) == 0 and length_detected_list_reject == '0':  # if there are no trackers in either normal or reject
+            if num_trackers_normal == 0 and num_trackers_reject == 0:  # if there are no trackers in either normal or reject
                 never_trackers.append(site_url)
 
-            if length_detected_list_reject != '0':  # if there are trackers in reject
+            if num_trackers_reject != 0:  # if there are trackers in reject
                 violating_sites.append(site_url)
 
     print("List of sites with no trackers after rejection:", len(no_trackers_after_reject), no_trackers_after_reject)
