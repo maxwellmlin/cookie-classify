@@ -118,35 +118,40 @@ for site in domain_paths:
 
     for inner_site_path in inner_site_paths:
         normal_har_path = f"{inner_site_path}/normal.json"
+        intercept_har_path = f"{inner_site_path}/after_reject.json"
+
+        if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
+            # Requires both normal and intercept HAR files to exist
+            continue
+        
         detected_list_normal = analyze_har(normal_har_path)
 
         # Create file if it doesn't exist; if it exists then write a row for each inner site path with a count of the number of trackers.
         normal_file = "analysis/trackers_in_normal.csv"
         normal_file_exists = os.path.isfile(normal_file)
 
-        with open(normal_file, mode="a", newline="") as file:
-            writer = csv.writer(file)
+        with open(normal_file, mode="a", newline="") as file1:
+            writer = csv.writer(file1)
 
             if not normal_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
                 
             writer.writerow([inner_site_path, len(detected_list_normal)])
+            file1.flush()
 
         # Repeat for files generated after run with intercept.
-        intercept_har_path = f"{inner_site_path}/after_reject.json"
         detected_list_intercept = analyze_har(intercept_har_path)
 
         intercept_file = "analysis/trackers_after_reject.csv"
         intercept_file_exists = os.path.isfile(intercept_file)
 
-        with open(intercept_file, mode="a", newline="") as file:
-            writer = csv.writer(file)
+        with open(intercept_file, mode="a", newline="") as file2:
+            writer = csv.writer(file2)
 
             if not intercept_file_exists:
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
                 
             writer.writerow([inner_site_path, len(detected_list_intercept)])
+            file2.flush()
 
-        if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
-            # Requires both normal and intercept HAR files to exist
-            continue
+
