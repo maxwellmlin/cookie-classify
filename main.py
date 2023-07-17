@@ -23,7 +23,7 @@ with open(SITE_LIST_PATH) as file:
     for line in file:
         sites.append(line.strip())
 
-with mp.Pool(processes=mp.cpu_count() * 4) as pool:
+with mp.Pool(processes=mp.cpu_count() * 2) as pool:
     processes = []
 
     for site_url in sites:
