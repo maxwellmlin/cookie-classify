@@ -52,6 +52,8 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.data_path = data_path
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
@@ -101,10 +103,10 @@ class Crawler:
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
+                file.write(f"NOTE: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
         if url_after_redirect != url:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"WARNING: URL changed from '{url}' to '{url_after_redirect}'.\n")
+                file.write(f"NOTE: URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Collect cookies
         self.crawl_inner_pages(
@@ -275,7 +277,7 @@ class Crawler:
 
                     if status:
                         with open("crawls/success.txt", "a") as file:
-                            file.write(f"{domain}\n")
+                            file.write(f"{self.data_path}\n")
 
             # Save HAR file
             if crawl_name:
