@@ -273,7 +273,7 @@ class Crawler:
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
             if after_redirect in redirects:
-                msg = f"Duplicate site '{after_redirect.url}' (UID: {uid}). Skipping."
+                msg = f"Duplicate site '{current_url.url}' (UID: {uid}). Skipping."
                 print(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -286,7 +286,13 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                print("Redirect to different domain. Skipping.")
+                msg = f"Domain name changed '{current_url.url}' (UID: {uid}). Skipping."
+                print(msg)
+                with open(self.data_path + "logs.txt", "a") as file:
+                    file.write(msg + "\n")
+
+                shutil.rmtree(uid_data_path)
+                self.uids[current_url] = -1
                 continue
 
             # Save a screenshot of the viewport  # TODO: save full page screenshot
