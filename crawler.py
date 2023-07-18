@@ -104,15 +104,15 @@ class Crawler:
         temp_driver.quit()
         if not status:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write("WARNING: BannerClick failed to click accept/reject button.\n")
+                file.write("BannerClick failed to click accept/reject button.\n")
             return
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"NOTE: Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
+                file.write(f"Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
         if url_after_redirect != url:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"NOTE: URL changed from '{url}' to '{url_after_redirect}'.\n")
+                file.write(f"URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Collect cookies
         self.crawl_inner_pages(
@@ -296,12 +296,12 @@ class Crawler:
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
                 if interaction_type.value:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    with open(uid_data_path + "logs.txt", "a") as file:
+                    with open(self.data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
 
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
-                            file.write("WARNING: BannerClick failed to click accept/reject button.\n")
+                            file.write("BannerClick failed to click accept/reject button.\n")
                             return BannerClickStatus.FAIL
 
             # Save HAR file
