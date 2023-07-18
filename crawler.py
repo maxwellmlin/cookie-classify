@@ -64,11 +64,7 @@ class Crawler:
 
     def crawl(self, url: str, depth: int = 2) -> None:
         """
-        Crawl website.
-
-        Get a website and click the accept button to obtain all cookies.
-        Then, refresh to load the website with all cookies.
-        Finally, refresh with an interceptor to remove cookies.
+        Crawl website with repeated calls to `crawl_inner_pages`.
 
         Args:
             url: URL of the website to crawl.
@@ -169,7 +165,7 @@ class Crawler:
         """
         Crawl inner pages of website with a given depth.
 
-        Screenshot folder structure: domain/uid/name.png
+        Screenshot folder structure: domain/uid/crawl_name.png
         The domain is the domain of the url (before any redirect)
         to ensure consistency with the site list.
 
