@@ -286,7 +286,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                print("Redirect to different domain. Skipping...")
+                print("Redirect to different domain. Skipping.")
                 continue
 
             # Save a screenshot of the viewport  # TODO: save full page screenshot
