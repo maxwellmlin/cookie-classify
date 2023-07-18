@@ -90,7 +90,7 @@ class Crawler:
             except Exception as e:
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
-            msg = f"{self.total_get_attempts} attempts failed for {url}. Skipping..."
+            msg = f"{self.total_get_attempts} attempts failed for '{url}'. Skipping."
             print(msg)
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(msg + "\n")
