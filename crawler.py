@@ -100,7 +100,7 @@ class Crawler:
         domain_after_redirect = utils.get_domain(url_after_redirect)
 
         # NOTE: THIS WILL REMOVE ALL SITES THAT BANNERCLICK CANNOT REJECT
-        status = bc.run_all_for_domain(domain, url_after_redirect, temp_driver, InteractionType.REJECT)
+        status = bc.run_all_for_domain(domain_after_redirect, url_after_redirect, temp_driver, InteractionType.REJECT.value)
         temp_driver.quit()
         if not status:
             with open(self.data_path + "logs.txt", "a") as file:
