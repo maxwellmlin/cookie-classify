@@ -255,8 +255,10 @@ class Crawler:
                 except Exception as e:
                     print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
-                msg = f"{self.total_get_attempts} attempts failed for {current_url.url}. Skipping inner page..."
+                msg = f"{self.total_get_attempts} attempts failed for '{current_url.url}' (UID: {uid}). Skipping."
                 print(msg)
+                with open(self.data_path + "logs.txt", "a") as file:
+                    file.write(msg + "\n")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
@@ -269,7 +271,10 @@ class Crawler:
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
             if after_redirect in redirects:
-                print("Redirect to duplicate site. Skipping...")
+                msg = f"Duplicate site '{after_redirect.url}' (UID: {uid}). Skipping."
+                print(msg)
+                with open(self.data_path + "logs.txt", "a") as file:
+                    file.write(msg + "\n")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Mark as duplicate
