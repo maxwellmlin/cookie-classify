@@ -12,7 +12,7 @@ def worker(data_path, site_url, depth):
     crawler.quit()
 
 
-SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
+SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 
 if not os.path.exists("crawls/depth1"):
     os.mkdir("crawls/depth1")
