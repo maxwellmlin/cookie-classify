@@ -15,6 +15,8 @@ def compare_trackers():
         next(read_reject)
         next(read_normal)
 
+        length = 0
+
         # Since both csvs are sorted by inner site path, we can just iterate through both at the same time
         for normal, after_reject in zip(read_normal, read_reject):
             inner_site_path, num_trackers_normal = normal
@@ -41,11 +43,14 @@ def compare_trackers():
 
             if num_trackers_reject != 0:  # if there are trackers in reject
                 violating_sites.append(site_url)
+            
+            length += 1
 
-    print("List of sites with no trackers after rejection:", len(no_trackers_after_reject), no_trackers_after_reject)
-    print("List of sites with increased trackers after rejection:", len(increased_trackers), increased_trackers)
-    print("List of sites that never contained trackers:", len(never_trackers), never_trackers)
-    print("List of sites that violated GDPR:", len(violating_sites), violating_sites)
+    print("Total sites:", length)
+    print("List of sites with no trackers after rejection:", len(no_trackers_after_reject))
+    print("List of sites with increased trackers after rejection:", len(increased_trackers))
+    print("List of sites that never contained trackers:", len(never_trackers))
+    print("List of sites that violated GDPR:", len(violating_sites))
 
 
 def get_length_detected_list(csv_reader, inner_site_path):
