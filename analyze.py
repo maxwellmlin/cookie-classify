@@ -118,8 +118,8 @@ with open(success_file_path, "r") as success_file:
 domain_paths = get_directories("crawls/depth1/")
 for site in domain_paths:
     # Skip if site is not in success.txt
-    if not any(site in line for line in success_lines):
-        continue
+    # if not any(site in line for line in success_lines):
+    #     continue
 
     inner_site_paths = get_directories(site)
 
