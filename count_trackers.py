@@ -7,7 +7,7 @@ def compare_trackers():
     never_trackers = []  # List of inner site paths with no trackers in either normal or rejection crawl
     violating_sites = []  # List of inner site paths with trackers after we click the reject button
 
-    with open('analysis/trackers_after_reject.csv', 'r') as reject_file, open('analysis/trackers_in_normal.csv', 'r') as normal_file:
+    with open('analysis/depth1_trackers_after_reject.csv', 'r') as reject_file, open('analysis/depth1_trackers_in_normal.csv', 'r') as normal_file:
         read_reject = csv.reader(reject_file)
         read_normal = csv.reader(normal_file)
 
