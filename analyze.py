@@ -116,12 +116,15 @@ with open(success_file_path, "r") as success_file:
     success_lines = success_file.readlines()
 
 domain_paths = get_directories("crawls/depth1/")
+incomplete_runs = 0
+total_runs = 0
 for site in domain_paths:
     # Skip if site is not in success.txt
     # if not any(site in line for line in success_lines):
     #     continue
 
     inner_site_paths = get_directories(site)
+    total_runs += len(inner_site_paths)
 
     for inner_site_path in inner_site_paths:
         normal_har_path = f"{inner_site_path}/normal.json"
@@ -129,6 +132,7 @@ for site in domain_paths:
 
         if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
             # Requires both normal and intercept HAR files to exist
+            incomplete_runs += 1
             continue
 
         detected_list_normal = analyze_har(normal_har_path)
@@ -160,3 +164,6 @@ for site in domain_paths:
 
             writer.writerow([inner_site_path, len(detected_list_intercept)])
             file2.flush()
+
+print("Total runs:", total_runs)
+print("Incomplete runs:", incomplete_runs)

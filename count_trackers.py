@@ -43,7 +43,7 @@ def compare_trackers():
 
             if num_trackers_reject != 0:  # if there are trackers in reject
                 violating_sites.append(site_url)
-            
+
             length += 1
 
     print("Total sites:", length)
