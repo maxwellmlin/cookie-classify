@@ -115,7 +115,7 @@ success_file_path = "inputs/sites/success.txt"
 with open(success_file_path, "r") as success_file:
     success_lines = success_file.readlines()
 
-domain_paths = get_directories("crawls/")
+domain_paths = get_directories("crawls/depth1/")
 for site in domain_paths:
     # Skip if site is not in success.txt
     if not any(site in line for line in success_lines):
@@ -134,7 +134,7 @@ for site in domain_paths:
         detected_list_normal = analyze_har(normal_har_path)
 
         # Create file if it doesn't exist; if it exists then write a row for each inner site path with a count of the number of trackers.
-        normal_file = "analysis/trackers_in_normal.csv"
+        normal_file = "analysis/depth1_trackers_in_normal.csv"
         normal_file_exists = os.path.isfile(normal_file)
 
         with open(normal_file, mode="a", newline="") as file1:
@@ -149,7 +149,7 @@ for site in domain_paths:
         # Repeat for files generated after run with intercept.
         detected_list_intercept = analyze_har(intercept_har_path)
 
-        intercept_file = "analysis/trackers_after_reject.csv"
+        intercept_file = "analysis/depth1_trackers_after_reject.csv"
         intercept_file_exists = os.path.isfile(intercept_file)
 
         with open(intercept_file, mode="a", newline="") as file2:
