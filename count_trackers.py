@@ -47,10 +47,10 @@ def compare_trackers():
             length += 1
 
     print("Complete runs:", length)
-    print("Sites that removed all trackers after rejection:", len(no_trackers_after_reject))
-    print("Sites with increased trackers after rejection:", len(increased_trackers))
-    print("Sites that never contained trackers:", len(never_trackers))
-    print("Sites that sent cookies to 3rd party trackers after rejection:", len(violating_sites))
+    print("Inner pages that removed all trackers after rejection:", len(no_trackers_after_reject))
+    print("Inner pages with increased trackers after rejection:", len(increased_trackers))
+    print("Inner pages that never contained trackers:", len(never_trackers))
+    print("Inner pages that sent cookies to 3rd party trackers after rejection:", len(violating_sites))
 
 
 def get_length_detected_list(csv_reader, inner_site_path):
