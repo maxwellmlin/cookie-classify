@@ -51,6 +51,7 @@ class Crawler:
         }
 
         self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
+        self.driver.set_page_load_timeout(30)
 
         self.time_to_wait = time_to_wait
         self.total_get_attempts = total_get_attempts
@@ -75,6 +76,7 @@ class Crawler:
         options = FirefoxOptions()
         options.add_argument("--headless")
         temp_driver = webdriver.Firefox(options=options)
+        temp_driver.set_page_load_timeout(30)
 
         # Visit the current URL with multiple attempts
         attempt = 0
