@@ -46,7 +46,7 @@ def compare_trackers():
 
             length += 1
 
-    print("Total sites:", length)
+    print("Complete runs:", length)
     print("List of sites with no trackers after rejection:", len(no_trackers_after_reject))
     print("List of sites with increased trackers after rejection:", len(increased_trackers))
     print("List of sites that never contained trackers:", len(never_trackers))
