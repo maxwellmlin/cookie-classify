@@ -10,8 +10,7 @@ class URL(object):
 
         parts = urlparse(url)
 
-        # NOTE: We assume the same webpage is served regardless of
-        # scheme, params, and fragment
+        # NOTE: Only compare hostname and path
         self.parts_to_compare = parts._replace(
             scheme="",
             netloc=parts.hostname,  # removes port, username, and password
