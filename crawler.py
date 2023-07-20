@@ -20,7 +20,6 @@ from cookie_database import CookieClass
 import interceptors
 import utils
 from url import URL
-from urllib.parse import urlparse, urlunparse
 
 
 class InteractionType(Enum):
@@ -187,21 +186,17 @@ class Crawler:
             BannerClickStatus.FAIL if the accept/reject button was not clicked successfully.
         """
 
-        # Remove query string from URL before traversing
-        parsed_url = urlparse(start_node)
-        url_no_query = urlunparse(parsed_url._replace(query=""))
-
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
         print(f"Starting traversal with arguments: '{locals()}'.")
 
         # Start with the landing page
-        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(url_no_query), 0)])  # (url, depth)
-        previous: dict[URL, Optional[str]] = {URL(url_no_query): None}  # map url to previous url
+        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
+        previous: dict[URL, Optional[str]] = {URL(start_node): None}  # map url to previous url
         redirects: set[URL] = set()  # set of URLs after redirect(s)
 
-        domain = utils.get_domain(url_no_query)
+        domain = utils.get_domain(start_node)
 
         # Graph search loop
         while urls_to_visit:

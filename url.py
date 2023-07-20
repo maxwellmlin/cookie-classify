@@ -17,7 +17,7 @@ class URL(object):
             netloc=parts.hostname,  # removes port, username, and password
             path=unquote_plus(parts.path),  # replaces %xx escapes and plus signs
             params="",
-            query=frozenset(parse_qsl(parts.query)),
+            query="",
             fragment=""
         )
 
