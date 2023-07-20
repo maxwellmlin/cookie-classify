@@ -165,5 +165,5 @@ for site in domain_paths:
             writer.writerow([inner_site_path, len(detected_list_intercept)])
             file2.flush()
 
-print("Total runs:", total_runs)
-print("Incomplete runs:", incomplete_runs)
+print("Total inner pages:", total_runs)
+print("Incomplete inner pages:", incomplete_runs)

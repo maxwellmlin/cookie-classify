@@ -46,7 +46,7 @@ def compare_trackers():
 
             length += 1
 
-    print("Complete runs:", length)
+    print("Complete inner pages:", length)
     print("Inner pages that removed all trackers after rejection:", len(no_trackers_after_reject))
     print("Inner pages with increased trackers after rejection:", len(increased_trackers))
     print("Inner pages that never contained trackers:", len(never_trackers))
