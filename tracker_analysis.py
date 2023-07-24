@@ -4,7 +4,7 @@ def analyze_csv(csv_data):
     domain_trackers = {}
     for line in csv_data:
         # Extract the domain name from the path
-        domain = line.split('/')[2]
+        domain = line.split('/')[1] # FIXME: change to 2 for depth1_noquery
         
         # Extract the number of trackers from the path
         trackers = int(line.split(',')[1])
@@ -22,21 +22,21 @@ def analyze_csv(csv_data):
 # FIXME: Write this into a Jupyter notebook when VM storage becomes available
 # for now just comment out each section to print results
 
-# depth1_noquery_normal = "analysis/depth1_noquery_trackers_in_normal.csv"
-# with open(depth1_noquery_normal, 'r') as file:
+# depth0_normal = "analysis/depth0_trackers_in_normal.csv"
+# with open(depth0_normal, 'r') as file:
 #     csv_data = file.readlines()
 
-# depth1_noquery_normal_analysis = analyze_csv(csv_data)
+# depth0_normal_analysis = analyze_csv(csv_data)
 
-# for domain, info in depth1_noquery_normal_analysis.items():
+# for domain, info in depth0_normal_analysis.items():
 #     print(f"Domain: {domain}, Number of Inner Pages: {info['num_inner_pages']}, Total Trackers: {info['total_trackers']}")
 
 
-depth1_noquery_reject = "analysis/depth1_noquery_after_reject.csv"
-with open(depth1_noquery_reject, 'r') as file:
+depth0_reject = "analysis/depth0_trackers_after_reject.csv"
+with open(depth0_reject, 'r') as file:
     csv_data = file.readlines()
 
-depth1_noquery_reject_analysis = analyze_csv(csv_data)
+depth0_reject_analysis = analyze_csv(csv_data)
 
-for domain, info in depth1_noquery_reject_analysis.items():
+for domain, info in depth0_reject_analysis.items():
     print(f"Domain: {domain}, Number of Inner Pages: {info['num_inner_pages']}, Total Trackers: {info['total_trackers']}")

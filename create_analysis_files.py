@@ -39,11 +39,11 @@ def get_urls_from_har(file: str) -> list[str]:
     """
 
     all_urls = []
-    data = json.load(open(file, "r"))
-    for entry in data["log"]["entries"]:
-        request = entry["request"]
+    data = json.load(open(file, "r")) # parses JSON data into Python dictionary
+    for entry in data["log"]["entries"]: # each entry is an HTTP request/response pair
+        request = entry["request"] # extract request dictionary
 
-        if (url := request.get("url")) and request.get("cookies"):
+        if (url := request.get("url")) and request.get("cookies"): # valid URL exists and request contains cookies
             all_urls.append(url)
 
     return all_urls
@@ -108,9 +108,10 @@ def analyze_har(har_path: str):
     Returns:
         A list of detected tracking cookies.
     """
-    urls = get_urls_from_har(har_path)
+    urls = get_urls_from_har(har_path) # get list of URLs
     detected_list = detect_tracking(trackings_sites, urls)
     return detected_list
+
 
 success_file_path = "inputs/sites/success.txt"
 with open(success_file_path, "r") as success_file:
@@ -118,20 +119,20 @@ with open(success_file_path, "r") as success_file:
 
 domain_paths = get_directories("crawls/depth1_noquery")
 incomplete_runs = 0
-total_runs = 0
+total_inner_pages = 0
 for site in domain_paths:
     # Skip if site is not in success.txt
     # if not any(site in line for line in success_lines):
     #     continue
 
     inner_site_paths = get_directories(site)
-    total_runs += len(inner_site_paths)
+    total_inner_pages += len(inner_site_paths)
 
     for inner_site_path in inner_site_paths:
         normal_har_path = f"{inner_site_path}/normal.json"
-        intercept_har_path = f"{inner_site_path}/after_reject.json"
+        reject_har_path = f"{inner_site_path}/after_reject.json"
 
-        if not os.path.isfile(normal_har_path) or not os.path.isfile(intercept_har_path):
+        if not os.path.isfile(normal_har_path) or not os.path.isfile(reject_har_path):
             # Requires both normal and intercept HAR files to exist
             incomplete_runs += 1
             continue
@@ -142,29 +143,38 @@ for site in domain_paths:
         normal_file = "analysis/depth1_noquery_trackers_in_normal.csv"
         normal_file_exists = os.path.isfile(normal_file)
 
-        with open(normal_file, mode="a", newline="") as file1:
-            writer = csv.writer(file1)
+        if normal_file_exists:
+            with open(normal_file, mode="a", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow([inner_site_path, len(detected_list_normal)])
+                file.flush() # bugfix where rows weren't writing: flush() clears internal buffer
 
-            if not normal_file_exists:
+        else:
+            with open(normal_file, mode="w", newline="") as file:
+                writer = csv.writer(file)
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
+                writer.writerow([inner_site_path, len(detected_list_normal)])
+                file.flush()
 
-            writer.writerow([inner_site_path, len(detected_list_normal)])
-            file1.flush()
 
         # Repeat for files generated after run with intercept.
-        detected_list_intercept = analyze_har(intercept_har_path)
+        detected_list_reject = analyze_har(reject_har_path)
 
-        intercept_file = "analysis/depth1_noquery_after_reject.csv"
-        intercept_file_exists = os.path.isfile(intercept_file)
+        reject_file = "analysis/depth1_noquery_after_reject.csv"
+        reject_file_exists = os.path.isfile(reject_file)
 
-        with open(intercept_file, mode="a", newline="") as file2:
-            writer = csv.writer(file2)
-
-            if not intercept_file_exists:
+        if reject_file_exists:
+            with open(reject_file, mode="a", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow([inner_site_path, len(detected_list_reject)])
+                file.flush()
+        else:
+            with open(reject_file, mode="w", newline="") as file:
+                writer = csv.writer(file)
                 writer.writerow(["Inner Site Path", "Length of Detected List"])
+                writer.writerow([inner_site_path, len(detected_list_reject)])
+                file.flush()
 
-            writer.writerow([inner_site_path, len(detected_list_intercept)])
-            file2.flush()
 
-print("Total inner pages:", total_runs)
+print("Total inner pages:", total_inner_pages)
 print("Incomplete inner pages:", incomplete_runs)
