@@ -20,6 +20,7 @@ from cookie_database import CookieClass
 import interceptors
 import utils
 from url import URL
+from data import Data
 
 
 class InteractionType(Enum):
@@ -63,7 +64,7 @@ class Crawler:
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
 
-    def crawl(self, url: str, depth: int = 2) -> None:
+    def crawl(self, url: str, depth: int = 2) -> Optional[Data]:
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
@@ -123,37 +124,40 @@ class Crawler:
             depth=depth,
         )
 
-        # Log
-        self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="normal",
-            depth=depth,
-        )
+        data = Data()
+        data.cmp_name = self.run_addon_js()
 
-        # Click reject
-        bc_status = self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="",
-            depth=0,
-            interaction_type=InteractionType.REJECT,
-        )
+        # # Log
+        # self.crawl_inner_pages(
+        #     url_after_redirect,
+        #     crawl_name="normal",
+        #     depth=depth,
+        # )
 
-        if bc_status == BannerClickStatus.FAIL:
-            # Delete all data
-            for uid in self.uids.values():
-                if uid == -1:
-                    continue
+        # # Click reject
+        # bc_status = self.crawl_inner_pages(
+        #     url_after_redirect,
+        #     crawl_name="",
+        #     depth=0,
+        #     interaction_type=InteractionType.REJECT,
+        # )
 
-                shutil.rmtree(self.data_path + f"{uid}/")
+        # if bc_status == BannerClickStatus.FAIL:
+        #     # Delete all data
+        #     for uid in self.uids.values():
+        #         if uid == -1:
+        #             continue
 
-            return
+        #         shutil.rmtree(self.data_path + f"{uid}/")
 
-        # Log
-        self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="after_reject",
-            depth=depth,
-        )
+        #     return
+
+        # # Log
+        # self.crawl_inner_pages(
+        #     url_after_redirect,
+        #     crawl_name="after_reject",
+        #     depth=depth,
+        # )
 
         # blacklist = tuple([
         #     CookieClass.STRICTLY_NECESSARY,
@@ -162,6 +166,8 @@ class Crawler:
         #     CookieClass.TARGETING,
         #     CookieClass.UNCLASSIFIED
         # ])
+
+        return data
 
     def crawl_inner_pages(
             self,
@@ -372,6 +378,14 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
+
+    def run_addon_js(self):
+        js = open("neverconsent/nc.js").read()
+        self.driver.execute_script(js)
+        time.sleep(self.time_to_wait)
+        ret = self.driver.execute_script('return localStorage["nc_cmp"];')
+
+        return ret
 
     def quit(self) -> None:
         """Safely end the web driver."""
