@@ -372,7 +372,7 @@ class Crawler:
 
         time.sleep(self.time_to_wait)
 
-        self.driver.execute_script('return localStorage["nc_cmpa"];')
+        return self.driver.execute_script('return localStorage["nc_cmp"];')
 
     def test_bannerclick(self, url: str, interaction_type: InteractionType) -> bool:
         """
