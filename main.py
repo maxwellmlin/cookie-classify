@@ -16,7 +16,7 @@ def worker(data_path: str, site_url: str, depth: int) -> CrawlData:
 
 
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_NAME = "cmp"
+CRAWL_NAME = "depth1_noquery"
 crawl_path = f"crawls/{CRAWL_NAME}/"
 
 if not os.path.exists(crawl_path):
@@ -36,7 +36,7 @@ for site_url in sites:
     # Create data folder
     data_path = f"{crawl_path}{utils.get_domain(site_url)}/"
 
-    input.append((data_path, site_url, 0))
+    input.append((data_path, site_url, 1))
 
     # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
     # process = mp.Process(target=worker, args=(data_path, site_url, 0))
