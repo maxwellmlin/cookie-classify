@@ -2,7 +2,7 @@ from urllib.parse import urlparse, unquote_plus
 import utils
 
 
-class URL(object):
+class URL():
     """A URL object that can be compared with other URL objects."""
 
     def __init__(self, url):

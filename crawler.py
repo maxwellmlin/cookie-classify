@@ -23,7 +23,11 @@ from url import URL
 
 
 class InteractionType(Enum):
-    # Enum values correspond to BannerClick's `CHOICE` variable
+    """
+    Type of interaction with cookie notice.
+
+    Enum values correspond to BannerClick's `CHOICE` variable
+    """
     NO_ACTION = 0
     ACCEPT = 1
     REJECT = 2
@@ -83,7 +87,6 @@ class Crawler:
             url: URL of the website to crawl.
             depth: Number of layers of the DFS. Defaults to 2.
         """
-
         data: CrawlData = {"data_path": self.data_path,
                            "cmp_name": None,
                            "click_success": None}
@@ -166,7 +169,6 @@ class Crawler:
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
             data: Where crawl data is saved. Defaults to None in which case no data is saved.
         """
-
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
@@ -234,7 +236,7 @@ class Crawler:
                     self.driver.get(current_url.url)
                     break  # If successful, break out of the loop
 
-                except Exception as e:
+                except Exception as e:  # skipcq: PYL-W0703
                     print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
                 msg = f"Skipping '{current_url.url}' (UID: {uid}). {self.total_get_attempts} attempts failed."
@@ -287,15 +289,14 @@ class Crawler:
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
 
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
-            if current_depth == 0:
-                if interaction_type.value:
-                    status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    if not status:
-                        with open(self.data_path + "logs.txt", "a") as file:
-                            file.write(f"BannerClick failed to {interaction_type.name}.\n")
+            if current_depth == 0 and interaction_type.value:
+                status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                if not status:
+                    with open(self.data_path + "logs.txt", "a") as file:
+                        file.write(f"BannerClick failed to {interaction_type.name}.\n")
 
-                    if data is not None:
-                        data["click_success"] = status is not None
+                if data is not None:
+                    data["click_success"] = status is not None
 
             # Save HAR file
             if crawl_name:
@@ -359,12 +360,19 @@ class Crawler:
             json.dump(data, file, indent=4)
 
     def get_cmp(self) -> Optional[str]:
-        js = open("neverconsent/nc.js").read()
+        """
+        Return the name of the CMP used on the current page.
+
+        Returns:
+            CMP name if found, otherwise None.
+        """
+        with open("neverconsent/nc.js", "r") as file:
+            js = file.read()
         self.driver.execute_script(js)
 
         time.sleep(self.time_to_wait)
 
-        return self.driver.execute_script('return localStorage["nc_cmp"];')
+        self.driver.execute_script('return localStorage["nc_cmpa"];')
 
     def test_bannerclick(self, url: str, interaction_type: InteractionType) -> bool:
         """
@@ -377,7 +385,6 @@ class Crawler:
         Returns:
             Whether the accept/reject button was clicked successfully.
         """
-
         options = FirefoxOptions()
 
         if self.headless:
@@ -393,7 +400,7 @@ class Crawler:
                 driver.get(url)
                 break  # If successful, break out of the loop
 
-            except Exception as e:
+            except Exception as e:  # skipcq: PYL-W0703
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
             msg = f"Skipping '{url}' (UID: 0). {self.total_get_attempts} attempts failed."

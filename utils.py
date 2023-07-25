@@ -35,5 +35,5 @@ def get_full_domain(url: str) -> str:
 
     if separated_url.subdomain == "":
         return get_domain(url)
-    else:
-        return f"{separated_url.subdomain}.{separated_url.domain}.{separated_url.suffix}"
+
+    return f"{separated_url.subdomain}.{separated_url.domain}.{separated_url.suffix}"
