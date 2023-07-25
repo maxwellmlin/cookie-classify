@@ -2,7 +2,7 @@ import functools
 from collections import deque
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypedDict
 import os
 import time
 import shutil
@@ -20,7 +20,6 @@ from cookie_database import CookieClass
 import interceptors
 import utils
 from url import URL
-from data import Data
 
 
 class InteractionType(Enum):
@@ -30,14 +29,21 @@ class InteractionType(Enum):
     REJECT = 2
 
 
-class BannerClickStatus(Enum):
-    FAIL = 0
+class CrawlData(TypedDict, total=False):
+    """
+    Class for storing data about a crawl
+    """
+
+    data_path: str
+    cmp_name: Optional[str]
+    landing_page_success: bool
+    click_success: bool
 
 
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3) -> None:
+    def __init__(self, data_path: str, time_to_wait: int = 3, total_get_attempts: int = 3) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
@@ -45,14 +51,14 @@ class Crawler:
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
         """
         options = FirefoxOptions()
-        options.add_argument("--headless")  # TODO: native does not work
+        options.add_argument("--headless")
 
         seleniumwire_options = {
             'enable_har': True,
         }
 
         self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
-        self.driver.set_page_load_timeout(30)
+        self.driver.set_page_load_timeout(60)
 
         self.time_to_wait = time_to_wait
         self.total_get_attempts = total_get_attempts
@@ -64,7 +70,7 @@ class Crawler:
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
 
-    def crawl(self, url: str, depth: int = 2) -> Optional[Data]:
+    def crawl(self, url: str, depth: int = 2) -> CrawlData:
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
@@ -73,59 +79,17 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
         """
 
-        # Check if `url` results in redirects
-        options = FirefoxOptions()
-        options.add_argument("--headless")
-        temp_driver = webdriver.Firefox(options=options)
-        temp_driver.set_page_load_timeout(30)
-
-        # Visit the current URL with multiple attempts
-        attempt = 0
-        for attempt in range(self.total_get_attempts):
-            try:
-                temp_driver.get(url)
-                break  # If successful, break out of the loop
-
-            except Exception as e:
-                print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
-        if attempt == self.total_get_attempts - 1:
-            msg = f"{self.total_get_attempts} attempts failed for '{url}'. Skipping."
-            print(msg)
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
-            temp_driver.quit()
-            return
-
-        time.sleep(self.time_to_wait)
-
-        domain = utils.get_domain(url)
-        url_after_redirect = temp_driver.current_url
-        domain_after_redirect = utils.get_domain(url_after_redirect)
-
-        # NOTE: THIS WILL REMOVE ALL SITES THAT BANNERCLICK CANNOT REJECT
-        status = bc.run_all_for_domain(domain_after_redirect, url_after_redirect, temp_driver, InteractionType.REJECT.value)
-        temp_driver.quit()
-        if not status:
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write("BannerClick failed to click accept/reject button.\n")
-            return
-
-        if domain_after_redirect != domain:
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"Domain name changed from '{domain}' to '{domain_after_redirect}'.\n")
-        if url_after_redirect != url:
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"URL changed from '{url}' to '{url_after_redirect}'.\n")
+        data: CrawlData = {"data_path": self.data_path}
 
         # Collect cookies
         self.crawl_inner_pages(
-            url_after_redirect,
+            url,
             crawl_name="",
-            depth=depth,
+            depth=0,
+            data=data
         )
 
-        data = Data()
-        data.cmp_name = self.run_addon_js()
+        return data
 
         # # Log
         # self.crawl_inner_pages(
@@ -167,15 +131,14 @@ class Crawler:
         #     CookieClass.UNCLASSIFIED
         # ])
 
-        return data
-
     def crawl_inner_pages(
             self,
             start_node: str,
             crawl_name: str = "",
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
-            cookie_blacklist: tuple[CookieClass, ...] = ()) -> Optional[BannerClickStatus]:
+            cookie_blacklist: tuple[CookieClass, ...] = (),
+            data: Optional[CrawlData] = None):
         """
         Crawl inner pages of website with a given depth.
 
@@ -189,9 +152,7 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
-
-        Returns:
-            BannerClickStatus.FAIL if the accept/reject button was not clicked successfully.
+            data: Where crawl data is saved. Defaults to None in which case no data is saved.
         """
 
         if depth < 0:
@@ -203,8 +164,7 @@ class Crawler:
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
         previous: dict[URL, Optional[str]] = {URL(start_node): None}  # map url to previous url
         redirects: set[URL] = set()  # set of URLs after redirect(s)
-
-        domain = utils.get_domain(start_node)
+        domain = ""  # will be set after resolving landing page redirects
 
         # Graph search loop
         while urls_to_visit:
@@ -273,10 +233,24 @@ class Crawler:
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
                 del self.driver.request_interceptor
+
+                if depth == 0:
+                    if data is not None:
+                        data["landing_page_success"] = False
+
                 continue
 
             # Wait for redirects and dynamic content
             time.sleep(self.time_to_wait)
+
+            if data is not None:
+                data["landing_page_success"] = True
+                data["cmp_name"] = self.get_cmp()
+
+            # Get domain name
+            if depth == 0:
+                domain = utils.get_domain(self.driver.current_url)
+                cmp_name = self.get_cmp()
 
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
@@ -316,7 +290,11 @@ class Crawler:
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
                             file.write("BannerClick failed to click accept/reject button.\n")
-                            return BannerClickStatus.FAIL
+                            if data is not None:
+                                data["click_success"] = False
+                    else:
+                        if data is not None:
+                            data["click_success"] = True
 
             # Save HAR file
             if crawl_name:
@@ -379,13 +357,67 @@ class Crawler:
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
 
-    def run_addon_js(self):
+    def get_cmp(self) -> Optional[str]:
         js = open("neverconsent/nc.js").read()
         self.driver.execute_script(js)
+
         time.sleep(self.time_to_wait)
-        ret = self.driver.execute_script('return localStorage["nc_cmp"];')
+
+        try:
+            ret = self.driver.execute_script('return localStorage["nc_cmp"];')
+        except Exception as e:
+            ret = None
+            print(e)
 
         return ret
+
+    def bannerclick_success(self, url):
+        """
+        TODO
+        Return whether the accept/reject button was clicked successfully.
+
+        Args:
+            url: _description_
+
+        Returns:
+            _description_
+        """
+
+        # Check if `url` results in redirects
+        options = FirefoxOptions()
+        options.add_argument("--headless")
+        temp_driver = webdriver.Firefox(options=options)
+        temp_driver.set_page_load_timeout(30)
+
+        # Visit the current URL with multiple attempts
+        attempt = 0
+        for attempt in range(self.total_get_attempts):
+            try:
+                temp_driver.get(url)
+                break  # If successful, break out of the loop
+
+            except Exception as e:
+                print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
+        if attempt == self.total_get_attempts - 1:
+            msg = f"{self.total_get_attempts} attempts failed for '{url}'. Skipping."
+            print(msg)
+            with open(self.data_path + "logs.txt", "a") as file:
+                file.write(msg + "\n")
+            temp_driver.quit()
+
+        time.sleep(self.time_to_wait)
+
+        url_after_redirect = temp_driver.current_url
+        domain_after_redirect = utils.get_domain(url_after_redirect)
+
+        status = bc.run_all_for_domain(domain_after_redirect, url_after_redirect, temp_driver, InteractionType.REJECT.value)
+        temp_driver.quit()
+        if not status:
+            with open(self.data_path + "logs.txt", "a") as file:
+                file.write("BannerClick failed to click accept/reject button.\n")
+                return False
+        else:
+            return True
 
     def quit(self) -> None:
         """Safely end the web driver."""
