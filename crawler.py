@@ -35,7 +35,7 @@ class CrawlData(TypedDict, total=False):
     """
 
     data_path: str
-    cmp_name: Optional[str]
+    cmp_name: Optional[str]  # None if no cmp found
     click_success: bool
 
 
@@ -236,7 +236,7 @@ class Crawler:
                 except Exception as e:
                     print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
             if attempt == self.total_get_attempts - 1:
-                msg = f"{self.total_get_attempts} attempts failed for '{current_url.url}' (UID: {uid}). Skipping."
+                msg = f"Skipping '{current_url.url}' (UID: {uid}). {self.total_get_attempts} attempts failed."
                 print(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -261,7 +261,7 @@ class Crawler:
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
             if after_redirect in redirects:
-                msg = f"Duplicate site '{current_url.url}' (UID: {uid}). Skipping."
+                msg = f"Skipping duplicate site '{current_url.url}' (UID: {uid})."
                 print(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -274,7 +274,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                msg = f"Domain name changed '{current_url.url}' (UID: {uid}). Skipping."
+                msg = f"Skipping domain redirect '{current_url.url}' (UID: {uid})."
                 print(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -403,7 +403,7 @@ class Crawler:
             except Exception as e:
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
         if attempt == self.total_get_attempts - 1:
-            msg = f"{self.total_get_attempts} attempts failed for '{url}'. Skipping."
+            msg = f"Skipping '{url}' (UID: 0). {self.total_get_attempts} attempts failed."
             print(msg)
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(msg + "\n")
