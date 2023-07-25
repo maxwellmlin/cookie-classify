@@ -9,7 +9,7 @@ from cookie_database import CookieClass
 """
 Interceptors for seleniumwire.
 
-NOTE: Many of these functions are general functions and must be partially applied when used as an interceptor.
+Many of these functions are general functions and must be partially applied when used as an interceptor.
 All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
 
 For example, to use the remove_cookie_class_interceptor, use:
@@ -80,7 +80,7 @@ def set_referer_interceptor(request: seleniumwire.request.Request, url: str, ref
 
     if URL(request.url) == URL(url):
         with open(data_path + "logs.txt", "a") as file:
-            file.write(f"Injecting Referer Header: {referer}\n\n")
+            file.write(f"Injecting Referer Header: {referer}\n")
 
         del request.headers["Referer"]
         request.headers["Referer"] = referer
