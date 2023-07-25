@@ -283,24 +283,20 @@ class Crawler:
                 self.uids[current_url] = -1
                 continue
 
-            # Save a screenshot of the viewport  # TODO: save full page screenshot
+            # Save a screenshot of the viewport
             if crawl_name:
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
 
-            if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
+            # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
+            if current_depth == 0:
                 if interaction_type.value:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    with open(self.data_path + "logs.txt", "a") as file:
-                        file.write(f"btn_status={status}" + "\n")
-
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
-                            file.write("BannerClick failed to click accept/reject button.\n")
-                            if data is not None:
-                                data["click_success"] = False
-                    else:
-                        if data is not None:
-                            data["click_success"] = True
+                            file.write(f"BannerClick failed to {interaction_type.name}.\n")
+
+                    if data is not None:
+                        data["click_success"] = status is not None
 
             # Save HAR file
             if crawl_name:
@@ -318,9 +314,9 @@ class Crawler:
             for neighbor in hrefs:
                 if neighbor is None or utils.get_domain(neighbor) != domain or not validators.url(neighbor):  # type: ignore
                     # NOTE: Potential for false negatives if the href domain
-                    # is not the same as the current domain but redirects to the current domain.
+                    # is different than the current domain but redirects to the current domain.
                     # However, this is unlikely to occur in practice and
-                    # we do not want to visit every href present on the page (`self.time_to_wait` penalty).
+                    # we do not want to visit every href present on the page.
                     continue
 
                 neighbor = URL(neighbor)
