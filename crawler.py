@@ -251,13 +251,11 @@ class Crawler:
             # Wait for redirects and dynamic content
             time.sleep(self.time_to_wait)
 
-            if data is not None:
-                data["cmp_name"] = self.get_cmp()
-
             # Get domain name
             if current_depth == 0:
                 domain = utils.get_domain(self.driver.current_url)
-                cmp_name = self.get_cmp()
+                if data is not None:
+                    data["cmp_name"] = self.get_cmp()
 
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
@@ -366,13 +364,7 @@ class Crawler:
 
         time.sleep(self.time_to_wait)
 
-        try:
-            ret = self.driver.execute_script('return localStorage["nc_cmp"];')
-        except Exception as e:
-            ret = None
-            print(e)
-
-        return ret
+        return self.driver.execute_script('return localStorage["nc_cmp"];')
 
     def test_bannerclick(self, url: str, interaction_type: InteractionType) -> bool:
         """

@@ -15,7 +15,7 @@ def worker(data_path: str, site_url: str, depth: int) -> CrawlData:
     return ret
 
 
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+SITE_LIST_PATH = "inputs/sites/success.txt"  # Path to list of sites to crawl
 CRAWL_NAME = "depth1_noquery"
 crawl_path = f"crawls/{CRAWL_NAME}/"
 
