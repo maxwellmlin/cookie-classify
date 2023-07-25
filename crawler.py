@@ -29,14 +29,14 @@ class InteractionType(Enum):
     REJECT = 2
 
 
-class CrawlData(TypedDict, total=False):
+class CrawlData(TypedDict):
     """
     Class for storing data about a crawl
     """
 
     data_path: str
     cmp_name: Optional[str]  # None if no cmp found
-    click_success: bool
+    click_success: Optional[bool]  # None if no click was attempted
 
 
 class Crawler:
@@ -85,7 +85,8 @@ class Crawler:
         """
 
         data: CrawlData = {"data_path": self.data_path,
-                           "cmp_name": None}
+                           "cmp_name": None,
+                           "click_success": None}
 
         if not self.test_bannerclick(url, InteractionType.REJECT):
             data["click_success"] = False
