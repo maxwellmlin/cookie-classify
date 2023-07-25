@@ -1,36 +1,52 @@
 import os
+from multiprocessing.pool import ThreadPool
+import json
 
-from crawler import Crawler
+from crawler import Crawler, CrawlData
 import utils
 
-import multiprocessing as mp
 
-
-def worker(data_path, site_url, depth):
+def worker(data_path: str, site_url: str, depth: int) -> CrawlData:
     crawler = Crawler(data_path)
-    crawler.crawl(site_url, depth)
+    ret = crawler.crawl(site_url, depth)
     crawler.quit()
 
+    return ret
 
-SITE_LIST_PATH = "inputs/sites/success.txt"  # Path to list of sites to crawl
 
-if not os.path.exists("crawls/depth1_noquery"):
-    os.mkdir("crawls/depth1_noquery")
+def main():
+    SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+    CRAWL_NAME = "depth1_noquery"
+    crawl_path = f"crawls/{CRAWL_NAME}/"
 
-# Get list of sites to crawl
-sites = []
-with open(SITE_LIST_PATH) as file:
-    for line in file:
-        sites.append(line.strip())
+    if not os.path.exists(crawl_path):
+        os.mkdir(crawl_path)
 
-for site_url in sites:
-    # TODO: this is a temp fix for detectedBanner.txt
-    site_url = f"https://{site_url}"
+    # Read sites from file
+    sites = []
+    with open(SITE_LIST_PATH) as file:
+        for line in file:
+            sites.append(line.strip())
 
-    # Create data folder
-    data_path = f"crawls/depth1_noquery/{utils.get_domain(site_url)}/"
+    # Create input for pool
+    input_ = []
+    for site_url in sites:
+        data_path = f"{crawl_path}{utils.get_domain(site_url)}/"
+        input_.append((data_path, f"https://{site_url}", 1))
 
-    # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
-    process = mp.Process(target=worker, args=(data_path, site_url, 1))
-    process.start()
-    process.join()
+    num_threads = os.cpu_count() or 1
+    pool = ThreadPool(num_threads)
+    data: dict[str, CrawlData] = {}
+
+    # Run pool
+    for result in pool.starmap(worker, input_):
+        key: str = result.pop('data_path')  # type: ignore
+        data[key] = result
+
+    # Write results to file
+    with open(crawl_path + 'results.json', 'w') as file:
+        json.dump(data, file)
+
+
+if __name__ == "__main__":
+    main()
