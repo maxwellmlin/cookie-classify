@@ -30,18 +30,9 @@ with open(SITE_LIST_PATH) as file:
 
 input = []
 for site_url in sites:
-    # TODO: this is a temp fix for detectedBanner.txt
-    site_url = f"https://{site_url}"
-
     # Create data folder
     data_path = f"{crawl_path}{utils.get_domain(site_url)}/"
-
-    input.append((data_path, site_url, 1))
-
-    # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
-    # process = mp.Process(target=worker, args=(data_path, site_url, 0))
-    # process.start()
-    # process.join()
+    input.append((data_path, f"https://{site_url}", 1))
 
 num_threads = os.cpu_count() or 1
 pool = ThreadPool(num_threads)

@@ -254,7 +254,7 @@ class Crawler:
                 data["cmp_name"] = self.get_cmp()
 
             # Get domain name
-            if depth == 0:
+            if current_depth == 0:
                 domain = utils.get_domain(self.driver.current_url)
                 cmp_name = self.get_cmp()
 
