@@ -10,13 +10,12 @@ import config
 logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 1
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_NAME = "jul25"
+SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
+CRAWL_NAME = "jul26"
 CRAWL_PATH = f"crawls/{CRAWL_NAME}/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
-    logger.info(f"Starting worker: {locals()}")
     crawler = Crawler(data_path)
     ret = crawler.crawl(site_url, depth)
     crawler.quit()
