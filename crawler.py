@@ -16,6 +16,7 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import JavascriptException
 
 from cookie_database import CookieClass
 import interceptors
@@ -59,19 +60,9 @@ class Crawler:
             page_load_timeout: Time to wait for a page to load. Defaults to 60 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
-        options = FirefoxOptions()
-
         self.headless = headless
-        if headless:
-            options.add_argument("--headless")
-
-        seleniumwire_options = {
-            'enable_har': True,
-        }
-
-        self.driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
         self.page_load_timeout = page_load_timeout
-        self.driver.set_page_load_timeout(page_load_timeout)
+        self.driver = self.get_driver()
 
         self.time_to_wait = time_to_wait
         self.total_get_attempts = total_get_attempts
@@ -82,6 +73,20 @@ class Crawler:
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
+
+    def get_driver(self) -> webdriver.Firefox:
+        options = FirefoxOptions()
+        if self.headless:
+            options.add_argument("--headless")
+
+        seleniumwire_options = {
+            'enable_har': True,
+        }
+
+        driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
+        driver.set_page_load_timeout(self.page_load_timeout)
+
+        return driver
 
     def crawl(self, url: str, depth: int = 2) -> CrawlData:
         """
@@ -95,8 +100,17 @@ class Crawler:
                            "cmp_name": None,
                            "click_success": None}
 
-        if not self.test_bannerclick(url, InteractionType.REJECT):
-            data["click_success"] = False
+        # Exit early if cannot click reject
+        temp_driver = self.get_driver()
+        self.crawl_inner_pages(
+            url,
+            crawl_name="",
+            depth=0,
+            interaction_type=InteractionType.REJECT,
+            data=data,
+            driver=temp_driver
+        )
+        if not data["click_success"]:
             return data
 
         # Collect cookies
@@ -122,15 +136,7 @@ class Crawler:
             interaction_type=InteractionType.REJECT,
             data=data
         )
-
-        if not data.get("click_success"):
-            # Delete all data
-            for uid in self.uids.values():
-                if uid == -1:
-                    continue
-
-                shutil.rmtree(self.data_path + f"{uid}/")
-
+        if not data["click_success"]:
             return data
 
         # Log
@@ -142,14 +148,6 @@ class Crawler:
 
         return data
 
-        # blacklist = tuple([
-        #     CookieClass.STRICTLY_NECESSARY,
-        #     CookieClass.PERFORMANCE,
-        #     CookieClass.FUNCTIONALITY,
-        #     CookieClass.TARGETING,
-        #     CookieClass.UNCLASSIFIED
-        # ])
-
     def crawl_inner_pages(
             self,
             start_node: str,
@@ -157,7 +155,8 @@ class Crawler:
             depth: int = 2,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
             cookie_blacklist: tuple[CookieClass, ...] = (),
-            data: Optional[CrawlData] = None):
+            data: Optional[CrawlData] = None,
+            driver: Optional[webdriver.Firefox] = None):
         """
         Crawl inner pages of website with a given depth.
 
@@ -171,10 +170,14 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 2.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
-            data: Where crawl data is saved. Defaults to None in which case no data is saved.
+            data: Where some crawl data is saved. Defaults to None in which case no data is saved.
+            driver: The web driver to use for crawling. Defaults to None in which case `self.driver` is used.
         """
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
+
+        if driver is None:
+            driver = self.driver
 
         Crawler.logger.info(f"Starting traversal: {locals()}")
 
@@ -201,9 +204,10 @@ class Crawler:
                 continue
 
             uid_data_path = self.data_path + f"{uid}/"
+            site_info = f"'{current_url.url}' (UID: {uid})"
 
             # Log site visit
-            msg = f"Visiting: '{current_url.url}' (UID: {uid}) at depth {current_depth}"
+            msg = f"Visiting: {site_info} at depth {current_depth}"
             Crawler.logger.info(msg)
             if not os.path.isfile(uid_data_path + "logs.txt"):
                 with open(uid_data_path + "logs.txt", "a") as file:
@@ -228,31 +232,36 @@ class Crawler:
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
             # Set request interceptor
-            self.driver.request_interceptor = interceptor
+            driver.request_interceptor = interceptor
 
             # Remove previous HAR entries
-            del self.driver.requests
+            del driver.requests
 
             # Visit the current URL with multiple attempts
             attempt = 0
             for attempt in range(self.total_get_attempts):
                 try:
-                    self.driver.get(current_url.url)
+                    driver.get(current_url.url)
                     break  # If successful, break out of the loop
 
                 except Exception:  # skipcq: PYL-W0703
-                    Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: '{current_url.url}' (UID: {uid})")
+                    Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: {site_info}")
                     time.sleep(self.time_to_wait)
 
             if attempt == self.total_get_attempts - 1:
-                msg = f"Skipping down site: '{current_url.url}' (UID: {uid})"
-                Crawler.logger.critical(msg)
+                msg = f"Skipping down site: {site_info}"
+
+                if current_depth == 0:
+                    Crawler.logger.critical(msg)  # down landing page is more serious
+                else:
+                    Crawler.logger.error(msg)
+
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
-                del self.driver.request_interceptor
+                del driver.request_interceptor
 
                 continue
 
@@ -261,14 +270,14 @@ class Crawler:
 
             # Get domain name
             if current_depth == 0:
-                domain = utils.get_domain(self.driver.current_url)
+                domain = utils.get_domain(driver.current_url)
                 if data is not None:
                     data["cmp_name"] = self.get_cmp()
 
             # Account for redirects
-            after_redirect = URL(self.driver.current_url)
+            after_redirect = URL(driver.current_url)
             if after_redirect in redirects:
-                msg = f"Skipping duplicate site: '{current_url.url}' (UID: {uid})"
+                msg = f"Skipping duplicate site: {site_info}"
                 Crawler.logger.warning(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -281,7 +290,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                msg = f"Skipping domain redirect: '{current_url.url}' (UID: {uid})"
+                msg = f"Skipping domain redirect: {site_info}"
                 Crawler.logger.warning(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -296,9 +305,9 @@ class Crawler:
 
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
             if current_depth == 0 and interaction_type.value:
-                status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                status = bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value)
                 if not status:
-                    msg = f"BannerClick failed to {interaction_type.name}"
+                    msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
                     Crawler.logger.critical(msg)
                     with open(self.data_path + "logs.txt", "a") as file:
                         file.write(msg + "\n")
@@ -315,7 +324,7 @@ class Crawler:
                 continue
 
             # Find all the anchor elements (links) on the page
-            a_elements = self.driver.find_elements(By.TAG_NAME, 'a')
+            a_elements = driver.find_elements(By.TAG_NAME, 'a')
             hrefs = [link.get_attribute('href') for link in a_elements]
 
             # Visit neighbors
@@ -333,7 +342,7 @@ class Crawler:
                     previous[neighbor] = current_url.url
                     urls_to_visit.append((neighbor, current_depth + 1))
 
-            del self.driver.request_interceptor
+            del driver.request_interceptor
 
     def save_viewport_screenshot(self, file_path: str):
         """
@@ -380,60 +389,10 @@ class Crawler:
 
         time.sleep(self.time_to_wait)
 
-        return self.driver.execute_script('return localStorage["nc_cmp"];')
-
-    def test_bannerclick(self, url: str, interaction_type: InteractionType) -> bool:
-        """
-        Return whether the accept/reject button was clicked successfully.
-
-        Args:
-            url: URL of the website to test.
-            interaction_type: Whether to click the accept or reject button on cookie notices.
-
-        Returns:
-            Whether the accept/reject button was clicked successfully.
-        """
-        options = FirefoxOptions()
-
-        if self.headless:
-            options.add_argument("--headless")
-
-        driver = webdriver.Firefox(options=options)
-        driver.set_page_load_timeout(self.page_load_timeout)
-
-        # Visit the current URL with multiple attempts
-        attempt = 0
-        for attempt in range(self.total_get_attempts):
-            try:
-                driver.get(url)
-                break  # If successful, break out of the loop
-
-            except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: '{url}' (UID: 0)")
-                time.sleep(self.time_to_wait)
-
-        if attempt == self.total_get_attempts - 1:
-            msg = f"Skipping down site: '{url}' (UID: 0)"
-            Crawler.logger.critical(msg)
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
-            driver.quit()
-
-            return False
-
-        time.sleep(self.time_to_wait)
-
-        status = bc.run_all_for_domain(driver.current_url, utils.get_domain(driver.current_url), driver, interaction_type.value)
-        driver.quit()
-
-        if not status:
-            with open(self.data_path + "logs.txt", "a") as file:
-                msg = f"BannerClick failed to {interaction_type.name}"
-                Crawler.logger.warning(msg)
-                file.write(msg + "\n")
-                return False
-        else:
-            return True
+        try:
+            return self.driver.execute_script('return localStorage["nc_cmp"];')
+        except JavascriptException:
+            return None
 
     def quit(self) -> None:
         """Safely end the web driver."""
