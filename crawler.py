@@ -117,8 +117,7 @@ class Crawler:
         self.crawl_inner_pages(
             url,
             crawl_name="",
-            depth=depth,
-            data=data
+            depth=depth
         )
 
         # Log
