@@ -1,56 +1,70 @@
 import os
-from multiprocessing.pool import ThreadPool
 import json
+import logging
+import multiprocessing as mp
 
 from crawler import Crawler, CrawlData
 import utils
+import config
+
+logger = logging.getLogger(config.LOGGER_NAME)
+
+DEPTH = 1
+SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+CRAWL_NAME = "jul25"
+CRAWL_PATH = f"crawls/{CRAWL_NAME}/"
 
 
-def worker(data_path: str, site_url: str, depth: int) -> CrawlData:
+def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
+    logger.info(f"Starting worker: {locals()}")
     crawler = Crawler(data_path)
     ret = crawler.crawl(site_url, depth)
     crawler.quit()
 
-    return ret
+    queue.put(ret)
 
 
 def main():
-    DEPTH = 1
-    SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-    CRAWL_NAME = "depth1_noquery"
-    crawl_path = f"crawls/{CRAWL_NAME}/"
+    if not os.path.exists(CRAWL_PATH):
+        os.mkdir(CRAWL_PATH)
 
-    if not os.path.exists(crawl_path):
-        os.mkdir(crawl_path)
+    logger.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
+
+    log_stream = logging.StreamHandler()
+    log_stream.setLevel(logging.DEBUG)
+    log_stream.setFormatter(formatter)
+
+    log_file = logging.FileHandler(f'{CRAWL_PATH}/crawl.log', 'a')
+    log_file.setLevel(logging.DEBUG)
+    log_file.setFormatter(formatter)
+
+    logger.addHandler(log_stream)
+    logger.addHandler(log_file)
 
     # Read sites from file
     sites = []
-    with open(SITE_LIST_PATH) as file:
-        for line in file:
+    with open(SITE_LIST_PATH) as log_file:
+        for line in log_file:
             sites.append(line.strip())
 
     # Create input for pool
-    input_ = []
-    for site_url in sites:
-        data_path = f"{crawl_path}{utils.get_domain(site_url)}/"
-        input_.append((data_path, f"https://{site_url}", DEPTH))
-
-    if num_cpus := os.cpu_count():
-        num_threads = num_cpus - 1
-    else:
-        num_threads = 1
-    print("num_threads:", num_threads)
-    pool = ThreadPool(num_threads)
+    output: mp.Queue = mp.Queue()
     data: dict[str, CrawlData] = {}
+    for site_url in sites:
+        data_path = f"{CRAWL_PATH}{utils.get_domain(site_url)}/"
 
-    # Run pool
-    for result in pool.starmap(worker, input_):
-        key: str = result.pop('data_path')  # type: ignore
+        process = mp.Process(target=worker, args=(data_path, f"https://{site_url}", DEPTH, output))
+        process.start()
+
+        result = output.get()
+        key: str = result.pop('data_path')
         data[key] = result
+        with open(CRAWL_PATH + 'results.json', 'w') as log_file:
+            json.dump(data, log_file)
 
-    # Write results to file
-    with open(crawl_path + 'results.json', 'w') as file:
-        json.dump(data, file)
+        process.join()
 
 
 if __name__ == "__main__":

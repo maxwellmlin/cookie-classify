@@ -8,6 +8,7 @@ import time
 import shutil
 import validators
 import json
+import logging
 
 import bannerclick.bannerdetection as bc
 
@@ -20,6 +21,7 @@ from cookie_database import CookieClass
 import interceptors
 import utils
 from url import URL
+import config
 
 
 class InteractionType(Enum):
@@ -46,7 +48,9 @@ class CrawlData(TypedDict):
 class Crawler:
     """Crawl websites, intercept requests, and take screenshots."""
 
-    def __init__(self, data_path: str, time_to_wait: int = 3, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    logger = logging.getLogger(config.LOGGER_NAME)
+
+    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
@@ -172,7 +176,7 @@ class Crawler:
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        print(f"Starting traversal with arguments: '{locals()}'.")
+        Crawler.logger.info(f"Starting traversal: {locals()}")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
@@ -199,8 +203,8 @@ class Crawler:
             uid_data_path = self.data_path + f"{uid}/"
 
             # Log site visit
-            msg = f"Visiting '{current_url.url}' (UID: {uid}) at depth {current_depth}."
-            print(msg)
+            msg = f"Visiting: '{current_url.url}' (UID: {uid}) at depth {current_depth}"
+            Crawler.logger.info(msg)
             if not os.path.isfile(uid_data_path + "logs.txt"):
                 with open(uid_data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -236,13 +240,13 @@ class Crawler:
                     self.driver.get(current_url.url)
                     break  # If successful, break out of the loop
 
-                except Exception as e:  # skipcq: PYL-W0703
-                    print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
+                except Exception:  # skipcq: PYL-W0703
+                    Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: '{current_url.url}' (UID: {uid})")
                     time.sleep(self.time_to_wait)
 
             if attempt == self.total_get_attempts - 1:
-                msg = f"Skipping '{current_url.url}' (UID: {uid}). {self.total_get_attempts} attempts failed."
-                print(msg)
+                msg = f"Skipping down site: '{current_url.url}' (UID: {uid})"
+                Crawler.logger.critical(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
@@ -264,8 +268,8 @@ class Crawler:
             # Account for redirects
             after_redirect = URL(self.driver.current_url)
             if after_redirect in redirects:
-                msg = f"Skipping duplicate site '{current_url.url}' (UID: {uid})."
-                print(msg)
+                msg = f"Skipping duplicate site: '{current_url.url}' (UID: {uid})"
+                Crawler.logger.warning(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
@@ -277,8 +281,8 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                msg = f"Skipping domain redirect '{current_url.url}' (UID: {uid})."
-                print(msg)
+                msg = f"Skipping domain redirect: '{current_url.url}' (UID: {uid})"
+                Crawler.logger.warning(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
@@ -294,8 +298,10 @@ class Crawler:
             if current_depth == 0 and interaction_type.value:
                 status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
                 if not status:
+                    msg = f"BannerClick failed to {interaction_type.name}"
+                    Crawler.logger.critical(msg)
                     with open(self.data_path + "logs.txt", "a") as file:
-                        file.write(f"BannerClick failed to {interaction_type.name}.\n")
+                        file.write(msg + "\n")
 
                 if data is not None:
                     data["click_success"] = status is not None
@@ -402,13 +408,13 @@ class Crawler:
                 driver.get(url)
                 break  # If successful, break out of the loop
 
-            except Exception as e:  # skipcq: PYL-W0703
-                print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
+            except Exception:  # skipcq: PYL-W0703
+                Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: '{url}' (UID: 0)")
                 time.sleep(self.time_to_wait)
 
         if attempt == self.total_get_attempts - 1:
-            msg = f"Skipping '{url}' (UID: 0). {self.total_get_attempts} attempts failed."
-            print(msg)
+            msg = f"Skipping down site: '{url}' (UID: 0)"
+            Crawler.logger.critical(msg)
             with open(self.data_path + "logs.txt", "a") as file:
                 file.write(msg + "\n")
             driver.quit()
@@ -422,7 +428,9 @@ class Crawler:
 
         if not status:
             with open(self.data_path + "logs.txt", "a") as file:
-                file.write(f"BannerClick failed to {interaction_type.name}.\n")
+                msg = f"BannerClick failed to {interaction_type.name}"
+                Crawler.logger.warning(msg)
+                file.write(msg + "\n")
                 return False
         else:
             return True
