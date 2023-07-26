@@ -238,25 +238,31 @@ class Crawler:
 
             # Visit the current URL with exponential backoff reattempts
             attempt = 0
+            wait_time = 0
             while attempt < self.total_get_attempts:
                 try:
-                    driver.get(current_url.url)
-                    break  # If successful, break out of the loop
-                except Exception:
                     attempt += 1
 
                     # Calculate wait time for exponential backoff
                     backoff_time = 2 ** attempt  # 2, 4, 8, ...
                     backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
-                    jitter_factor = random.uniform(0.5, 1.5)  # Add jitter (randomness) to the waiting time to spread load on server
+                    jitter_factor = random.uniform(1, 2)  # Add jitter (randomness) to the waiting time to spread load on server
                     wait_time = backoff_time * jitter_factor
 
-                    # Wait before the next retry
+                    # Attempt to get the website
+                    driver.get(current_url.url)
+
+                    break  # If successful, break out of the loop
+
+                except TimeoutException:
+                    time.sleep(wait_time)
+                    Crawler.logger.error(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                except Exception:
                     time.sleep(wait_time)
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
 
-            if attempt == self.total_get_attempts - 1:
+            if attempt == self.total_get_attempts:
                 msg = f"Skipping down site: {site_info}"
 
                 if current_depth == 0:
