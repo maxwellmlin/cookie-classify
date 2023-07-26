@@ -16,7 +16,7 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import JavascriptException
+from selenium.common.exceptions import JavascriptException, TimeoutException
 
 from cookie_database import CookieClass
 import interceptors
@@ -244,7 +244,10 @@ class Crawler:
                     driver.get(current_url.url)
                     break  # If successful, break out of the loop
 
-                except Exception:  # skipcq: PYL-W0703
+                except TimeoutException:  # skipcq: PYL-W0703
+                    Crawler.logger.error(f"Failed attempt {attempt+1}/{self.total_get_attempts}: {site_info}")
+                    time.sleep(self.time_to_wait)
+                except Exception:
                     Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: {site_info}")
                     time.sleep(self.time_to_wait)
 
