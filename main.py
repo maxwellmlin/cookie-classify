@@ -35,7 +35,11 @@ def main():
         data_path = f"{crawl_path}{utils.get_domain(site_url)}/"
         input_.append((data_path, f"https://{site_url}", DEPTH))
 
-    num_threads = os.cpu_count() or 1
+    if num_cpus := os.cpu_count():
+        num_threads = num_cpus - 1
+    else:
+        num_threads = 1
+    print("num_threads:", num_threads)
     pool = ThreadPool(num_threads)
     data: dict[str, CrawlData] = {}
 

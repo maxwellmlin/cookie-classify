@@ -238,6 +238,8 @@ class Crawler:
 
                 except Exception as e:  # skipcq: PYL-W0703
                     print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for inner page '{current_url.url}'.")
+                    time.sleep(self.time_to_wait)
+
             if attempt == self.total_get_attempts - 1:
                 msg = f"Skipping '{current_url.url}' (UID: {uid}). {self.total_get_attempts} attempts failed."
                 print(msg)
@@ -402,6 +404,8 @@ class Crawler:
 
             except Exception as e:  # skipcq: PYL-W0703
                 print(f"'{e}' on attempt {attempt+1}/{self.total_get_attempts} for website '{url}'.")
+                time.sleep(self.time_to_wait)
+
         if attempt == self.total_get_attempts - 1:
             msg = f"Skipping '{url}' (UID: 0). {self.total_get_attempts} attempts failed."
             print(msg)
