@@ -10,8 +10,8 @@ import config
 logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 1
-SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
-CRAWL_NAME = "jul26"
+SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+CRAWL_NAME = "crawl_name"
 CRAWL_PATH = f"crawls/{CRAWL_NAME}/"
 
 
