@@ -209,9 +209,8 @@ class Crawler:
             # Log site visit
             msg = f"Visiting: {site_info} at depth {current_depth}"
             Crawler.logger.info(msg)
-            if not os.path.isfile(uid_data_path + "logs.txt"):
-                with open(uid_data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+            with open(uid_data_path + "logs.txt", "a") as file:
+                file.write(msg + "\n")
 
             # Define request interceptor
             def interceptor(request: seleniumwire.request.Request):
