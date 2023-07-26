@@ -8,6 +8,7 @@ import time
 import shutil
 import validators
 import json
+import random
 import logging
 
 import bannerclick.bannerdetection as bc
@@ -235,19 +236,25 @@ class Crawler:
             # Remove previous HAR entries
             del driver.requests
 
-            # Visit the current URL with multiple attempts
+            # Visit the current URL with exponential backoff reattempts
             attempt = 0
-            for attempt in range(self.total_get_attempts):
+            while attempt < self.total_get_attempts:
                 try:
                     driver.get(current_url.url)
                     break  # If successful, break out of the loop
-
-                except TimeoutException:  # skipcq: PYL-W0703
-                    Crawler.logger.error(f"Failed attempt {attempt+1}/{self.total_get_attempts}: {site_info}")
-                    time.sleep(self.time_to_wait)
                 except Exception:
-                    Crawler.logger.exception(f"Failed attempt {attempt+1}/{self.total_get_attempts}: {site_info}")
-                    time.sleep(self.time_to_wait)
+                    attempt += 1
+
+                    # Calculate wait time for exponential backoff
+                    backoff_time = 2 ** attempt  # 2, 4, 8, ...
+                    backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
+
+                    jitter_factor = random.uniform(0.5, 1.5)  # Add jitter (randomness) to the waiting time to spread load on server
+                    wait_time = backoff_time * jitter_factor
+
+                    # Wait before the next retry
+                    time.sleep(wait_time)
+                    Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
 
             if attempt == self.total_get_attempts - 1:
                 msg = f"Skipping down site: {site_info}"
