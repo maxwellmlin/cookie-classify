@@ -308,7 +308,13 @@ class Crawler:
 
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
             if current_depth == 0 and interaction_type.value:
-                status = bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value)
+                status = None
+                for _ in range(3):
+                    if status := bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value):
+                        break
+
+                    time.sleep(self.time_to_wait)
+
                 if not status:
                     msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
                     Crawler.logger.critical(msg)
