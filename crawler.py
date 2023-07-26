@@ -309,7 +309,7 @@ class Crawler:
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
             if current_depth == 0 and interaction_type.value:
                 status = None
-                for _ in range(3):
+                for _ in range(self.total_get_attempts):
                     if status := bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value):
                         break
 
