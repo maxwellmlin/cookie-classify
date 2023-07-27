@@ -52,7 +52,7 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
@@ -249,6 +249,8 @@ class Crawler:
                     wait_time = backoff_time * jitter_factor
 
                     attempt += 1
+
+                    driver.set_page_load_timeout(self.page_load_timeout * attempt)
 
                     # Attempt to get the website
                     driver.get(current_url.url)
