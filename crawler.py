@@ -63,7 +63,7 @@ class Crawler:
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
 
-    def crawl(self, url: str, depth: int = 2) -> None:
+    def crawl(self, url: str, depth: int = 2, interaction_type: InteractionType = InteractionType.NO_ACTION) -> None:
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
@@ -102,12 +102,12 @@ class Crawler:
         domain_after_redirect = utils.get_domain(url_after_redirect)
 
         # NOTE: THIS WILL REMOVE ALL SITES THAT BANNERCLICK CANNOT REJECT
-        status = bc.run_all_for_domain(domain_after_redirect, url_after_redirect, temp_driver, InteractionType.REJECT.value)
+        #status = bc.run_all_for_domain(domain_after_redirect, url_after_redirect, temp_driver, InteractionType.REJECT.value)
         temp_driver.quit()
-        if not status:
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write("BannerClick failed to click accept/reject button.\n")
-            return
+        #if not status:
+        #    with open(self.data_path + "logs.txt", "a") as file:
+        #        file.write("BannerClick failed to click accept/reject button.\n")
+        #    return
 
         if domain_after_redirect != domain:
             with open(self.data_path + "logs.txt", "a") as file:
@@ -117,25 +117,25 @@ class Crawler:
                 file.write(f"URL changed from '{url}' to '{url_after_redirect}'.\n")
 
         # Collect cookies
-        self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="",
-            depth=depth,
-        )
+        #self.crawl_inner_pages(
+        #    url_after_redirect,
+        #    crawl_name="",
+        #    depth=depth,
+        #)
 
         # Log
-        self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="normal",
-            depth=depth,
-        )
+        #self.crawl_inner_pages(
+        #    url_after_redirect,
+        #    crawl_name="normal",
+        #    depth=depth,
+        #)
 
         # Click reject
         bc_status = self.crawl_inner_pages(
             url_after_redirect,
             crawl_name="",
             depth=0,
-            interaction_type=InteractionType.REJECT,
+            interaction_type=interaction_type,
         )
 
         if bc_status == BannerClickStatus.FAIL:
@@ -149,11 +149,11 @@ class Crawler:
             return
 
         # Log
-        self.crawl_inner_pages(
-            url_after_redirect,
-            crawl_name="after_reject",
-            depth=depth,
-        )
+        #self.crawl_inner_pages(
+        #    url_after_redirect,
+        #    crawl_name="after_reject",
+        #    depth=depth,
+        #)
 
         # blacklist = tuple([
         #     CookieClass.STRICTLY_NECESSARY,
@@ -301,16 +301,27 @@ class Crawler:
             if crawl_name:
                 self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
 
-            if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
+            if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages 
                 if interaction_type.value:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                    first_requests = self.driver.requests
+                    time.sleep(10)
+                    second_requests = self.driver.requests
+                    
                     with open(self.data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
-
+                    with open("http_full_requests.csv", "a") as file:
+                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{status}|{str(first_requests)}|{str(second_requests}\n")
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
                             file.write("BannerClick failed to click accept/reject button.\n")
                             return BannerClickStatus.FAIL
+                else:
+                    first_requests = self.driver.requests
+                    time.sleep(10)
+                    second_requests = self.driver.requests
+                    with open("http_full_requests.csv", "a") as file:
+                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{1}|{str(first_requests)}|{str(second_requests)}\n")
 
             # Save HAR file
             if crawl_name:

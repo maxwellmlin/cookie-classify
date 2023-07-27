@@ -1,21 +1,26 @@
 import os
 
-from crawler import Crawler
+from crawler import Crawler, InteractionType
 import utils
 
 import multiprocessing as mp
 
 
 def worker(data_path, site_url, depth):
-    crawler = Crawler(data_path)
-    crawler.crawl(site_url, depth)
-    crawler.quit()
+    no_action_crawler = Crawler(data_path)
+    no_action_crawler.crawl(site_url, depth, InteractionType.NO_ACTION)
+    no_action_crawler.quit()
+    accept_crawler = Crawler(data_path)
+    accept_crawler.crawl(site_url, depth, InteractionType.ACCEPT)
+    accept_crawler.quit()
+    reject_crawler = Crawler(data_path)
+    reject_crawler.crawl(site_url, depth, InteractionType.REJECT)
+    reject_crawler.quit()
 
+SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
 
-SITE_LIST_PATH = "inputs/sites/success.txt"  # Path to list of sites to crawl
-
-if not os.path.exists("crawls/depth1_noquery"):
-    os.mkdir("crawls/depth1_noquery")
+if not os.path.exists("crawls/full_requests"):
+    os.mkdir("crawls/full_requests")
 
 # Get list of sites to crawl
 sites = []
@@ -28,7 +33,7 @@ for site_url in sites:
     site_url = f"https://{site_url}"
 
     # Create data folder
-    data_path = f"crawls/depth1_noquery/{utils.get_domain(site_url)}/"
+    data_path = f"crawls/full_requests/{utils.get_domain(site_url)}/"
 
     # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
     process = mp.Process(target=worker, args=(data_path, site_url, 1))

@@ -1,0 +1,5 @@
+
+# identifies all PIDs for geckodriver and firefox to remove
+netstat -tlp | egrep '(firefo|chro|gecko)' | awk '/:* */ {split($NF,a,"/"); print a[2],a[1]}'
+
+# 
