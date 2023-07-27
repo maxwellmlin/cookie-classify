@@ -241,14 +241,14 @@ class Crawler:
             wait_time = 0
             while attempt < self.total_get_attempts:
                 try:
-                    attempt += 1
-
                     # Calculate wait time for exponential backoff
-                    backoff_time = 2 ** attempt  # 2, 4, 8, ...
+                    backoff_time = 5 * (2 ** attempt)  # 5, 10, 20, ...
                     backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
                     jitter_factor = random.uniform(1, 2)  # Add jitter (randomness) to the waiting time to spread load on server
                     wait_time = backoff_time * jitter_factor
+
+                    attempt += 1
 
                     # Attempt to get the website
                     driver.get(current_url.url)
