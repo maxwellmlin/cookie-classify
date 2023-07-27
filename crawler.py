@@ -52,7 +52,7 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
         """
         Args:
             data_path: Path to store log files and save screenshots.
@@ -241,14 +241,16 @@ class Crawler:
             wait_time = 0
             while attempt < self.total_get_attempts:
                 try:
-                    attempt += 1
-
                     # Calculate wait time for exponential backoff
-                    backoff_time = 2 ** attempt  # 2, 4, 8, ...
+                    backoff_time = 5 * (2 ** attempt)  # 5, 10, 20, ...
                     backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
                     jitter_factor = random.uniform(1, 2)  # Add jitter (randomness) to the waiting time to spread load on server
                     wait_time = backoff_time * jitter_factor
+
+                    attempt += 1
+
+                    driver.set_page_load_timeout(self.page_load_timeout * attempt)
 
                     # Attempt to get the website
                     driver.get(current_url.url)
@@ -256,11 +258,11 @@ class Crawler:
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
-                    time.sleep(wait_time)
                     Crawler.logger.error(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
-                except Exception:
                     time.sleep(wait_time)
+                except Exception:
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    time.sleep(wait_time)
 
             if attempt == self.total_get_attempts:
                 msg = f"Skipping down site: {site_info}"
