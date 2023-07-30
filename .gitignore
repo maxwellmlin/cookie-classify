@@ -8,3 +8,4 @@ screenshots
 .mypy_cache
 analysis
 .vscode
+http_full_requests.csv

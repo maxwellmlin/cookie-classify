@@ -9,6 +9,7 @@ import shutil
 import validators
 import json
 
+from urllib.parse import urljoin, urlparse
 import bannerclick.bannerdetection as bc
 
 import seleniumwire.request
@@ -304,24 +305,30 @@ class Crawler:
             if current_depth == 0:  # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages 
                 if interaction_type.value:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
-                    first_requests = self.driver.requests
+                    first_requests = [urljoin(i.url, urlparse(i.url).path) for i in self.driver.requests]
+                    del self.driver.requests
                     time.sleep(10)
-                    second_requests = self.driver.requests
                     
+                    second_requests = [urljoin(i.url, urlparse(i.url).path) for i in self.driver.requests]
+                    final_compare = len([i for i in first_requests if i not in second_requests])
+
                     with open(self.data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
-                    with open("http_full_requests.csv", "a") as file:
-                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{status}|{str(first_requests)}|{str(second_requests}\n")
+                    with open("http_full_requests3.csv", "a") as file:
+                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{status}|{len(first_requests)}|{len(second_requests)}|{final_compare}\n")
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
                             file.write("BannerClick failed to click accept/reject button.\n")
                             return BannerClickStatus.FAIL
                 else:
-                    first_requests = self.driver.requests
+                    first_requests = [urljoin(i.url, urlparse(i.url).path) for i in self.driver.requests]
+                    del self.driver.requests
                     time.sleep(10)
-                    second_requests = self.driver.requests
-                    with open("http_full_requests.csv", "a") as file:
-                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{1}|{str(first_requests)}|{str(second_requests)}\n")
+                    
+                    second_requests = [urljoin(i.url, urlparse(i.url).path) for i in self.driver.requests]
+                    final_compare = len([i for i in first_requests if i not in second_requests])
+                    with open("http_full_requests3.csv", "a") as file:
+                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{1}|{len(first_requests)}|{len(second_requests)}|{final_compare}\n")
 
             # Save HAR file
             if crawl_name:
