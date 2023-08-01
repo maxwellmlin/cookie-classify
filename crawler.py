@@ -314,8 +314,8 @@ class Crawler:
 
                     with open(self.data_path + "logs.txt", "a") as file:
                         file.write(f"btn_status={status}" + "\n")
-                    with open("http_full_requests3.csv", "a") as file:
-                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{status}|{len(first_requests)}|{len(second_requests)}|{final_compare}\n")
+                    with open("http_full_requests4.csv", "a") as file:
+                        file.write(f"{after_redirect.url},{domain},{interaction_type.value},{status},{len(first_requests)},{len(second_requests)},{final_compare}\n")
                     if not status:
                         with open(self.data_path + "logs.txt", "a") as file:
                             file.write("BannerClick failed to click accept/reject button.\n")
@@ -327,12 +327,12 @@ class Crawler:
                     
                     second_requests = [urljoin(i.url, urlparse(i.url).path) for i in self.driver.requests]
                     final_compare = len([i for i in first_requests if i not in second_requests])
-                    with open("http_full_requests3.csv", "a") as file:
-                        file.write(f"{after_redirect.url}|{domain}|{interaction_type.value}|{1}|{len(first_requests)}|{len(second_requests)}|{final_compare}\n")
+                    with open("http_full_requests4.csv", "a") as file:
+                        file.write(f"{after_redirect.url},{domain},{interaction_type.value},{1},{len(first_requests)},{len(second_requests)},{final_compare}\n")
 
             # Save HAR file
-            if crawl_name:
-                self.save_har(uid_data_path + f"{crawl_name}.json")
+            #if crawl_name:
+            self.save_har(uid_data_path + f"requests.json")
 
             # Don't need to visit neighbors if we're at the maximum depth
             if current_depth == depth:

@@ -19,8 +19,8 @@ def worker(data_path, site_url, depth):
 
 SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
 
-if not os.path.exists("crawls/full_requests3"):
-    os.mkdir("crawls/full_requests3")
+if not os.path.exists("crawls/full_requests4"):
+    os.mkdir("crawls/full_requests4")
 
 # Get list of sites to crawl
 sites = []
@@ -33,7 +33,7 @@ for site_url in sites:
     site_url = f"https://{site_url}"
 
     # Create data folder
-    data_path = f"crawls/full_requests3/{utils.get_domain(site_url)}/"
+    data_path = f"crawls/full_requests4/{utils.get_domain(site_url)}/"
 
     # See https://stackoverflow.com/a/1316799/ for why we need to use multiprocessing
     process = mp.Process(target=worker, args=(data_path, site_url, 1))
