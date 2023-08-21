@@ -33,10 +33,4 @@ To crawl the list of sites in `inputs/sites/sites.txt`, run:
 python3 main.py
 ```
 
-Logs and screenshots are saved in the `crawls` folder.
-
-To analyze `crawls`, run
-
-```bash
-python3 analyze.py
-```
+Logs and screenshots are saved in the `crawls` folder. To analyze, use the `wip_tracker_analysis.ipynb` Jupyter Notebook.

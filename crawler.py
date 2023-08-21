@@ -321,14 +321,9 @@ class Crawler:
 
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
             if current_depth == 0 and interaction_type.value:
-                status = None
-                for _ in range(self.total_get_attempts):
-                    if status := bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value):
-                        break
+                status = bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value)
 
-                    time.sleep(self.time_to_wait)
-
-                if not status:
+                if status is None:
                     msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
                     Crawler.logger.critical(msg)
                     with open(self.data_path + "logs.txt", "a") as file:
@@ -409,7 +404,7 @@ class Crawler:
             js = file.read()
         self.driver.execute_script(js)
 
-        time.sleep(self.time_to_wait)
+        time.sleep(5)
 
         try:
             return self.driver.execute_script('return localStorage["nc_cmp"];')
