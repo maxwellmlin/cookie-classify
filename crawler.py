@@ -43,7 +43,7 @@ class CrawlData(TypedDict):
     """
 
     data_path: str
-    cmp_name: Optional[str]  # None if no cmp found
+    cmp_name: Optional[str]  # None if no CMP found
     click_success: Optional[bool]  # None if no click was attempted
 
 
@@ -58,7 +58,7 @@ class Crawler:
             data_path: Path to store log files and save screenshots.
             time_to_wait: Time to wait after visiting a page. Defaults to 5 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
-            page_load_timeout: Time to wait for a page to load. Defaults to 60 seconds.
+            page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
         self.headless = headless
@@ -89,13 +89,13 @@ class Crawler:
 
         return driver
 
-    def crawl(self, url: str, depth: int = 2) -> CrawlData:
+    def crawl(self, url: str, depth: int = 0) -> CrawlData:
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
         Args:
             url: URL of the website to crawl.
-            depth: Number of layers of the DFS. Defaults to 2.
+            depth: Number of layers of the DFS. Defaults to 0.
         """
         data: CrawlData = {"data_path": self.data_path,
                            "cmp_name": None,
@@ -105,8 +105,6 @@ class Crawler:
         temp_driver = self.get_driver()
         self.crawl_inner_pages(
             url,
-            crawl_name="",
-            depth=0,
             interaction_type=InteractionType.REJECT,
             data=data,
             driver=temp_driver
@@ -117,7 +115,6 @@ class Crawler:
         # Collect cookies
         self.crawl_inner_pages(
             url,
-            crawl_name="",
             depth=depth
         )
 
@@ -131,8 +128,6 @@ class Crawler:
         # Click reject
         self.crawl_inner_pages(
             url,
-            crawl_name="",
-            depth=0,
             interaction_type=InteractionType.REJECT,
             data=data
         )
@@ -152,7 +147,7 @@ class Crawler:
             self,
             start_node: str,
             crawl_name: str = "",
-            depth: int = 2,
+            depth: int = 0,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
             cookie_blacklist: tuple[CookieClass, ...] = (),
             data: Optional[CrawlData] = None,
@@ -166,11 +161,11 @@ class Crawler:
 
         Args:
             start_node: URL where traversal will begin. Future crawls will be constrained to this domain.
-            crawl_name: Name of the crawl, used for path names. Defaults to "", where no data is saved.
-            depth: Number of layers of the DFS. Defaults to 2.
+            crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
+            depth: Number of layers of the DFS. Defaults to 0.
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
-            data: Where some crawl data is saved. Defaults to None in which case no data is saved.
+            data: Object to save global crawl data. Defaults to None in which case no data is saved.
             driver: The web driver to use for crawling. Defaults to None in which case `self.driver` is used.
         """
         if depth < 0:
@@ -194,7 +189,7 @@ class Crawler:
             # Create uid for `current_url` if it does not exist
             if current_url not in self.uids:
                 self.uids[current_url] = self.next_uid
-                Path(self.data_path + f"{self.next_uid}/").mkdir(parents=True, exist_ok=True)
+                Path(self.data_path + f"{self.next_uid}/").mkdir(parents=True)
 
                 self.next_uid += 1
 
@@ -204,7 +199,7 @@ class Crawler:
                 continue
 
             uid_data_path = self.data_path + f"{uid}/"
-            site_info = f"'{current_url.url}' (UID: {uid})"
+            site_info = f"'{current_url.url}' (UID: {uid})"  # for logging
 
             # Log site visit
             msg = f"Visiting: {site_info} at depth {current_depth}"
@@ -277,21 +272,21 @@ class Crawler:
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
-                del driver.request_interceptor
 
                 continue
 
             # Wait for redirects and dynamic content
             time.sleep(self.time_to_wait)
 
-            # Get domain name
+            # Get domain and CMP name
             if current_depth == 0:
                 domain = utils.get_domain(driver.current_url)
                 if data is not None:
                     data["cmp_name"] = self.get_cmp()
 
-            # Account for redirects
             after_redirect = URL(driver.current_url)
+
+            # Account for redirects
             if after_redirect in redirects:
                 msg = f"Skipping duplicate site: {site_info}"
                 Crawler.logger.warning(msg)
@@ -363,8 +358,6 @@ class Crawler:
                 if neighbor not in previous:
                     previous[neighbor] = current_url.url
                     urls_to_visit.append((neighbor, current_depth + 1))
-
-            del driver.request_interceptor
 
     def save_viewport_screenshot(self, file_path: str):
         """
