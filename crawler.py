@@ -32,6 +32,7 @@ class InteractionType(Enum):
 
     Enum values correspond to BannerClick's `CHOICE` variable
     """
+
     NO_ACTION = 0
     ACCEPT = 1
     REJECT = 2
@@ -76,6 +77,9 @@ class Crawler:
         self.next_uid = 0
 
     def get_driver(self) -> webdriver.Firefox:
+        """
+        Initialize and return a Firefox web driver using arguments from `self`.
+        """
         options = FirefoxOptions()
         if self.headless:
             options.add_argument("--headless")

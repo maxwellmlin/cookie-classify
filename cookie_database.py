@@ -11,6 +11,7 @@ class CookieClass(Enum):
 
     See: https://www.cookielaw.org/wp-content/uploads/2019/12/icc_uk_cookiesguide_revnov.pdf
     """
+
     STRICTLY_NECESSARY = "Strictly Necessary"
     PERFORMANCE = "Performance"
     FUNCTIONALITY = "Functionality"
