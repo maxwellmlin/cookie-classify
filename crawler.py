@@ -253,7 +253,7 @@ class Crawler:
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
-                    Crawler.logger.error(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
                     time.sleep(wait_time)
                 except Exception:
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")

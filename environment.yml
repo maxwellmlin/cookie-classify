@@ -18,3 +18,4 @@ dependencies:
     - beautifulsoup4
     - pandas
     - validators
+    - matplotlib

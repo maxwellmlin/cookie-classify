@@ -11,8 +11,7 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 1
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_NAME = "jul26_depth1"
-CRAWL_PATH = f"crawls/{CRAWL_NAME}/"
+CRAWL_PATH = "crawls/jul26_depth1/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
