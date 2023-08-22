@@ -11,13 +11,13 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 1
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_PATH = "crawls/jul26_depth1/"
+CRAWL_PATH = "crawls/aug21/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
     crawler = Crawler(data_path)
     ret = crawler.crawl(site_url, depth)
-    crawler.quit()
+    crawler.cleanup_driver()
 
     queue.put(ret)
 
