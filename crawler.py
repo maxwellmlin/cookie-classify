@@ -89,8 +89,6 @@ class Crawler:
         options.add_argument("--disable-extensions")
         options.add_argument('--disable-application-cache')
         options.add_argument('--disable-gpu')
-        options.add_argument('--no-sandbox')  # NOTE: This is a security feature that we disable to reduce RAM overhead
-        options.add_argument("--disable-dev-shm-usage")
 
         if self.headless:
             options.add_argument("--headless")
