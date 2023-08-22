@@ -90,6 +90,7 @@ class Crawler:
 
         # options.add_argument('--no-sandbox')
         # options.add_argument("--disable-dev-shm-usage")
+
         if self.headless:
             options.add_argument("--headless")
 
@@ -117,15 +118,16 @@ class Crawler:
                            }
 
         # Exit early if cannot click reject
-        temp_driver = self.get_driver()
         self.crawl_inner_pages(
             url,
             interaction_type=InteractionType.REJECT,
             data=data,
-            driver=temp_driver
         )
         if not data["click_success"]:
             return data
+
+        self.cleanup_driver()
+        self.driver = self.get_driver()  # Reset driver
 
         # Collect cookies
         self.crawl_inner_pages(
@@ -406,6 +408,7 @@ class Crawler:
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
 
-    def quit(self) -> None:
+    def cleanup_driver(self) -> None:
         """Safely end the web driver."""
+        self.driver.close()
         self.driver.quit()
