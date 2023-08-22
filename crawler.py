@@ -46,6 +46,7 @@ class CrawlData(TypedDict):
     data_path: str
     cmp_name: Optional[str]  # None if no CMP found
     click_success: Optional[bool]  # None if no click was attempted
+    down: bool  # True if website is down
 
 
 class Crawler:
@@ -103,7 +104,9 @@ class Crawler:
         """
         data: CrawlData = {"data_path": self.data_path,
                            "cmp_name": None,
-                           "click_success": None}
+                           "click_success": None,
+                           "down": False
+                           }
 
         # Exit early if cannot click reject
         temp_driver = self.get_driver()
@@ -268,6 +271,9 @@ class Crawler:
 
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
+
+                    if data is not None:
+                        data["down"] = True
                 else:
                     Crawler.logger.error(msg)
 
