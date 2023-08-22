@@ -58,7 +58,7 @@ class Crawler:
         """
         Args:
             data_path: Path to store log files and save screenshots.
-            time_to_wait: Time to wait after visiting a page. Defaults to 5 seconds.
+            time_to_wait: Time to wait between driver get requests. Defaults to 5 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
@@ -82,6 +82,14 @@ class Crawler:
         Initialize and return a Firefox web driver using arguments from `self`.
         """
         options = FirefoxOptions()
+        options.add_argument("start-maximized")
+        options.add_argument("disable-infobars")
+        options.add_argument("--disable-extensions")
+        options.add_argument('--disable-application-cache')
+        options.add_argument('--disable-gpu')
+
+        # options.add_argument('--no-sandbox')
+        # options.add_argument("--disable-dev-shm-usage")
         if self.headless:
             options.add_argument("--headless")
 
@@ -244,15 +252,11 @@ class Crawler:
             while attempt < self.total_get_attempts:
                 try:
                     # Calculate wait time for exponential backoff
-                    backoff_time = 5 * (2 ** attempt)  # 5, 10, 20, ...
+                    backoff_time = self.time_to_wait * (2 ** attempt)  # 5, 10, 20, ...
                     backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
-                    jitter_factor = random.uniform(1, 2)  # Add jitter (randomness) to the waiting time to spread load on server
-                    wait_time = backoff_time * jitter_factor
-
-                    attempt += 1
-
-                    driver.set_page_load_timeout(self.page_load_timeout * attempt)
+                    load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
+                    driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
 
                     # Attempt to get the website
                     driver.get(current_url.url)
@@ -260,13 +264,15 @@ class Crawler:
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
+                    attempt += 1
                     Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
                     if attempt < self.total_get_attempts:
-                        time.sleep(wait_time)
+                        time.sleep(backoff_time)
                 except Exception:
+                    attempt += 1
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
                     if attempt < self.total_get_attempts:
-                        time.sleep(wait_time)
+                        time.sleep(backoff_time)
 
             if attempt == self.total_get_attempts:
                 msg = f"Skipping down site: {site_info}"
