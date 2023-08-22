@@ -46,7 +46,7 @@ class CrawlData(TypedDict):
     data_path: str
     cmp_name: Optional[str]  # None if no CMP found
     click_success: Optional[bool]  # None if no click was attempted
-    down: bool  # True if website is down
+    down: bool  # True if landing page is inaccessible, False otherwise
 
 
 class Crawler:
@@ -116,7 +116,7 @@ class Crawler:
                            "down": False
                            }
 
-        # Exit early if cannot click reject
+        # Check cookie notice type
         self.crawl_inner_pages(
             url,
             interaction_type=InteractionType.REJECT,
@@ -127,6 +127,10 @@ class Crawler:
 
         self.cleanup_driver()
         self.driver = self.get_driver()  # Reset driver
+
+        #
+        # Website Cookie Compliance Algorithm
+        #
 
         # Collect cookies
         self.crawl_inner_pages(
