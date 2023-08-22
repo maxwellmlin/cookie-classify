@@ -46,7 +46,7 @@ class CrawlData(TypedDict):
     data_path: str
     cmp_name: Optional[str]  # None if no CMP found
     click_success: Optional[bool]  # None if no click was attempted
-    down: bool  # True if website is down
+    down: bool  # True if landing page is inaccessible, False otherwise
 
 
 class Crawler:
@@ -82,14 +82,14 @@ class Crawler:
         Initialize and return a Firefox web driver using arguments from `self`.
         """
         options = FirefoxOptions()
+        
+        # See: https://stackoverflow.com/a/64724390/21055641
         options.add_argument("start-maximized")
         options.add_argument("disable-infobars")
         options.add_argument("--disable-extensions")
         options.add_argument('--disable-application-cache')
         options.add_argument('--disable-gpu')
 
-        # options.add_argument('--no-sandbox')
-        # options.add_argument("--disable-dev-shm-usage")
         if self.headless:
             options.add_argument("--headless")
 
@@ -116,16 +116,21 @@ class Crawler:
                            "down": False
                            }
 
-        # Exit early if cannot click reject
-        temp_driver = self.get_driver()
+        # Check cookie notice type
         self.crawl_inner_pages(
             url,
             interaction_type=InteractionType.REJECT,
             data=data,
-            driver=temp_driver
         )
         if not data["click_success"]:
             return data
+
+        self.cleanup_driver()
+        self.driver = self.get_driver()  # Reset driver
+
+        #
+        # Website Cookie Compliance Algorithm
+        #
 
         # Collect cookies
         self.crawl_inner_pages(
@@ -165,8 +170,7 @@ class Crawler:
             depth: int = 0,
             interaction_type: InteractionType = InteractionType.NO_ACTION,
             cookie_blacklist: tuple[CookieClass, ...] = (),
-            data: Optional[CrawlData] = None,
-            driver: Optional[webdriver.Firefox] = None):
+            data: Optional[CrawlData] = None):
         """
         Crawl inner pages of website with a given depth.
 
@@ -181,15 +185,11 @@ class Crawler:
             interaction_type: Whether to click the accept or reject button on cookie notices. Defaults to InteractionType.NO_ACTION.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
             data: Object to save global crawl data. Defaults to None in which case no data is saved.
-            driver: The web driver to use for crawling. Defaults to None in which case `self.driver` is used.
         """
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        if driver is None:
-            driver = self.driver
-
-        Crawler.logger.info(f"Starting traversal: {locals()}")
+        Crawler.logger.info(f"Starting `crawl_inner_pages` with args: {locals()}")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
@@ -241,10 +241,10 @@ class Crawler:
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
             # Set request interceptor
-            driver.request_interceptor = interceptor
+            self.driver.request_interceptor = interceptor
 
             # Remove previous HAR entries
-            del driver.requests
+            del self.driver.requests
 
             # Visit the current URL with exponential backoff reattempts
             attempt = 0
@@ -256,10 +256,10 @@ class Crawler:
                     backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
                     load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
-                    driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
+                    self.driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
 
                     # Attempt to get the website
-                    driver.get(current_url.url)
+                    self.driver.get(current_url.url)
 
                     break  # If successful, break out of the loop
 
@@ -298,13 +298,13 @@ class Crawler:
 
             # Get domain and CMP name
             if current_depth == 0:
-                domain = utils.get_domain(driver.current_url)
+                domain = utils.get_domain(self.driver.current_url)
                 if data is not None:
                     with open("neverconsent/nc.js", "r") as file:
                         js = file.read()
-                    data["cmp_name"] = driver.execute_script(js)
+                    data["cmp_name"] = self.driver.execute_script(js)
 
-            after_redirect = URL(driver.current_url)
+            after_redirect = URL(self.driver.current_url)
 
             # Account for redirects
             if after_redirect in redirects:
@@ -336,7 +336,7 @@ class Crawler:
 
             # NOTE: We are assumming bannerclick is successful on the landing page, and the notice disappears on inner pages
             if current_depth == 0 and interaction_type.value:
-                status = bc.run_all_for_domain(domain, after_redirect.url, driver, interaction_type.value)
+                status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
 
                 if status is None:
                     msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
@@ -356,7 +356,7 @@ class Crawler:
                 continue
 
             # Find all the anchor elements (links) on the page
-            a_elements = driver.find_elements(By.TAG_NAME, 'a')
+            a_elements = self.driver.find_elements(By.TAG_NAME, 'a')
             hrefs = [link.get_attribute('href') for link in a_elements]
 
             # Visit neighbors
@@ -406,6 +406,7 @@ class Crawler:
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
 
-    def quit(self) -> None:
+    def cleanup_driver(self) -> None:
         """Safely end the web driver."""
+        self.driver.close()
         self.driver.quit()
