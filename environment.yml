@@ -8,6 +8,8 @@ dependencies:
   - selenium
   - firefox
   - geckodriver
+  - htop
+  - screen
   - pip:
     - selenium-wire
     - selenium==4.2.0  # BannerClick requires Selenium 4.2.0
