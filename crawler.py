@@ -277,7 +277,7 @@ class Crawler:
                     if data is not None:
                         data["down"] = True
                 else:
-                    Crawler.logger.error(msg)
+                    Crawler.logger.warning(msg)
 
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
