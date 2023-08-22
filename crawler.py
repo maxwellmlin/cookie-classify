@@ -286,7 +286,9 @@ class Crawler:
             if current_depth == 0:
                 domain = utils.get_domain(driver.current_url)
                 if data is not None:
-                    data["cmp_name"] = self.get_cmp()
+                    with open("neverconsent/nc.js", "r") as file:
+                        js = file.read()
+                    data["cmp_name"] = driver.execute_script(js)
 
             after_redirect = URL(driver.current_url)
 
@@ -389,24 +391,6 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
-
-    def get_cmp(self) -> Optional[str]:
-        """
-        Return the name of the CMP used on the current page.
-
-        Returns:
-            CMP name if found, otherwise None.
-        """
-        with open("neverconsent/nc.js", "r") as file:
-            js = file.read()
-        self.driver.execute_script(js)
-
-        time.sleep(5)
-
-        try:
-            return self.driver.execute_script('return localStorage["nc_cmp"];')
-        except JavascriptException:
-            return None
 
     def quit(self) -> None:
         """Safely end the web driver."""
