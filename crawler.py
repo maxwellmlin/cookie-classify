@@ -185,7 +185,7 @@ class Crawler:
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        Crawler.logger.info(f"Starting traversal: {locals()}")
+        Crawler.logger.info(f"Starting `crawl_inner_pages` with args: {locals()}")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
