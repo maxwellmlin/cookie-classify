@@ -82,13 +82,14 @@ class Crawler:
         Initialize and return a Firefox web driver using arguments from `self`.
         """
         options = FirefoxOptions()
+        
+        # See: https://stackoverflow.com/a/64724390/21055641
         options.add_argument("start-maximized")
         options.add_argument("disable-infobars")
         options.add_argument("--disable-extensions")
         options.add_argument('--disable-application-cache')
         options.add_argument('--disable-gpu')
-
-        options.add_argument('--no-sandbox')
+        options.add_argument('--no-sandbox')  # NOTE: This is a security feature that we disable to reduce RAM overhead
         options.add_argument("--disable-dev-shm-usage")
 
         if self.headless:
