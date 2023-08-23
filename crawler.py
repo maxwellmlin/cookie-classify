@@ -116,13 +116,20 @@ class Crawler:
                            "down": False
                            }
 
+        # CMP Detection Only
+        # self.crawl_inner_pages(
+        #     url,
+        #     data=data,
+        # )
+        # return data
+
         # Check cookie notice type
         self.crawl_inner_pages(
             url,
             interaction_type=InteractionType.REJECT,
             data=data,
         )
-        if not data["click_success"]:
+        if data["down"] or (data["click_success"] is False and data["cmp_name"] is None):
             return data
 
         self.cleanup_driver()
@@ -141,7 +148,7 @@ class Crawler:
         # Log
         self.crawl_inner_pages(
             url,
-            crawl_name="normal",
+            crawl_name="before",
             depth=depth,
         )
 
@@ -157,7 +164,7 @@ class Crawler:
         # Log
         self.crawl_inner_pages(
             url,
-            crawl_name="after_reject",
+            crawl_name="after",
             depth=depth,
         )
 
@@ -300,7 +307,7 @@ class Crawler:
             if current_depth == 0:
                 domain = utils.get_domain(self.driver.current_url)
                 if data is not None:
-                    with open("neverconsent/nc.js", "r") as file:
+                    with open("injections/cmp-detection.js", "r") as file:
                         js = file.read()
                     data["cmp_name"] = self.driver.execute_script(js)
 

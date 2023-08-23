@@ -1,7 +1,7 @@
-import os
 import json
 import logging
 import multiprocessing as mp
+import pathlib
 
 from crawler import Crawler, CrawlData
 import utils
@@ -9,9 +9,9 @@ import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
-DEPTH = 1
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_PATH = "crawls/aug21/"
+DEPTH = 0
+SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
+CRAWL_PATH = "crawls/cmp_detection/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
@@ -23,8 +23,7 @@ def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
 
 
 def main():
-    if not os.path.exists(CRAWL_PATH):
-        os.mkdir(CRAWL_PATH)
+    pathlib.Path(CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
     logger.setLevel(logging.DEBUG)
 
