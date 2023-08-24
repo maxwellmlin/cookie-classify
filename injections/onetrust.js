@@ -1,8 +1,8 @@
 /**
- * __
- * @returns {string} "onetrust"
+ * TODO: Add docstring
  * 
- * Else, returns an error message which should be logged.
+ * 
+ * 
  */
 
 /*
