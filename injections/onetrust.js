@@ -82,7 +82,7 @@ function encodeObject(obj) {
 
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
-            keyValuePairs.push(`${key}=${encodeURIComponent(obj[key])}`);
+            keyValuePairs.push(`${key}=${obj[key]}`);
         }
     }
 
@@ -100,7 +100,7 @@ function encodeGroups(obj) {
 
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
-            keyValuePairs.push(`${key}:${encodeURIComponent(obj[key])}`);
+            keyValuePairs.push(`${key}:${obj[key]}`);
         }
     }
 
@@ -151,16 +151,24 @@ function disableOnlyTracking() {
     onetrust.js
 */
 let OptanonConsent = Cookies.get('OptanonConsent')
+let CookieGroupIDs = getCookieGroupIDs()
 
-if (OptanonConsent == null) {
-    return "ERROR: OptanonConsent cookie not found"
-}
-if (getCookieGroupIDs() == null) {
-    return "ERROR: Conflicting OneTrust IDs found"
-}
+// if (OptanonConsent == null) {
+//     return "ERROR: OptanonConsent cookie not found"
+// }
+// if (CookieGroupIDs() == null) {
+//     return "ERROR: Conflicting OneTrust IDs found"
+// }
 
 OptanonConsentObject = decodeString(OptanonConsent)
-// OptanonConsentObject['groups'] = disableOnlyTracking()
+OptanonConsentObject['groups'] = disableOnlyTracking()
+OptanonConsentObject['interactionCount'] = (parseInt(OptanonConsentObject['interactionCount']) + 1).toString()
+OptanonConsentObject['landingPage'] = "NotLandingPage"
 
-Cookies.remove('OptanonConsent')
-Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject))
+// otBannerSdk.js uses this domain to set cookies
+domain = `.${OneTrust.GetDomainData().Domain}`
+
+Cookies.remove("OptanonConsent", { path: '/', domain: domain })
+Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', domain: domain, expires: 30, secure: false, sameSite: 'Lax' })
+
+// Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString())
