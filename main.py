@@ -2,15 +2,16 @@ import json
 import logging
 import multiprocessing as mp
 import pathlib
+import os
 
-from crawler import Crawler, CrawlData
+from crawler import Crawler, CrawlData, CMPType
 import utils
 import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 0
-SITE_LIST_PATH = "inputs/sites/detectedBanner.txt"  # Path to list of sites to crawl
+SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 CRAWL_PATH = "crawls/cmp_detection/"
 
 
@@ -40,11 +41,20 @@ def main():
     logger.addHandler(log_stream)
     logger.addHandler(log_file)
 
-    # Read sites from file
     sites = []
-    with open(SITE_LIST_PATH) as log_file:
-        for line in log_file:
-            sites.append(line.strip())
+
+    # Read sites from text file
+    # with open(SITE_LIST_PATH) as file:
+    #     for line in file:
+    #         sites.append(line.strip())
+
+    # All OneTrust sites
+    with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
+        data = json.load(log_file)
+        for path in data:
+            if CMPType.ONETRUST in data[path]["cmp_names"]:
+                site = os.path.basename(os.path.normpath(path))
+                sites.append(site)
 
     # Create input for pool
     output: mp.Queue = mp.Queue()
@@ -58,6 +68,7 @@ def main():
         result = output.get()
         key: str = result.pop('data_path')
         data[key] = result
+
         with open(CRAWL_PATH + 'results.json', 'w') as log_file:
             json.dump(data, log_file)
 
