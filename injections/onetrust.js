@@ -153,22 +153,53 @@ function disableOnlyTracking() {
 let OptanonConsent = Cookies.get('OptanonConsent')
 let CookieGroupIDs = getCookieGroupIDs()
 
-// if (OptanonConsent == null) {
-//     return "ERROR: OptanonConsent cookie not found"
-// }
-// if (CookieGroupIDs() == null) {
-//     return "ERROR: Conflicting OneTrust IDs found"
-// }
+if (OptanonConsent == null) {
+    msg = "OptanonConsent cookie not found"
+
+    console.warn(`ERROR: ${msg}`)
+    // return {
+    //     "success": false,
+    //     "message": msg
+    // }
+}
+if (CookieGroupIDs == null) {
+    msg = "Conflicting OneTrust IDs found"
+
+    console.warn(`ERROR: ${msg}`)
+    // return {
+    //     "success": false,
+    //     "message": msg
+    // }
+}
+if (window.OneTrust == null) {
+    msg = "OneTrust API not found"
+
+    console.warn(`ERROR: ${msg}`)
+    // return {
+    //     "success": false,
+    //     "message": msg
+    // }
+}
 
 OptanonConsentObject = decodeString(OptanonConsent)
 OptanonConsentObject['groups'] = disableOnlyTracking()
+
+console.log(`Injected groups field: ${OptanonConsentObject['groups']}`)
+
+// These likely don't need to be updated but we do it anyway to fully emulate user interaction
 OptanonConsentObject['interactionCount'] = (parseInt(OptanonConsentObject['interactionCount']) + 1).toString()
-OptanonConsentObject['landingPage'] = "NotLandingPage"
+OptanonConsentObject['landingPath'] = "NotLandingPage"
 
 // otBannerSdk.js uses this domain to set cookies
 domain = `.${OneTrust.GetDomainData().Domain}`
 
 Cookies.remove("OptanonConsent", { path: '/', domain: domain })
-Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', domain: domain, expires: 30, secure: false, sameSite: 'Lax' })
+Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
 
-// Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString())
+// Optional: Close the OneTrust banner
+Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString(), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
+
+// return {
+//     "success": true,
+//     "message": ""
+// }
