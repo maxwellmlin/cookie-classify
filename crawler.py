@@ -148,7 +148,7 @@ class Crawler:
         # Log
         self.crawl_inner_pages(
             url,
-            crawl_name="before",
+            crawl_name="normal",
             depth=depth,
         )
 
@@ -164,7 +164,7 @@ class Crawler:
         # Log
         self.crawl_inner_pages(
             url,
-            crawl_name="after",
+            crawl_name="after_reject",
             depth=depth,
         )
 
