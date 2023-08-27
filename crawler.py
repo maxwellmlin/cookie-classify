@@ -17,7 +17,7 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import JavascriptException, TimeoutException
+from selenium.common.exceptions import JavascriptException, TimeoutException, WebDriverException
 
 from cookie_database import CookieClass
 import interceptors
@@ -389,7 +389,13 @@ class Crawler:
             file_path: Path to save the screenshot.
         """
         # Take a screenshot of the viewport
-        screenshot = self.driver.get_screenshot_as_png()
+        try:
+            # NOTE: Rarely, this command will fail
+            # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+            screenshot = self.driver.get_screenshot_as_png()
+        except WebDriverException:
+            Crawler.logger.exception("Failed to take screenshot")
+            return
 
         # Save the screenshot to a file
         with open(file_path, "wb") as file:
