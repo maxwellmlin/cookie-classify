@@ -154,14 +154,30 @@ class Crawler:
             # OneTrust Compliance
             #
 
+            # TODO: technically, don't need these first two crawls, but want to verify that OneTrust injection is working properly for now
+            # Collect cookies
+            self.crawl_inner_pages(
+                url,
+                depth=depth
+            )
+
+            # Log
+            self.crawl_inner_pages(
+                url,
+                crawl_name="normal",
+                depth=depth,
+            )
+
+            # OneTrust reject
             self.crawl_inner_pages(
                 url,
                 interaction_type=CMPType.ONETRUST,
                 data=data
             )
+            if not data["interact_success"]:  # unable to BannerClick reject
+                return data
 
-            # TODO: Exit early if injection failed
-
+            # Log
             self.crawl_inner_pages(
                 url,
                 crawl_name="onetrust_reject_tracking",
@@ -191,7 +207,7 @@ class Crawler:
                 depth=depth,
             )
 
-            # Click reject
+            # BannerClick reject
             self.crawl_inner_pages(
                 url,
                 interaction_type=BannerClickInteractionType.REJECT,

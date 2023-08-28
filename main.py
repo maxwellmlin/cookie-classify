@@ -12,7 +12,7 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 0
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_PATH = "crawls/cmp_detection/"
+CRAWL_PATH = "crawls/aug28-onetrust/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
