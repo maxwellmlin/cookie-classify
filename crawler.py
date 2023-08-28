@@ -214,6 +214,11 @@ class Crawler:
                 data=data
             )
             if not data["interact_success"]:  # unable to BannerClick reject
+                msg = f"BannerClick failed to reject: {url}"
+                Crawler.logger.critical(msg)
+                with open(self.data_path + "logs.txt", "a") as file:
+                    file.write(msg + "\n")
+
                 return data
 
             # Log
@@ -414,13 +419,6 @@ class Crawler:
                     -1 = Accept (Settings) Success
                     -2 = Reject (Settings) Success
                     """
-
-                    if status is None:
-                        msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
-                        Crawler.logger.critical(msg)
-                        with open(self.data_path + "logs.txt", "a") as file:
-                            file.write(msg + "\n")
-
                     if data is not None:
                         data["interact_success"] = status is not None
 
