@@ -16,7 +16,7 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import JavascriptException, TimeoutException, WebDriverException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 from cookie_database import CookieClass
 import interceptors
@@ -56,7 +56,7 @@ class CrawlData(TypedDict):
 
     data_path: str
     cmp_names: list[CMPType]  # Empty if no CMP found
-    click_success: Optional[bool]  # None if no click was attempted
+    interact_success: Optional[bool]  # None if no interaction was attempted
     down: bool  # True if landing page is inaccessible, False otherwise
 
 
@@ -125,7 +125,7 @@ class Crawler:
         """
         data: CrawlData = {"data_path": self.data_path,
                            "cmp_names": [],
-                           "click_success": None,
+                           "interact_success": None,
                            "down": False
                            }
 
@@ -170,7 +170,7 @@ class Crawler:
 
             return data
 
-        elif data["click_success"]:
+        elif data["interact_success"]:  # able to BannerClick reject
             self.cleanup_driver()
             self.driver = self.get_driver()  # Reset driver
 
@@ -197,7 +197,7 @@ class Crawler:
                 interaction_type=BannerClickInteractionType.REJECT,
                 data=data
             )
-            if not data["click_success"]:
+            if not data["interact_success"]:  # unable to BannerClick reject
                 return data
 
             # Log
@@ -389,6 +389,15 @@ class Crawler:
             if current_depth == 0 and interaction_type is not None:
                 if type(interaction_type) is BannerClickInteractionType:
                     status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                    """
+                    None = BannerClick failed
+
+                    1 = Accept Success
+                    2 = Reject Success
+
+                    -1 = Accept (Settings) Success
+                    -2 = Reject (Settings) Success
+                    """
 
                     if status is None:
                         msg = f"BannerClick failed to {interaction_type.name}: {site_info}"
@@ -397,7 +406,7 @@ class Crawler:
                             file.write(msg + "\n")
 
                     if data is not None:
-                        data["click_success"] = status is not None
+                        data["interact_success"] = status is not None
 
                 if type(interaction_type) is CMPType:
                     if interaction_type == CMPType.ONETRUST:
@@ -411,6 +420,9 @@ class Crawler:
                             Crawler.logger.info(f"Successfully injected OneTrust script: {res['message']}")
                         else:
                             Crawler.logger.error(f"Failed to inject OneTrust script: {res['message']}")
+
+                        if data is not None:
+                            data["interact_success"] = res["success"]
 
             # Save HAR file
             if crawl_name:
