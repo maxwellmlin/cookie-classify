@@ -23,33 +23,48 @@
  * @returns {Object|null} - An object mapping OneTrust IDs to category names (e.g., {1: "Strictly Necessary Cookies"}).
  *                          If there's a conflict in IDs, it returns null.
  */
+// function getCookieGroupIDsWithHTML() {
+//     // Select all elements with an ID that starts with 'ot-header-id-'
+//     onetrust_id_elements = document.querySelectorAll('*[id^="ot-header-id-"]');
+
+//     success = true;
+//     categories = {} // Map OneTrust ID to category name (e.g. 1: "Strictly Necessary Cookies")
+//     onetrust_id_elements.forEach(function (element) {
+//         let onetrust_id = element.id.split('ot-header-id-')[1];  // get the ID after the prefix
+//         let category = element.innerText;
+
+//         // Check for conflicts
+//         if (onetrust_id in categories && categories[onetrust_id] !== category) {
+//             let duplicate_id_elements = document.querySelectorAll(`*[id^="ot-header-id-${onetrust_id}"]`)
+//             console.warn(`The same OneTrust ID maps to different categories! Conflicting elements are:`);
+//             console.warn(duplicate_id_elements);
+
+//             success = false;
+//         }
+
+//         categories[onetrust_id] = category;
+//     });
+
+//     if (success) {
+//         return categories;
+//     } else {
+//         return null;
+//     }
+// }
+
+/**
+ * Retrieve a mapping of OneTrust Cookie Group IDs to their corresponding category names.
+ * 
+ * @returns {Object} - An object mapping OneTrust IDs to category names (e.g., {1: "Strictly Necessary Cookies"}).
+ */
 function getCookieGroupIDs() {
-    // Select all elements with an ID that starts with 'ot-header-id-'
-    onetrust_id_elements = document.querySelectorAll('*[id^="ot-header-id-"]');
-
-    success = true;
     categories = {} // Map OneTrust ID to category name (e.g. 1: "Strictly Necessary Cookies")
-    onetrust_id_elements.forEach(function (element) {
-        let onetrust_id = element.id.split('ot-header-id-')[1];  // get the ID after the prefix
-        let category = element.innerText;
 
-        // Check for conflicts
-        if (onetrust_id in categories && categories[onetrust_id] !== category) {
-            let duplicate_id_elements = document.querySelectorAll(`*[id^="ot-header-id-${onetrust_id}"]`)
-            console.warn(`The same OneTrust ID maps to different categories! Conflicting elements are:`);
-            console.warn(duplicate_id_elements);
+    OneTrust.GetDomainData().Groups.forEach(group => {
+        categories[group.OptanonGroupId] = group.GroupName;
+    })
 
-            success = false;
-        }
-
-        categories[onetrust_id] = category;
-    });
-
-    if (success) {
-        return categories;
-    } else {
-        return null;
-    }
+    return categories;
 }
 
 
@@ -151,36 +166,27 @@ function disableOnlyTracking() {
     onetrust.js
 */
 let OptanonConsent = Cookies.get('OptanonConsent')
-let CookieGroupIDs = getCookieGroupIDs()
 
 if (OptanonConsent == null) {
     msg = "OptanonConsent cookie not found"
 
     console.warn(`ERROR: ${msg}`)
-    // return {
-    //     "success": false,
-    //     "message": msg
-    // }
-}
-if (CookieGroupIDs == null) {
-    msg = "Conflicting OneTrust IDs found"
-
-    console.warn(`ERROR: ${msg}`)
-    // return {
-    //     "success": false,
-    //     "message": msg
-    // }
+    return {
+        "success": false,
+        "message": msg
+    }
 }
 if (window.OneTrust == null) {
     msg = "OneTrust API not found"
 
     console.warn(`ERROR: ${msg}`)
-    // return {
-    //     "success": false,
-    //     "message": msg
-    // }
+    return {
+        "success": false,
+        "message": msg
+    }
 }
 
+let CookieGroupIDs = getCookieGroupIDs()
 OptanonConsentObject = decodeString(OptanonConsent)
 OptanonConsentObject['groups'] = disableOnlyTracking()
 
@@ -199,7 +205,7 @@ Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', d
 // Optional: Close the OneTrust banner
 Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString(), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
 
-// return {
-//     "success": true,
-//     "message": ""
-// }
+return {
+    "success": true,
+    "message": `Injected groups: ${OptanonConsentObject['groups']}`
+}
