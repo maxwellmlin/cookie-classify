@@ -50,9 +50,9 @@ def main():
 
     # All OneTrust sites
     with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
-        data = json.load(log_file)
-        for path in data:
-            if CMPType.ONETRUST in data[path]["cmp_names"]:
+        results = json.load(log_file)
+        for path in results:
+            if CMPType.ONETRUST in results[path]["cmp_names"]:
                 site = os.path.basename(os.path.normpath(path))
                 sites.append(site)
 
