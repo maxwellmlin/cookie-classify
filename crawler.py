@@ -435,7 +435,7 @@ class Crawler:
                         if res["success"] is True:
                             Crawler.logger.info(f"Successfully injected with '{res['message']}'")
                         else:
-                            Crawler.logger.error(f"Failed to inject: {res['message']}")
+                            Crawler.logger.critical(f"Failed to inject: {res['message']}")
 
                         if data is not None:
                             data["interact_success"] = res["success"]
