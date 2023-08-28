@@ -258,7 +258,7 @@ class Crawler:
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        Crawler.logger.info(f"Starting `crawl_inner_pages` with args: {locals()}")
+        Crawler.logger.info(f"Starting crawl with args: {locals()}")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
@@ -424,16 +424,18 @@ class Crawler:
 
                 if type(interaction_type) is CMPType:
                     if interaction_type == CMPType.ONETRUST:
-                        with open("injections/onetrust.js", "r") as file:
+                        injection_script = "onetrust.js"
+
+                        with open(f"injections/{injection_script}", "r") as file:
                             js = file.read()
 
-                        Crawler.logger.info(f"Injecting `onetrust.js`: {site_info}")
                         res = self.driver.execute_script(js)
 
+                        Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}")
                         if res["success"] is True:
-                            Crawler.logger.info(f"Successfully injected OneTrust script: {res['message']}")
+                            Crawler.logger.info(f"Successfully injected with '{res['message']}'")
                         else:
-                            Crawler.logger.error(f"Failed to inject OneTrust script: {res['message']}")
+                            Crawler.logger.error(f"Failed to inject: {res['message']}")
 
                         if data is not None:
                             data["interact_success"] = res["success"]

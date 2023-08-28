@@ -1,8 +1,12 @@
 /**
- * TODO: Add docstring
- * 
- * 
- * 
+ * Inject a groups field into the OneTrust `OptanonConsent` cookie.
+ * @return {res}
+ */
+
+/**
+ * @typedef {Object} res
+ * @property {boolean} success - Whether the injection was successful
+ * @property {string} message - The injected groups field if successful, otherwise an error message
  */
 
 /*
@@ -207,5 +211,5 @@ Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString(), { path: '/', doma
 
 return {
     "success": true,
-    "message": `Injected groups: ${OptanonConsentObject['groups']}`
+    "message": OptanonConsentObject['groups']
 }
