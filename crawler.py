@@ -122,8 +122,8 @@ class Crawler:
         """
         try:
             ret = self.__crawl(url, depth)
-        except Exception as e:
-            logging.critical(f"GENERAL CRAWL FAILURE: {e}", exc_info=True)
+        except Exception:
+            Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {url}", exc_info=True)
 
             ret: CrawlData = {
                 "data_path": self.data_path,
