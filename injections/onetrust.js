@@ -144,7 +144,7 @@ function disableOnlyTracking() {
 if (window.OneTrust === undefined) {
     msg = "OneTrust API not found"
 
-    console.warn(`ERROR: ${msg}`)
+    console.error(`ERROR: ${msg}`)
     return {
         "success": false,
         "message": msg
@@ -155,7 +155,7 @@ let OptanonConsent = Cookies.get('OptanonConsent')
 if (OptanonConsent === undefined) {
     msg = "OptanonConsent cookie not found"
 
-    console.warn(`ERROR: ${msg}`)
+    console.error(`ERROR: ${msg}`)
     return {
         "success": false,
         "message": msg
@@ -166,7 +166,7 @@ let CookieGroupIDs = getCookieGroupIDs()
 if (CookieGroupIDs === null) {
     msg = "No cookie categories found"
 
-    console.warn(`ERROR: ${msg}`)
+    console.error(`ERROR: ${msg}`)
     return {
         "success": false,
         "message": msg
@@ -186,7 +186,7 @@ OptanonConsentObject['landingPath'] = "NotLandingPage"
 if ((domain = OneTrust?.GetDomainData()?.Domain) === undefined) {
     msg = "OneTrust domain is undefined"
 
-    console.warn(`ERROR: ${msg}`)
+    console.error(`ERROR: ${msg}`)
     return {
         "success": false,
         "message": msg
