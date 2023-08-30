@@ -18,14 +18,27 @@
 /**
  * Retrieve a mapping of OneTrust Cookie Group IDs to their corresponding category names.
  * 
- * @returns {Object} - An object mapping OneTrust IDs to category names (e.g., {1: "Strictly Necessary Cookies"}).
+ * @returns {Object} - An object mapping OneTrust IDs to category names (e.g., {1: "Strictly Necessary Cookies"}). Returns null if no categories are found.
  */
 function getCookieGroupIDs() {
-    categories = {} // Map OneTrust ID to category name (e.g. 1: "Strictly Necessary Cookies")
+    let categories = {} // Map OneTrust ID to category name (e.g. 1: "Strictly Necessary Cookies")
 
-    OneTrust.GetDomainData().Groups.forEach(group => {
-        categories[group.OptanonGroupId] = group.GroupName;
-    })
+    const groups = OneTrust?.GetDomainData?.()?.Groups 
+    if (groups === undefined) {
+        return null
+    }
+
+    for (const group of groups) {
+        const groupID = group.OptanonGroupId
+        const groupName = group.GroupName
+        if (groupID !== undefined && groupName !== undefined) {
+            categories[groupID] = groupName
+        }
+    }
+
+    if (Object.keys(categories).length === 0) {
+        return null
+    }
 
     return categories;
 }
@@ -128,18 +141,7 @@ function disableOnlyTracking() {
 /*
     onetrust.js
 */
-let OptanonConsent = Cookies.get('OptanonConsent')
-
-if (OptanonConsent == null) {
-    msg = "OptanonConsent cookie not found"
-
-    console.warn(`ERROR: ${msg}`)
-    return {
-        "success": false,
-        "message": msg
-    }
-}
-if (window.OneTrust == null) {
+if (window.OneTrust === undefined) {
     msg = "OneTrust API not found"
 
     console.warn(`ERROR: ${msg}`)
@@ -149,7 +151,28 @@ if (window.OneTrust == null) {
     }
 }
 
+let OptanonConsent = Cookies.get('OptanonConsent')
+if (OptanonConsent === undefined) {
+    msg = "OptanonConsent cookie not found"
+
+    console.warn(`ERROR: ${msg}`)
+    return {
+        "success": false,
+        "message": msg
+    }
+}
+
 let CookieGroupIDs = getCookieGroupIDs()
+if (CookieGroupIDs === null) {
+    msg = "No cookie categories found"
+
+    console.warn(`ERROR: ${msg}`)
+    return {
+        "success": false,
+        "message": msg
+    }
+}
+
 OptanonConsentObject = decodeString(OptanonConsent)
 OptanonConsentObject['groups'] = disableOnlyTracking()
 
@@ -160,7 +183,16 @@ OptanonConsentObject['interactionCount'] = (parseInt(OptanonConsentObject['inter
 OptanonConsentObject['landingPath'] = "NotLandingPage"
 
 // otBannerSdk.js uses this domain to set cookies
-domain = `.${OneTrust.GetDomainData().Domain}`
+if ((domain = OneTrust?.GetDomainData()?.Domain) === undefined) {
+    msg = "OneTrust domain is undefined"
+
+    console.warn(`ERROR: ${msg}`)
+    return {
+        "success": false,
+        "message": msg
+    }
+}
+domain = `.${domain}`
 
 Cookies.remove("OptanonConsent", { path: '/', domain: domain })
 Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
