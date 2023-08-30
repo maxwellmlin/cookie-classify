@@ -58,7 +58,7 @@ class CrawlData(TypedDict):
     cmp_names: list[CMP]  # Empty if no CMP found
     interact_type: BannerClick | CMP | None  # None if no interaction was attempted
     interact_success: Optional[bool]  # None if no interaction was attempted
-    down: bool  # True if landing page is inaccessible, False otherwise
+    down: bool  # True if landing page is down or some other critical error occurred
 
 
 class Crawler:
@@ -319,7 +319,6 @@ class Crawler:
 
             # Visit the current URL with exponential backoff reattempts
             attempt = 0
-            wait_time = 0
             backoff_time = 0
             while attempt < self.total_get_attempts:
                 try:
