@@ -519,6 +519,8 @@ class Crawler:
             json.dump(data, file, indent=4)
 
     def cleanup_driver(self) -> None:
-        """Safely end the web driver."""
+        """
+        Safely end the web driver.
+        """
         self.driver.close()
         self.driver.quit()
