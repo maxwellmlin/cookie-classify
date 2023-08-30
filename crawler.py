@@ -25,18 +25,18 @@ from url import URL
 import config
 
 
-class BannerClickInteractionType(Enum):
+class BannerClick(str, Enum):
     """
     Type of interaction with Accept/Reject cookie notice.
 
     Enum values correspond to BannerClick's `CHOICE` variable.
     """
 
-    ACCEPT = 1
-    REJECT = 2
+    ACCEPT = "BannerClick Accept"
+    REJECT = "BannerClick Reject"
 
 
-class CMPType(str, Enum):
+class CMP(str, Enum):
     """
     Type of CMP API.
 
@@ -55,7 +55,8 @@ class CrawlData(TypedDict):
     """
 
     data_path: str
-    cmp_names: list[CMPType]  # Empty if no CMP found
+    cmp_names: list[CMP]  # Empty if no CMP found
+    interact_type: BannerClick | CMP | None  # None if no interaction was attempted
     interact_success: Optional[bool]  # None if no interaction was attempted
     down: bool  # True if landing page is inaccessible, False otherwise
 
@@ -125,6 +126,7 @@ class Crawler:
         """
         data: CrawlData = {"data_path": self.data_path,
                            "cmp_names": [],
+                           "interact_type": None,
                            "interact_success": None,
                            "down": False
                            }
@@ -139,14 +141,14 @@ class Crawler:
         # Check cookie notice type
         self.crawl_inner_pages(
             url,
-            interaction_type=BannerClickInteractionType.REJECT,
+            interaction_type=BannerClick.REJECT,
             data=data,
         )
 
         #
         # Website Cookie Compliance Algorithm
         #
-        if CMPType.ONETRUST in data["cmp_names"]:
+        if CMP.ONETRUST in data["cmp_names"]:
             self.cleanup_driver()
             self.driver = self.get_driver()
 
@@ -171,7 +173,7 @@ class Crawler:
             # OneTrust reject
             self.crawl_inner_pages(
                 url,
-                interaction_type=CMPType.ONETRUST,
+                interaction_type=CMP.ONETRUST,
                 data=data
             )
             if not data["interact_success"]:  # unable to BannerClick reject
@@ -210,7 +212,7 @@ class Crawler:
             # BannerClick reject
             self.crawl_inner_pages(
                 url,
-                interaction_type=BannerClickInteractionType.REJECT,
+                interaction_type=BannerClick.REJECT,
                 data=data
             )
             if not data["interact_success"]:  # unable to BannerClick reject
@@ -237,7 +239,7 @@ class Crawler:
             start_node: str,
             crawl_name: str = "",
             depth: int = 0,
-            interaction_type: BannerClickInteractionType | CMPType | None = None,
+            interaction_type: BannerClick | CMP | None = None,
             cookie_blacklist: tuple[CookieClass, ...] = (),
             data: Optional[CrawlData] = None):
         """
@@ -374,7 +376,7 @@ class Crawler:
                         js = file.read()
 
                     cmp_names = self.driver.execute_script(js)
-                    data["cmp_names"] = [CMPType(name) for name in cmp_names]
+                    data["cmp_names"] = [CMP(name) for name in cmp_names]
 
             after_redirect = URL(self.driver.current_url)
 
@@ -408,8 +410,16 @@ class Crawler:
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
-                if type(interaction_type) is BannerClickInteractionType:
-                    status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, interaction_type.value)
+                if data is not None:
+                    data["interact_type"] = interaction_type
+
+                if type(interaction_type) is BannerClick:
+                    if interaction_type == BannerClick.ACCEPT:
+                        magic_number = 1
+                    elif interaction_type == BannerClick.REJECT:
+                        magic_number = 2
+
+                    status = bc.run_all_for_domain(domain, after_redirect.url, self.driver, magic_number)
                     """
                     None = BannerClick failed
 
@@ -422,8 +432,8 @@ class Crawler:
                     if data is not None:
                         data["interact_success"] = status is not None
 
-                if type(interaction_type) is CMPType:
-                    if interaction_type == CMPType.ONETRUST:
+                elif type(interaction_type) is CMP:
+                    if interaction_type == CMP.ONETRUST:
                         injection_script = "onetrust.js"
 
                         with open(f"injections/{injection_script}", "r") as file:

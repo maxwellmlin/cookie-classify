@@ -4,7 +4,7 @@ import multiprocessing as mp
 import pathlib
 import os
 
-from crawler import Crawler, CMPType
+from crawler import Crawler, CMP
 import utils
 import config
 
@@ -52,7 +52,7 @@ def main():
     with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
         results = json.load(log_file)
         for path in results:
-            if CMPType.ONETRUST in results[path]["cmp_names"]:
+            if CMP.ONETRUST in results[path]["cmp_names"]:
                 site = os.path.basename(os.path.normpath(path))
                 sites.append(site)
 
