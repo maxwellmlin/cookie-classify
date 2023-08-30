@@ -118,6 +118,25 @@ class Crawler:
 
     def crawl(self, url: str, depth: int = 0) -> CrawlData:
         """
+        Wrapper for `__crawl` that catches any exceptions.
+        """
+        try:
+            ret = self.__crawl(url, depth)
+        except Exception as e:
+            logging.critical(f"GENERAL CRAWL FAILURE: {e}", exc_info=True)
+
+            ret: CrawlData = {
+                "data_path": self.data_path,
+                "cmp_names": [],
+                "interact_type": None,
+                "interact_success": None,
+                "down": True
+            }
+
+        return ret
+
+    def __crawl(self, url: str, depth: int = 0) -> CrawlData:
+        """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
         Args:

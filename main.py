@@ -17,18 +17,7 @@ CRAWL_PATH = "crawls/aug30-onetrust/"
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
     crawler = Crawler(data_path)
-
-    try:
-        ret = crawler.crawl(site_url, depth)
-    except Exception as e:
-        logging.critical(f"GENERAL CRAWL FAILURE: {e}", exc_info=True)
-        ret = {
-            "data_path": data_path,
-            "cmp_names": [],
-            "interact_type": None,
-            "interact_success": None,
-            "down": True
-        }
+    ret = crawler.crawl(site_url, depth)
     crawler.cleanup_driver()
 
     queue.put(ret)
