@@ -16,7 +16,7 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import TimeoutException, WebDriverException, JavascriptException
 
 from cookie_database import CookieClass
 import interceptors
@@ -429,7 +429,10 @@ class Crawler:
                         with open(f"injections/{injection_script}", "r") as file:
                             js = file.read()
 
-                        res = self.driver.execute_script(js)
+                        try:
+                            res = self.driver.execute_script(js)
+                        except JavascriptException as e:
+                            res = {"success": False, "message": e}
 
                         Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}")
                         if res["success"] is True:
