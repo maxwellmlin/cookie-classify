@@ -166,7 +166,7 @@ class Crawler:
             # Log
             self.crawl_inner_pages(
                 url,
-                crawl_name="normal",
+                crawl_name="no_interaction",
                 depth=depth,
             )
 
@@ -182,7 +182,7 @@ class Crawler:
             # Log
             self.crawl_inner_pages(
                 url,
-                crawl_name="onetrust_reject_tracking",
+                crawl_name="reject_only_tracking",
                 depth=depth,
             )
 
