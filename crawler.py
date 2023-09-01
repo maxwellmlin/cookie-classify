@@ -91,6 +91,14 @@ class Crawler:
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
 
+        self.data: CrawlData = {
+            "data_path": self.data_path,
+            "cmp_names": [],
+            "interact_type": None,
+            "interact_success": None,
+            "down": False
+        }
+
     def get_driver(self) -> webdriver.Firefox:
         """
         Initialize and return a Firefox web driver using arguments from `self`.
@@ -120,12 +128,13 @@ class Crawler:
         """
         Wrapper for `__crawl` that catches any exceptions.
         """
+        ret: CrawlData
         try:
             ret = self.__crawl(url, depth)
         except Exception:
             Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {url}", exc_info=True)
 
-            ret: CrawlData = {
+            ret = {
                 "data_path": self.data_path,
                 "cmp_names": [],
                 "interact_type": None,
@@ -143,12 +152,6 @@ class Crawler:
             url: URL of the website to crawl.
             depth: Number of layers of the DFS. Defaults to 0.
         """
-        data: CrawlData = {"data_path": self.data_path,
-                           "cmp_names": [],
-                           "interact_type": None,
-                           "interact_success": None,
-                           "down": False
-                           }
 
         # CMP Detection Only
         # self.crawl_inner_pages(
@@ -161,13 +164,12 @@ class Crawler:
         self.crawl_inner_pages(
             url,
             interaction_type=BannerClick.REJECT,
-            data=data,
         )
 
         #
         # Website Cookie Compliance Algorithm
         #
-        if CMP.ONETRUST in data["cmp_names"]:
+        if CMP.ONETRUST in self.data["cmp_names"]:
             self.cleanup_driver()
             self.driver = self.get_driver()
 
@@ -193,10 +195,9 @@ class Crawler:
             self.crawl_inner_pages(
                 url,
                 interaction_type=CMP.ONETRUST,
-                data=data
             )
-            if not data["interact_success"]:  # unable to BannerClick reject
-                return data
+            if not self.data["interact_success"]:  # unable to BannerClick reject
+                return self.data
 
             # Log
             self.crawl_inner_pages(
@@ -205,9 +206,9 @@ class Crawler:
                 depth=depth,
             )
 
-            return data
+            return self.data
 
-        elif data["interact_success"]:  # able to BannerClick reject
+        elif self.data["interact_success"]:  # able to BannerClick reject
             self.cleanup_driver()
             self.driver = self.get_driver()  # Reset driver
 
@@ -232,15 +233,14 @@ class Crawler:
             self.crawl_inner_pages(
                 url,
                 interaction_type=BannerClick.REJECT,
-                data=data
             )
-            if not data["interact_success"]:  # unable to BannerClick reject
+            if not self.data["interact_success"]:  # unable to BannerClick reject
                 msg = f"BannerClick failed to reject: {url}"
                 Crawler.logger.critical(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
-                return data
+                return self.data
 
             # Log
             self.crawl_inner_pages(
@@ -249,9 +249,9 @@ class Crawler:
                 depth=depth,
             )
 
-            return data
+            return self.data
         else:
-            return data
+            return self.data
 
     def crawl_inner_pages(
             self,
@@ -259,8 +259,8 @@ class Crawler:
             crawl_name: str = "",
             depth: int = 0,
             interaction_type: BannerClick | CMP | None = None,
-            cookie_blacklist: tuple[CookieClass, ...] = (),
-            data: Optional[CrawlData] = None):
+            cookie_blacklist: tuple[CookieClass, ...] = ()
+    ):
         """
         Crawl inner pages of website with a given depth.
 
@@ -274,7 +274,6 @@ class Crawler:
             depth: Number of layers of the DFS. Defaults to 0.
             interaction_type: Type of interaction with cookie notice/API. Defaults to None, where no action is taken.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
-            data: Object to save global crawl data. Defaults to None in which case no data is saved.
         """
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
@@ -370,8 +369,8 @@ class Crawler:
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
 
-                    if data is not None:
-                        data["down"] = True
+                    if self.data is not None:
+                        self.data["down"] = True
                 else:
                     Crawler.logger.warning(msg)
 
@@ -389,12 +388,12 @@ class Crawler:
             # Get domain and CMP name
             if current_depth == 0:
                 domain = utils.get_domain(self.driver.current_url)
-                if data is not None:
+                if self.data is not None:
                     with open("injections/cmp-detection.js", "r") as file:
                         js = file.read()
 
                     cmp_names = self.driver.execute_script(js)
-                    data["cmp_names"] = [CMP(name) for name in cmp_names]
+                    self.data["cmp_names"] = [CMP(name) for name in cmp_names]
 
             after_redirect = URL(self.driver.current_url)
 
@@ -428,8 +427,8 @@ class Crawler:
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
-                if data is not None:
-                    data["interact_type"] = interaction_type
+                if self.data is not None:
+                    self.data["interact_type"] = interaction_type
 
                 if type(interaction_type) is BannerClick:
                     if interaction_type == BannerClick.ACCEPT:
@@ -447,8 +446,8 @@ class Crawler:
                     -1 = Accept (Settings) Success
                     -2 = Reject (Settings) Success
                     """
-                    if data is not None:
-                        data["interact_success"] = status is not None
+                    if self.data is not None:
+                        self.data["interact_success"] = status is not None
 
                 elif type(interaction_type) is CMP:
                     if interaction_type == CMP.ONETRUST:
@@ -468,8 +467,8 @@ class Crawler:
                         else:
                             Crawler.logger.critical(f"Failed to inject: {res['message']}")
 
-                        if data is not None:
-                            data["interact_success"] = res["success"]
+                        if self.data is not None:
+                            self.data["interact_success"] = res["success"]
 
             # Save HAR file
             if crawl_name:
