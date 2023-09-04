@@ -239,8 +239,6 @@ class Crawler:
             )
 
             return
-        else:
-            return
 
     def crawl_inner_pages(
             self,
