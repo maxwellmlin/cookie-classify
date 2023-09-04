@@ -55,9 +55,9 @@ class CrawlData(TypedDict):
     """
 
     data_path: str
-    cmp_names: list[CMP]  # Empty if no CMP found
-    interact_type: BannerClick | CMP | None  # None if no interaction was attempted
-    interact_success: Optional[bool]  # None if no interaction was attempted
+    cmp_names: set[CMP]  # Empty if no CMP found
+    interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
+    interaction_success: Optional[bool]  # None if no interaction was attempted
     down: bool  # True if landing page is down or some other critical error occurred
 
 
@@ -93,9 +93,9 @@ class Crawler:
 
         self.data: CrawlData = {
             "data_path": self.data_path,
-            "cmp_names": [],
-            "interact_type": None,
-            "interact_success": None,
+            "cmp_names": set(),
+            "interaction_type": None,
+            "interaction_success": None,
             "down": False
         }
 
@@ -136,9 +136,9 @@ class Crawler:
 
             ret = {
                 "data_path": self.data_path,
-                "cmp_names": [],
-                "interact_type": None,
-                "interact_success": None,
+                "cmp_names": set(),
+                "interaction_type": None,
+                "interaction_success": None,
                 "down": True
             }
 
@@ -196,7 +196,7 @@ class Crawler:
                 url,
                 interaction_type=CMP.ONETRUST,
             )
-            if not self.data["interact_success"]:  # unable to BannerClick reject
+            if not self.data["interaction_success"]:  # unable to BannerClick reject
                 return self.data
 
             # Log
@@ -208,7 +208,7 @@ class Crawler:
 
             return self.data
 
-        elif self.data["interact_success"]:  # able to BannerClick reject
+        elif self.data["interaction_success"]:  # able to BannerClick reject
             self.cleanup_driver()
             self.driver = self.get_driver()  # Reset driver
 
@@ -234,7 +234,7 @@ class Crawler:
                 url,
                 interaction_type=BannerClick.REJECT,
             )
-            if not self.data["interact_success"]:  # unable to BannerClick reject
+            if not self.data["interaction_success"]:  # unable to BannerClick reject
                 msg = f"BannerClick failed to reject: {url}"
                 Crawler.logger.critical(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
@@ -393,7 +393,7 @@ class Crawler:
                         js = file.read()
 
                     cmp_names = self.driver.execute_script(js)
-                    self.data["cmp_names"] = [CMP(name) for name in cmp_names]
+                    self.data["cmp_names"].update([CMP(name) for name in cmp_names])  # Taking union of detected CMPs
 
             after_redirect = URL(self.driver.current_url)
 
@@ -428,7 +428,7 @@ class Crawler:
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
                 if self.data is not None:
-                    self.data["interact_type"] = interaction_type
+                    self.data["interaction_type"] = interaction_type
 
                 if type(interaction_type) is BannerClick:
                     if interaction_type == BannerClick.ACCEPT:
@@ -447,7 +447,7 @@ class Crawler:
                     -2 = Reject (Settings) Success
                     """
                     if self.data is not None:
-                        self.data["interact_success"] = status is not None
+                        self.data["interaction_success"] = status is not None
 
                 elif type(interaction_type) is CMP:
                     if interaction_type == CMP.ONETRUST:
@@ -468,7 +468,7 @@ class Crawler:
                             Crawler.logger.critical(f"Failed to inject: {res['message']}")
 
                         if self.data is not None:
-                            self.data["interact_success"] = res["success"]
+                            self.data["interaction_success"] = res["success"]
 
             # Save HAR file
             if crawl_name:
