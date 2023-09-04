@@ -1,0 +1,1277 @@
+{
+    "crawls/cmp_detection/mail.ru/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/zoom.us/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/europa.eu/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/digicert.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": true
+    },
+    "crawls/cmp_detection/stackoverflow.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/teamviewer.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/amazon.co.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/hp.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/aliyun.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rackspace.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/freepik.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/springer.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/nature.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/casalemedia.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/surveymonkey.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/paloaltonetworks.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/nvidia.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/imgsmail.ru/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/verisign.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/swrve.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/businesswire.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/deloitte.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rt.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/docker.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ebay.co.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/abc.net.au/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/plos.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/doubleverify.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/bmj.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/getpocket.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/supersonicads.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gartner.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/branch.io/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/teads.tv/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ultradns.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mlb.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/blackboard.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/entrust.net/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/slate.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/amplitude.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thelancet.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ey.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/symantec.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gamespot.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mediatek.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/onetrust.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/contextweb.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sap.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/discogs.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rackspacecloud.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gumgum.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/app.link/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pendo.io/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/agora.io/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/databricks.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/yieldmo.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mitre.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/acm.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/flaticon.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ssrn.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thoughtco.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/goguardian.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/newscientist.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gotinder.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/trustarc.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/fifa.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/viber.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/helpshift.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/merchantlink.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/truste.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/wufoo.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/weborama.fr/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/osu.edu/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mimecast.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/technologyreview.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pubnub.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/adtelligent.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/logitech.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/algolianet.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/seekingalpha.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ico.org.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/playrix.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/cancer.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/smugmug.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/inmobi.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": true
+    },
+    "crawls/cmp_detection/thomsonreuters.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/zend.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thawte.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/allrecipes.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/cell.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/lifewire.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/strava.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/broadcom.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/adweek.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/docusign.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/grserver.gr/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pcworld.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/segment.io/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mastercard.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/coe.int/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/yumpu.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tribalfusion.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/innovid.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/epam.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ap.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/flightradar24.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thomsonreuters.net/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gog.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/dxc.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/verywellmind.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/king.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/segment.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tvsquared.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/avg.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/uefa.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/cymru.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/worldcat.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/n-able.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/esa.int/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/premierleague.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tinder.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/breitbart.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/goal.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tapjoy.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/comodo.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ebscohost.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/eyeota.net/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/atlasobscura.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thebalance.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/adyen.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/screenconnect.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/iubenda.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rockstargames.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/shadowserver.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/scoop.it/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/siteground.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/superuser.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/byu.edu/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thespruce.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/chinatelecomglobal.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/senderscore.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/greenhouse.io/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mynavi.jp/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/fujitsu.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/lnk.to/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/verywellhealth.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ultradns.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": true
+    },
+    "crawls/cmp_detection/mimecast.net/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gmu.edu/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/treehugger.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sendinblue.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/nhl.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/acer.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/siteground.biz/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/smartthings.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sketchup.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/askubuntu.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/travelandleisure.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/observer.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/kaltura.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/bunq.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/unimelb.edu.au/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/smadex.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/flashscore.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mendeley.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/elsevierhealth.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/lilly.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pb.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/nap.edu/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/deltadna.net/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/home.kpmg/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/isipp.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sqills.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/imperial.ac.uk/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/split.io/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/doodle.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/oclc.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/spglobal.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/overleaf.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/vertamedia.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/playtika.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pandasecurity.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/hltv.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/pantheonsite.io/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": true
+    },
+    "crawls/cmp_detection/barracudanetworks.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/military.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mailerlite.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/justpremium.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ccleaner.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/hyprmx.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/wish.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/logi.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/urbanairship.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/uservoice.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/aa.com.tr/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/splunk.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rightmove.co.uk/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/liveabout.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/bartleby.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/domain.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/watchguard.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/hik-connect.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/exoclick.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/2k.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/onaudience.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/avid.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/narvar.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ets.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/health.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ons.gov.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rioseo.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/liveperson.net/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/complex.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/bhg.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/macworld.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thebalancecareers.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/geotrust.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/mariadb.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/rte.ie/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sabre.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/truecaller.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/americanbar.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/myfonts.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/gulfnews.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tfl.gov.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/forrester.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/quovadisglobal.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/active.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/fantasypros.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/eurogamer.net/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/siteground.us/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/match.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/realsimple.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/thespruceeats.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/freepik.es/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sanofi-synthelabo.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": true
+    },
+    "crawls/cmp_detection/nationalgeographic.org/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/eagleeyenetworks.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/aap.org/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/seagate.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/kcl.ac.uk/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/snowflake.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/esri.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/tappx.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/ecwid.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/sportingnews.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/apptimize.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/serverfault.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/nationalarchives.gov.uk/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/zebra.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/epfl.ch/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/xoom.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/foodandwine.com/": {
+        "cmp_names": ["OneTrust"],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/vodafone.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    },
+    "crawls/cmp_detection/workable.com/": {
+        "cmp_names": [],
+        "click_success": null,
+        "down": false
+    }
+}
