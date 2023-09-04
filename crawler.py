@@ -61,6 +61,18 @@ class CrawlData(TypedDict):
     down: bool  # True if landing page is down or some other critical error occurred
 
 
+class CrawlDataEncoder(json.JSONEncoder):
+    """
+    Class for encoding `CrawlData` as JSON.
+    """
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+
+        # Default behavior for all other types
+        return super().default(obj)
+
+
 class Crawler:
     """
     Crawl websites, intercept requests, and take screenshots.
