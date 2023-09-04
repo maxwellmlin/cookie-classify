@@ -130,7 +130,7 @@ class Crawler:
         """
         try:
             self.__crawl(url, depth)
-        except Exception:
+        except Exception:  # skipcq: PYL-W0703
             Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {url}", exc_info=True)
 
         return self.data
@@ -143,8 +143,7 @@ class Crawler:
             url: URL of the website to crawl.
             depth: Number of layers of the DFS. Defaults to 0.
         """
-
-        # CMP Detection Only
+        # Uncomment for CMP Detection Only
         # self.crawl_inner_pages(
         #     url,
         #     data=data,
@@ -168,7 +167,6 @@ class Crawler:
             # OneTrust Compliance
             #
 
-            # TODO: technically, don't need these first two crawls, but want to verify that OneTrust injection is working properly for now
             # Collect cookies
             self.crawl_inner_pages(
                 url,
@@ -199,7 +197,7 @@ class Crawler:
 
             return
 
-        elif self.data["interaction_success"]:  # able to BannerClick reject
+        if self.data["interaction_success"]:  # able to BannerClick reject
             self.cleanup_driver()
             self.driver = self.get_driver()  # Reset driver
 
