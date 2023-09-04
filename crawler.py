@@ -128,23 +128,14 @@ class Crawler:
         """
         Wrapper for `__crawl` that catches any exceptions.
         """
-        ret: CrawlData
         try:
-            ret = self.__crawl(url, depth)
+            self.__crawl(url, depth)
         except Exception:
             Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {url}", exc_info=True)
 
-            ret = {
-                "data_path": self.data_path,
-                "cmp_names": set(),
-                "interaction_type": None,
-                "interaction_success": None,
-                "down": True
-            }
+        return self.data
 
-        return ret
-
-    def __crawl(self, url: str, depth: int = 0) -> CrawlData:
+    def __crawl(self, url: str, depth: int = 0):
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
@@ -197,7 +188,7 @@ class Crawler:
                 interaction_type=CMP.ONETRUST,
             )
             if not self.data["interaction_success"]:  # unable to BannerClick reject
-                return self.data
+                return
 
             # Log
             self.crawl_inner_pages(
@@ -206,7 +197,7 @@ class Crawler:
                 depth=depth,
             )
 
-            return self.data
+            return
 
         elif self.data["interaction_success"]:  # able to BannerClick reject
             self.cleanup_driver()
@@ -240,7 +231,7 @@ class Crawler:
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
 
-                return self.data
+                return
 
             # Log
             self.crawl_inner_pages(
@@ -249,9 +240,9 @@ class Crawler:
                 depth=depth,
             )
 
-            return self.data
+            return
         else:
-            return self.data
+            return
 
     def crawl_inner_pages(
             self,
