@@ -4,7 +4,7 @@ import multiprocessing as mp
 import pathlib
 import os
 
-from crawler import Crawler, CMP
+from crawler import Crawler, CMP, CrawlDataEncoder
 import utils
 import config
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 0
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_PATH = "crawls/aug30-onetrust/"
+CRAWL_PATH = "crawls/test/"
 
 
 def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
@@ -70,7 +70,7 @@ def main():
         data[key] = result
 
         with open(CRAWL_PATH + 'results.json', 'w') as log_file:
-            json.dump(data, log_file)
+            json.dump(data, log_file, cls=CrawlDataEncoder)
 
         process.join()
 
