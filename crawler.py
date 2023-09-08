@@ -9,6 +9,7 @@ import shutil
 import validators
 import json
 import logging
+from collections.abc import Callable
 
 import bannerclick.bannerdetection as bc
 
@@ -137,24 +138,31 @@ class Crawler:
 
         return driver
 
-    def crawl(self, depth: int = 0) -> CrawlData:
+    @staticmethod
+    def crawl_method(crawl_algo: Callable[..., None]) -> Callable[..., CrawlData]:
         """
-        Wrapper for `__crawl` that catches any exceptions.
+        Decorator that safely starts and ends the web driver as well as catches any exceptions.
         """
-        self.driver = self.get_driver()
+        def wrapper(*args, **kwargs) -> CrawlData:
+            self = args[0]
+            self.driver = self.get_driver()
 
-        try:
-            self.__crawl(depth)
-        except Exception:  # skipcq: PYL-W0703
-            Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {self.crawl_url}", exc_info=True)
+            try:
+                crawl_algo(*args, **kwargs)
+            except Exception:  # skipcq: PYL-W0703
+                Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {self.crawl_url}", exc_info=True)
 
-        self.cleanup_driver()
+            self.cleanup_driver()
 
-        return self.data
+            return self.data
 
-    def __crawl(self, depth: int = 0):
+        return wrapper
+
+    @crawl_method
+    def compliance_algo(self, depth: int = 0):
         """
-        Crawl website with repeated calls to `crawl_inner_pages`.
+        Run the website cookie compliance algorithm.
+        OneTrust CMP and Accept/Reject cookie notices are supported.
 
         Args:
             depth: Number of layers of the DFS. Defaults to 0.

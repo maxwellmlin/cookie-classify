@@ -13,7 +13,7 @@ DEPTH = 0
 
 def worker(site_url: str, depth: int, queue: mp.Queue) -> None:
     crawler = Crawler(site_url)
-    ret = crawler.crawl(depth)
+    ret = crawler.compliance_algo(DEPTH)
 
     queue.put(ret)
 
