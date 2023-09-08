@@ -18,7 +18,7 @@ class CookieRequestHeader:
             key, value = cookie.split("=", 1)  # Split at first '=' (since value may contain '=')
             self.cookies[key] = value
 
-    def remove_by_class(self, blacklist: tuple[CookieClass]) -> None:
+    def remove_by_class(self, blacklist: tuple[CookieClass, ...]) -> None:
         """
         Remove all cookies with a class in blacklist from `self.cookies`.
 

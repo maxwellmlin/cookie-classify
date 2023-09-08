@@ -24,7 +24,7 @@ driver.request_interceptor = interceptor
 """
 
 
-def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass], data_path: str) -> None:
+def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass, ...], data_path: str) -> None:
     """
     Remove cookies by class from a GET request.
 
