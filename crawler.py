@@ -80,10 +80,10 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, data_path: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
+    def __init__(self, crawl_url: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
         """
         Args:
-            data_path: Path to store log files and save screenshots.
+            crawl_url: The URL of the website to crawl.
             time_to_wait: Time to wait between driver get requests. Defaults to 5 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
@@ -91,14 +91,15 @@ class Crawler:
         """
         self.headless = headless
         self.page_load_timeout = page_load_timeout
-        self.driver = self.get_driver()
 
         self.time_to_wait = time_to_wait
         self.total_get_attempts = total_get_attempts
 
-        self.data_path = data_path
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
+        self.crawl_url = crawl_url
+
+        self.data_path = f"{config.CRAWL_PATH}{utils.get_domain(crawl_url)}/"
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
 
         self.uids: dict[URL, int] = {}  # map url to a unique id
         self.next_uid = 0
@@ -136,23 +137,26 @@ class Crawler:
 
         return driver
 
-    def crawl(self, url: str, depth: int = 0) -> CrawlData:
+    def crawl(self, depth: int = 0) -> CrawlData:
         """
         Wrapper for `__crawl` that catches any exceptions.
         """
+        self.driver = self.get_driver()
+
         try:
-            self.__crawl(url, depth)
+            self.__crawl(depth)
         except Exception:  # skipcq: PYL-W0703
-            Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {url}", exc_info=True)
+            Crawler.logger.critical(f"GENERAL CRAWL FAILURE: {self.crawl_url}", exc_info=True)
+
+        self.cleanup_driver()
 
         return self.data
 
-    def __crawl(self, url: str, depth: int = 0):
+    def __crawl(self, depth: int = 0):
         """
         Crawl website with repeated calls to `crawl_inner_pages`.
 
         Args:
-            url: URL of the website to crawl.
             depth: Number of layers of the DFS. Defaults to 0.
         """
         # Uncomment for CMP Detection Only
@@ -164,7 +168,7 @@ class Crawler:
 
         # Check cookie notice type
         self.crawl_inner_pages(
-            url,
+            self.crawl_url,
             interaction_type=BannerClick.REJECT,
         )
 
@@ -181,20 +185,20 @@ class Crawler:
 
             # Collect cookies
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 depth=depth
             )
 
             # Log
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 crawl_name="no_interaction",
                 depth=depth,
             )
 
             # OneTrust reject
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 interaction_type=CMP.ONETRUST,
             )
             if not self.data["interaction_success"]:  # unable to BannerClick reject
@@ -202,7 +206,7 @@ class Crawler:
 
             # Log
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 crawl_name="reject_only_tracking",
                 depth=depth,
             )
@@ -219,24 +223,24 @@ class Crawler:
 
             # Collect cookies
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 depth=depth
             )
 
             # Log
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 crawl_name="normal",
                 depth=depth,
             )
 
             # BannerClick reject
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 interaction_type=BannerClick.REJECT,
             )
             if not self.data["interaction_success"]:  # unable to BannerClick reject
-                msg = f"BannerClick failed to reject: {url}"
+                msg = f"BannerClick failed to reject: {self.crawl_url}"
                 Crawler.logger.critical(msg)
                 with open(self.data_path + "logs.txt", "a") as file:
                     file.write(msg + "\n")
@@ -245,7 +249,7 @@ class Crawler:
 
             # Log
             self.crawl_inner_pages(
-                url,
+                self.crawl_url,
                 crawl_name="after_reject",
                 depth=depth,
             )
@@ -277,7 +281,7 @@ class Crawler:
         if depth < 0:
             raise ValueError("Depth must be non-negative.")
 
-        Crawler.logger.info(f"Starting crawl with args: {locals()}")
+        Crawler.logger.info(f"Starting `crawl_inner_pages` with args: {locals()}")
 
         # Start with the landing page
         urls_to_visit: deque[tuple[URL, int]] = deque([(URL(start_node), 0)])  # (url, depth)
