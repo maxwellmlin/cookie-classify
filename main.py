@@ -11,11 +11,13 @@ logger = logging.getLogger(config.LOGGER_NAME)
 DEPTH = 0
 
 
-def worker(site_url: str, depth: int, queue: mp.Queue) -> None:
-    crawler = Crawler(site_url)
-    ret = crawler.compliance_algo(DEPTH)
+def worker(site_url: str, queue: mp.Queue) -> None:
+    crawler = Crawler(site_url, headless=False)
 
-    queue.put(ret)
+    # result = crawler.compliance_algo(DEPTH)
+    result = crawler.classification_algo()
+
+    queue.put(result)
 
 
 def main():
@@ -55,7 +57,7 @@ def main():
     output = mp.Queue()
     data = {}
     for site_url in sites:
-        process = mp.Process(target=worker, args=(f"https://{site_url}", DEPTH, output))
+        process = mp.Process(target=worker, args=(f"https://{site_url}", output))
         process.start()
 
         result = output.get()
