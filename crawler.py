@@ -18,7 +18,13 @@ import seleniumwire.request
 from seleniumwire import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, WebDriverException, JavascriptException, NoSuchElementException
+from selenium.common.exceptions import (
+    TimeoutException,
+    WebDriverException,
+    JavascriptException,
+    NoSuchElementException,
+    ElementNotInteractableException
+)
 
 from cookie_database import CookieClass
 import interceptors
@@ -52,17 +58,24 @@ class CMP(str, Enum):
     TCF = "__tcfapi"
 
 
+DriverAction = Enum(
+    "DriverAction", [
+        "BACK"  # Go back to the previous page
+    ]
+)
+
+
 class CrawlData(TypedDict):
     """
     Class for storing data about a crawl.
     """
 
     data_path: str
-    cmp_names: set[CMP]  # Empty if no CMP found
+    cmp_names: set[CMP] | None  # Empty if no CMP found
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
-    interaction_success: Optional[bool]  # None if no interaction was attempted
-    down: bool  # True if landing page is down or some other critical error occurred
-    clickstream: list[str] | None  # List of CSS selectors that were clicked on
+    interaction_success: bool | None  # None if no interaction was attempted
+    down: bool | None  # True if landing page is down or some other critical error occurred
+    clickstream: list[str | DriverAction] | None  # List of CSS selectors that were clicked on
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -110,10 +123,10 @@ class Crawler:
 
         self.data: CrawlData = {
             "data_path": self.data_path,
-            "cmp_names": set(),
+            "cmp_names": None,
             "interaction_type": None,
             "interaction_success": None,
-            "down": False,
+            "down": None,
             "clickstream": None
         }
 
@@ -124,8 +137,6 @@ class Crawler:
         options = FirefoxOptions()
 
         # See: https://stackoverflow.com/a/64724390/21055641
-        options.add_argument("start-maximized")
-        options.add_argument("disable-infobars")
         options.add_argument("--disable-extensions")
         options.add_argument('--disable-application-cache')
         options.add_argument('--disable-gpu')
@@ -185,7 +196,7 @@ class Crawler:
         #
         # Website Cookie Compliance Algorithm
         #
-        if CMP.ONETRUST in self.data["cmp_names"]:
+        if self.data["cmp_names"] and CMP.ONETRUST in self.data["cmp_names"]:
             self.cleanup_driver()
             self.driver = self.get_driver()
 
@@ -266,6 +277,8 @@ class Crawler:
         trials: Number of clickstreams to generate. Defaults to 10.
         """
         for _ in range(trials):
+            Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
+
             clickstream = self.crawl_clickstream(
                 clickstream=None,
                 crawl_name="all_cookies",
@@ -378,6 +391,9 @@ class Crawler:
                     # Attempt to get the website
                     self.driver.get(current_url.url)
 
+                    if current_depth == 0:
+                        self.data["down"] = False
+
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
@@ -419,8 +435,12 @@ class Crawler:
                 with open("injections/cmp-detection.js", "r") as file:
                     js = file.read()
 
-                cmp_names = self.driver.execute_script(js)
-                self.data["cmp_names"].update([CMP(name) for name in cmp_names])  # Taking union of detected CMPs
+                cmp_names = [CMP(name) for name in self.driver.execute_script(js)]
+
+                if self.data["cmp_names"] is None:
+                    self.data["cmp_names"] = set(cmp_names)
+                else:
+                    self.data["cmp_names"].update(cmp_names)  # Taking union of detected CMPs
 
             after_redirect = URL(self.driver.current_url)
 
@@ -524,11 +544,11 @@ class Crawler:
     @log
     def crawl_clickstream(
             self,
-            clickstream: list[str] | None,
+            clickstream: list[str | DriverAction] | None,
             length: int = 10,
             crawl_name: str = "",
             cookie_blocklist: tuple[CookieClass, ...] = ()
-    ) -> list[str]:
+    ) -> list[str | DriverAction]:
         """
         Crawl website using clickstream.
 
@@ -581,6 +601,8 @@ class Crawler:
                 # Attempt to get the website
                 self.driver.get(self.crawl_url)
 
+                self.data["down"] = False
+
                 break  # If successful, break out of the loop
 
             except TimeoutException:
@@ -601,6 +623,9 @@ class Crawler:
                 file.write(msg + "\n")
 
             self.data["down"] = True
+            return []
+
+        domain = utils.get_domain(self.driver.current_url)
 
         # CMP detection
         # with open("injections/cmp-detection.js", "r") as file:
@@ -608,13 +633,30 @@ class Crawler:
         # cmp_names = self.driver.execute_script(js)
         # self.data["cmp_names"].update([CMP(name) for name in cmp_names])  # Taking union of detected CMPs
 
+        self.driver.back()
+
         # Clickstream execution loop
         i = 0
-        while i < length:
-            if generate_clickstream:
-                clickstream.append(self.get_clickstream_element())
+        failed_attempts = 0
+        while i < min(length, len(clickstream)):
+            time.sleep(self.time_to_wait)
 
-            selector = clickstream[i]
+            if utils.get_domain(self.driver.current_url) != domain:
+                pass
+
+            while len(self.driver.window_handles) > 1:
+                self.driver.switch_to.window(self.driver.window_handles[1])
+                self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
+
+            selector: str | DriverAction
+            if generate_clickstream:
+                if failed_attempts < 10:
+                    selector = self.get_clickstream_element()
+                else:
+                    selector = DriverAction.BACK
+            else:
+                selector = clickstream[i]
 
             # Log site visit
             msg = f"Executing Clickstream #{i} for {site_info}"
@@ -625,34 +667,42 @@ class Crawler:
             #
             # Execute Clickstream
             #
-            try:
-                element = self.driver.find_element(By.CSS_SELECTOR, selector)
-            except NoSuchElementException:
-                Crawler.logger.critical(f"Failed to find element: {selector}")
-                self.data["interaction_success"] = False
-                return clickstream
-
-            try:
-                element.click()
-
-                Crawler.logger.info(f"Successfully clicked element: {selector}")
-            except Exception:
-                if generate_clickstream:
-                    Crawler.logger.warning(f"Failed to click {selector}, generating new clickstream")
-                    continue
-                else:
-                    Crawler.logger.critical(f"Failed to click: {selector}")
+            if type(selector) is DriverAction:
+                if selector == DriverAction.BACK:
+                    self.driver.back()
+                Crawler.logger.info(f"Successfully executed {selector}")
+            else:
+                try:
+                    element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                except NoSuchElementException:
+                    Crawler.logger.exception(f"Failed to find element: {selector}")
                     self.data["interaction_success"] = False
                     return clickstream
 
-            # Wait for clickstream to execute
-            time.sleep(self.time_to_wait)
+                try:
+                    element.click()
+
+                    Crawler.logger.info(f"Successfully clicked element: {selector}")
+
+                    failed_attempts = 0
+                    if generate_clickstream:
+                        clickstream.append(selector)
+                except ElementNotInteractableException:
+                    if generate_clickstream:
+                        Crawler.logger.exception(f"Failed to click {selector}, generating new clickstream")
+                        failed_attempts += 1
+                        continue
+                    else:
+                        Crawler.logger.exception(f"Failed to click: {selector}")
+                        self.data["interaction_success"] = False
+                        return clickstream
 
             i += 1
 
         #
         # After clickstream
         #
+        time.sleep(self.time_to_wait)
 
         # Save a screenshot of the viewport
         if crawl_name:
@@ -666,7 +716,7 @@ class Crawler:
 
         return clickstream
 
-    def get_clickstream_element(self) -> str:
+    def get_clickstream_element(self) -> str | DriverAction:
         """
         Return a CSS selector for a clickable element.
 
@@ -675,7 +725,9 @@ class Crawler:
         """
         with open("injections/clickable-elements.js", "r") as file:
             js = file.read()
-        elements: list[str] = self.driver.execute_script(js)
+        elements: list[str | DriverAction] = self.driver.execute_script(js)
+
+        elements.append(DriverAction.BACK)
 
         return random.choice(elements)
 
