@@ -1,5 +1,6 @@
 import functools
 from collections import deque
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
 from typing import Optional, TypedDict, Any
@@ -9,7 +10,6 @@ import shutil
 import validators
 import json
 import logging
-from collections.abc import Callable
 import random
 
 import bannerclick.bannerdetection as bc
@@ -106,6 +106,8 @@ class Crawler:
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
+        self.driver: webdriver.Firefox
+
         self.headless = headless
         self.page_load_timeout = page_load_timeout
 
@@ -641,6 +643,7 @@ class Crawler:
         while i < min(length, len(clickstream)):
             time.sleep(self.time_to_wait)
 
+            # TODO: implement
             if utils.get_domain(self.driver.current_url) != domain:
                 pass
 
@@ -692,10 +695,10 @@ class Crawler:
                         Crawler.logger.exception(f"Failed to click {selector}, generating new clickstream")
                         failed_attempts += 1
                         continue
-                    else:
-                        Crawler.logger.exception(f"Failed to click: {selector}")
-                        self.data["interaction_success"] = False
-                        return clickstream
+
+                    Crawler.logger.exception(f"Failed to click: {selector}")
+                    self.data["interaction_success"] = False
+                    return clickstream
 
             i += 1
 
