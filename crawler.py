@@ -157,11 +157,11 @@ class Crawler:
             'enable_har': enable_har,
         }
 
-        fp = webdriver.FirefoxProfile()
+        firefox_profile = webdriver.FirefoxProfile()
         if disable_cookies:
-            fp.set_preference("network.cookie.cookieBehavior", 2)
+            firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
 
-        driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=fp)
+        driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
 
         return driver
