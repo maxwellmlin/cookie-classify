@@ -288,7 +288,6 @@ class Crawler:
             trials: Number of clickstreams to generate. Defaults to 10.
         """
 
-        self.data["clickstream"] = list()
         for _ in range(trials):
             Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
 
@@ -298,10 +297,17 @@ class Crawler:
                 crawl_name="all_cookies",
             )
             self.driver.quit()
-            self.data["clickstream"].append(clickstream)
+
+            if self.data["down"]:
+                return
+
+            if self.data["clickstream"] is not None:
+                self.data["clickstream"].append(clickstream)
+            else:
+                self.data["clickstream"] = [clickstream]
 
             with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
-                json.dump(self.data, log_file, cls=CrawlDataEncoder)
+                json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
             self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
@@ -580,14 +586,14 @@ class Crawler:
         to ensure consistency with the site list.
 
         Args:
-            start_node: URL where traversal will begin. Future crawls will be constrained to this domain.
-            clickstream: List of CSS selectors to click on. Defaults to None, where a clickstream is instead generated.
+            start_node: URL where traversal will begin.
+            clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
             length: Maximum length of the clickstream. Defaults to 10.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
 
         Returns:
-            The clickstream that was executed. None if clickstream execution failed.
+            The clickstream that was executed.
         """
         if clickstream is None:
             clickstream = []
@@ -658,6 +664,7 @@ class Crawler:
         while i < clickstream_length:
             # No more possible actions
             if len(selectors) == 0 and self.driver.current_url == original_url:
+                Crawler.logger.info("No more possible actions. Clickstream complete")
                 return clickstream
 
             # Close all tabs except the first one
