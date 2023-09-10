@@ -135,12 +135,13 @@ class Crawler:
             "clickstream": None
         }
 
-    def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
+    def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
         """
         Initialize and return a Firefox web driver using arguments from `self`.
 
         Args:
             enable_har: Whether to enable HAR logging. Defaults to True.
+            disable_cookies: Whether to disable cookies. Defaults to False.
         """
         options = FirefoxOptions()
 
@@ -156,7 +157,11 @@ class Crawler:
             'enable_har': enable_har,
         }
 
-        driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options)
+        fp = webdriver.FirefoxProfile()
+        if disable_cookies:
+            fp.set_preference("network.cookie.cookieBehavior", 2)
+
+        driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=fp)
         driver.set_page_load_timeout(self.page_load_timeout)
 
         return driver
@@ -309,7 +314,7 @@ class Crawler:
             with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
-            self.driver = self.get_driver(enable_har=False)
+            self.driver = self.get_driver(enable_har=False, disable_cookies=True)
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="no_cookies",
@@ -714,14 +719,14 @@ class Crawler:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
                     else:
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i}/{clickstream_length-1}", exc_info=True)
                         return clickstream
 
-            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
+            Crawler.logger.info(f"Completed action {i}/{clickstream_length-1}")
             time.sleep(self.time_to_wait)
 
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i}.png")
 
             if generate_clickstream:
                 clickstream.append(action)
