@@ -61,11 +61,12 @@ class CMP(str, Enum):
     TCF = "__tcfapi"
 
 
-DriverAction = Enum(
-    "DriverAction", [
-        "BACK"  # Go back to the previous page
-    ]
-)
+class DriverAction(str, Enum):
+    """
+    Type of action to take on the driver.
+    """
+
+    BACK = "driver.back"  # Go back to the previous page
 
 
 class CrawlData(TypedDict):
@@ -411,6 +412,7 @@ class Crawler:
 
                     # Attempt to get the website
                     self.driver.get(current_url.url)
+                    self.driver.set_page_load_timeout(self.page_load_timeout)
 
                     if current_depth == 0:
                         self.data["down"] = False
@@ -620,6 +622,7 @@ class Crawler:
 
                 # Attempt to get the website
                 self.driver.get(self.crawl_url)
+                self.driver.set_page_load_timeout(self.page_load_timeout)
 
                 self.data["down"] = False
 
@@ -649,11 +652,10 @@ class Crawler:
         original_url = self.driver.current_url
 
         # Clickstream execution loop
-        i = 1
-
         selectors: list[str] = self.get_selectors()
         clickstream_length = length if generate_clickstream else min(length, len(clickstream))
-        while i <= clickstream_length:
+        i = 0
+        while i < clickstream_length:
             # No more possible actions
             if len(selectors) == 0 and self.driver.current_url == original_url:
                 return clickstream
@@ -683,7 +685,7 @@ class Crawler:
             if type(action) is DriverAction:
                 if action == DriverAction.BACK:
                     self.driver.back()
-                Crawler.logger.info("All selectors exhausted. Navigating to previous page.")
+                Crawler.logger.info("All selectors exhausted. Navigating to previous page")
 
             else:
                 try:
@@ -693,31 +695,34 @@ class Crawler:
                     self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
                     # Click
                     element.click()
-
-                except (NoSuchElementException, ElementNotInteractableException, ElementClickInterceptedException, InvalidSelectorException, StaleElementReferenceException):
+                except (
+                    NoSuchElementException,
+                    ElementNotInteractableException,
+                    ElementClickInterceptedException,
+                    InvalidSelectorException,
+                    StaleElementReferenceException,
+                    TimeoutException
+                ):
                     if generate_clickstream:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
+                    else:
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
+                        return clickstream
 
-                    Crawler.logger.critical(f"Failed clickstream {self.current_uid} on action {i}/{clickstream_length}", exc_info=True)
-                    self.data["interaction_success"] = False
-                    return clickstream
+            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
+            time.sleep(self.time_to_wait)
 
-                Crawler.logger.info(f"Completed action {i}/{clickstream_length}")
-                if generate_clickstream:
-                    clickstream.append(action)
-                    selectors = self.get_selectors()
+            if crawl_name:
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+
+            if generate_clickstream:
+                clickstream.append(action)
+                selectors = self.get_selectors()
+
             i += 1
 
         Crawler.logger.info(f"Completed clickstream {self.current_uid}")
-
-        #
-        # After clickstream
-        #
-
-        # Save a screenshot of the viewport
-        if crawl_name:
-            self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
 
         return clickstream
 

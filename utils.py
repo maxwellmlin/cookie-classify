@@ -47,7 +47,7 @@ def log(func):
     """
     def wrapper(*args, **kwargs):
         logger = logging.getLogger(config.LOGGER_NAME)
-        logger.debug(f"Calling `{func.__name__}` with args: {args}, kwargs: {kwargs}")
+        logger.info(f"Calling `{func.__name__}` with args: {args}, kwargs: {kwargs}")
         return func(*args, **kwargs)
 
     return wrapper

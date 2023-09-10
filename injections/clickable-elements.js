@@ -4,11 +4,14 @@ DEBUG = false
  * Return CSS selectors for clickable elements.
  * 
  * Clickable elements are defined as:
+ * - <button> elements
+ * - <a> elements
+ * - Elements with an onclick attribute
+ * - Elements with a cursor style of pointer
  * 
  * Adapted from: https://gist.github.com/iiLaurens/81b1b47f6259485c93ce6f0cdd17490a
  * 
- * @returns {Object|null} - An object mapping OneTrust IDs to category names (e.g., {1: "Strictly Necessary Cookies"}).
- *                          If there's a conflict in IDs, it returns null.
+ * @returns {string[]} CSS selectors for clickable elements.
  */
 
 window.scrollTo(0, 0)
@@ -27,7 +30,6 @@ var items = Array.prototype.slice.call(
             right: Math.min(rect.right - bodyRect.x, document.body.clientWidth),
             bottom: Math.min(rect.bottom - bodyRect.y, document.body.clientHeight)
         },
-        text: element.textContent.trim().replace(/\s{2,}/g, ' ')
     };
 }).filter(item =>
     item.include);
@@ -35,7 +37,7 @@ var items = Array.prototype.slice.call(
 // Only keep inner clickable items
 // items = items.filter(x => !items.some(y => x.element.contains(y.element) && !(x == y)))
 
-if (debug) {
+if (DEBUG) {
     // Lets create a floating border on top of these elements that will always be visible
     items.forEach(function (item) {
         newElement = document.createElement("div");
