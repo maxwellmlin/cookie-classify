@@ -668,7 +668,7 @@ class Crawler:
         i = 0
         while i < clickstream_length:
             # No more possible actions
-            if len(selectors) == 0 and self.driver.current_url == original_url:
+            if not selectors and self.driver.current_url == original_url:
                 Crawler.logger.info("No more possible actions. Clickstream complete")
                 return clickstream
 
@@ -680,7 +680,7 @@ class Crawler:
 
             # Restrict within original domain
             while utils.get_domain(self.driver.current_url) != domain:
-                self.driver.back()
+                self.back()
 
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
@@ -696,7 +696,7 @@ class Crawler:
             #
             if type(action) is DriverAction:
                 if action == DriverAction.BACK:
-                    self.driver.back()
+                    self.back()
                 Crawler.logger.info("All selectors exhausted. Navigating to previous page")
 
             else:
@@ -713,7 +713,8 @@ class Crawler:
                     ElementClickInterceptedException,
                     InvalidSelectorException,
                     StaleElementReferenceException,
-                    TimeoutException
+                    TimeoutException,
+                    WebDriverException
                 ):
                     if generate_clickstream:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
@@ -786,3 +787,15 @@ class Crawler:
 
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
+
+    def back(self) -> None:
+        """
+        Go back to the previous page.
+        """
+        try:
+            self.driver.back()
+        except (TimeoutException, WebDriverException):
+            self.driver.execute_script("window.history.go(-1)")
+
+    def __repr__(self) -> str:
+        return self.crawl_url
