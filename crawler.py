@@ -292,7 +292,6 @@ class Crawler:
         Args:
             trials: Number of clickstreams to generate. Defaults to 10.
         """
-
         for _ in range(trials):
             Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
 
@@ -722,7 +721,7 @@ class Crawler:
                     if generate_clickstream:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
-                    else:
+                    else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
                         return clickstream
 
