@@ -2,9 +2,9 @@ from typing import Optional
 
 import seleniumwire.request
 
-from cookie_request_header import CookieRequestHeader
-from url import URL
-from cookie_database import CookieClass
+from utils.cookie_request_header import CookieRequestHeader
+from utils.url import URL
+from utils.cookie_database import CookieClass
 
 """
 Interceptors for seleniumwire.

@@ -1,4 +1,4 @@
-from cookie_database import CookieDatabase, CookieClass
+from utils.cookie_database import CookieDatabase, CookieClass
 
 
 class CookieRequestHeader:

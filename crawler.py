@@ -29,11 +29,11 @@ from selenium.common.exceptions import (
 
 import bannerclick.bannerdetection as bc
 
-from cookie_database import CookieClass
-import interceptors
-import utils
-from utils import log
-from url import URL
+from utils.cookie_database import CookieClass
+import utils.interceptors as interceptors
+import utils.utils as utils
+from utils.utils import log
+from utils.url import URL
 import config
 
 

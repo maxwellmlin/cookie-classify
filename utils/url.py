@@ -1,5 +1,5 @@
 from urllib.parse import urlparse, unquote_plus
-import utils
+import utils.utils as utils
 
 
 class URL():
