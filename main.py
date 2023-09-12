@@ -2,29 +2,26 @@ import json
 import logging
 import multiprocessing as mp
 import pathlib
-import os
 
-from crawler import Crawler, CMP, CrawlDataEncoder
-import utils
+from crawler import Crawler, CrawlDataEncoder
 import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
 DEPTH = 0
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
-CRAWL_PATH = "crawls/test/"
 
 
-def worker(data_path: str, site_url: str, depth: int, queue: mp.Queue) -> None:
-    crawler = Crawler(data_path)
-    ret = crawler.crawl(site_url, depth)
-    crawler.cleanup_driver()
+def worker(site_url: str, queue: mp.Queue) -> None:
+    crawler = Crawler(site_url, headless=False)
 
-    queue.put(ret)
+    # result = crawler.compliance_algo(DEPTH)
+    result = crawler.classification_algo()
+
+    queue.put(result)
 
 
 def main():
-    pathlib.Path(CRAWL_PATH).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
     logger.setLevel(logging.DEBUG)
 
@@ -34,7 +31,7 @@ def main():
     log_stream.setLevel(logging.DEBUG)
     log_stream.setFormatter(formatter)
 
-    log_file = logging.FileHandler(f'{CRAWL_PATH}/crawl.log', 'a')
+    log_file = logging.FileHandler(f'{config.CRAWL_PATH}/crawl.log', 'a')
     log_file.setLevel(logging.DEBUG)
     log_file.setFormatter(formatter)
 
@@ -44,32 +41,30 @@ def main():
     sites = []
 
     # Read sites from text file
-    # with open(SITE_LIST_PATH) as file:
-    #     for line in file:
-    #         sites.append(line.strip())
+    with open(config.SITE_LIST_PATH) as file:
+        for line in file:
+            sites.append(line.strip())
 
     # All OneTrust sites
-    with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
-        results = json.load(log_file)
-        for path in results:
-            if CMP.ONETRUST in results[path]["cmp_names"]:
-                site = os.path.basename(os.path.normpath(path))
-                sites.append(site)
+    # with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
+    #     results = json.load(log_file)
+    #     for path in results:
+    #         if CMP.ONETRUST in results[path]["cmp_names"]:
+    #             site = os.path.basename(os.path.normpath(path))
+    #             sites.append(site)
 
     # Create input for pool
     output = mp.Queue()
     data = {}
     for site_url in sites:
-        data_path = f"{CRAWL_PATH}{utils.get_domain(site_url)}/"
-
-        process = mp.Process(target=worker, args=(data_path, f"https://{site_url}", DEPTH, output))
+        process = mp.Process(target=worker, args=(f"https://{site_url}", output))
         process.start()
 
         result = output.get()
         key = result.pop('data_path')
         data[key] = result
 
-        with open(CRAWL_PATH + 'results.json', 'w') as log_file:
+        with open(config.CRAWL_PATH + 'results.json', 'w') as log_file:
             json.dump(data, log_file, cls=CrawlDataEncoder)
 
         process.join()

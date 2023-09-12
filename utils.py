@@ -1,4 +1,6 @@
 import tldextract
+import config
+import logging
 
 # Utility functions for cookie-classify.
 
@@ -37,3 +39,15 @@ def get_full_domain(url: str) -> str:
         return get_domain(url)
 
     return f"{separated_url.subdomain}.{separated_url.domain}.{separated_url.suffix}"
+
+
+def log(func):
+    """
+    Decorator for logging function calls.
+    """
+    def wrapper(*args, **kwargs):
+        logger = logging.getLogger(config.LOGGER_NAME)
+        logger.info(f"Calling `{func.__name__}` with args: {args}, kwargs: {kwargs}")
+        return func(*args, **kwargs)
+
+    return wrapper
