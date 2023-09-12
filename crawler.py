@@ -79,7 +79,7 @@ class CrawlData(TypedDict):
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
     down: bool | None  # True if landing page is down or some other critical error occurred
-    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors that were clicked on
+    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
 
 
 class CrawlDataEncoder(json.JSONEncoder):
