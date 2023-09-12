@@ -662,6 +662,9 @@ class Crawler:
         domain = utils.get_domain(self.driver.current_url)
         original_url = self.driver.current_url
 
+        if crawl_name:
+            self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-0.png")
+
         # Clickstream execution loop
         selectors: list[str] = self.get_selectors()
         clickstream_length = length if generate_clickstream else min(length, len(clickstream))
@@ -720,14 +723,14 @@ class Crawler:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
                     else:
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i}/{clickstream_length-1}", exc_info=True)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
                         return clickstream
 
-            Crawler.logger.info(f"Completed action {i}/{clickstream_length-1}")
+            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
             time.sleep(self.time_to_wait)
 
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i}.png")
+                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
 
             if generate_clickstream:
                 clickstream.append(action)
