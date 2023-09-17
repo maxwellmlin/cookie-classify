@@ -298,7 +298,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
                 clickstream=None,
-                crawl_name="all_cookies",
+                crawl_name="baseline",
             )
             self.driver.quit()
 
@@ -313,6 +313,15 @@ class Crawler:
             with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
+            # Control group
+            self.driver = self.get_driver(enable_har=False, disable_cookies=False)
+            self.crawl_clickstream(
+                clickstream=clickstream,
+                crawl_name="all_cookies",
+            )
+            self.driver.quit()
+
+            # Experimental group
             self.driver = self.get_driver(enable_har=False, disable_cookies=True)
             self.crawl_clickstream(
                 clickstream=clickstream,

@@ -21,3 +21,4 @@ dependencies:
     - pandas
     - validators
     - matplotlib
+    - lxml

@@ -154,3 +154,30 @@ class ImageShingle:
                 matches += min(count, other_shingles.shingle_count[shingle])  # Add the number of matches
 
         return matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
+
+    @staticmethod
+    def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float:
+        """
+        Compare three shingles and return the percentage of matches
+        that occur between baseline and experimental that do not occur
+        between baseline and control.
+
+        Args:
+            baseline: Image baseline.
+            control: Image without treatement.
+            experimental: Image with treatment.
+
+        Raises:
+            ValueError: If the images are not the same size.
+            ValueError: If the shingles do not have the same chunk size.
+
+        Returns:
+            float: Percentage of shingles that differ between baseline and experimental
+            but not between baseline and control.
+        """
+        if baseline.chunk_size != control.chunk_size or baseline.chunk_size != experimental.chunk_size:
+            raise ValueError("Shingles must have the same chunk size.")
+
+        return 0.0
+
+        # TODO: Implement this method
