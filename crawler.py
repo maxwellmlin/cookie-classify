@@ -80,6 +80,7 @@ class CrawlData(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
     down: bool | None  # True if landing page is down or some other critical error occurred
     clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
+    unknown_exception: bool
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -132,7 +133,8 @@ class Crawler:
             "interaction_type": None,
             "interaction_success": None,
             "down": None,
-            "clickstream": None
+            "clickstream": None,
+            "unknown_exception": False
         }
 
     def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
@@ -179,6 +181,7 @@ class Crawler:
                 func(*args, **kwargs)
             except Exception:  # skipcq: PYL-W0703
                 Crawler.logger.critical(f"GENERAL CRAWL EXCEPTION: {self.crawl_url}", exc_info=True)
+                self.data["unknown_exception"] = True
 
             self.driver.quit()
 
