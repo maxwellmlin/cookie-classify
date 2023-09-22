@@ -160,8 +160,9 @@ class Crawler:
         }
 
         firefox_profile = webdriver.FirefoxProfile()
-        if disable_cookies:
-            firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
+        # TODO: Completely remove disable_cookies later
+        # if disable_cookies:
+        #     firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
 
         driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
