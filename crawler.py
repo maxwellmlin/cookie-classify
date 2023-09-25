@@ -55,8 +55,6 @@ class CMP(str, Enum):
     Enum values correspond to the name of the exposed CMP JavaScript API object.
     """
 
-    NONE = "NONE"  # No CMP found
-
     ONETRUST = "OneTrust"
     TCF = "__tcfapi"
 
