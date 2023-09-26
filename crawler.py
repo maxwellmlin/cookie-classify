@@ -78,7 +78,7 @@ class CrawlData(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
     down: bool | None  # True if landing page is down or some other critical error occurred
     clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
-    unknown_exception: bool
+    crawl_failure: bool
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -132,7 +132,7 @@ class Crawler:
             "interaction_success": None,
             "down": None,
             "clickstream": None,
-            "unknown_exception": False
+            "crawl_failure": False
         }
 
     def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
@@ -179,8 +179,8 @@ class Crawler:
             try:
                 func(*args, **kwargs)
             except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.critical(f"GENERAL CRAWL EXCEPTION: {self.crawl_url}", exc_info=True)
-                self.data["unknown_exception"] = True
+                Crawler.logger.critical(f"CRAWL FAILURE: {self.crawl_url}", exc_info=True)
+                self.data["crawl_failure"] = True
 
             self.driver.quit()
 
@@ -319,7 +319,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False, disable_cookies=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                crawl_name="all_cookies",
+                crawl_name="control",
             )
             self.driver.quit()
 
@@ -327,7 +327,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False, disable_cookies=True)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                crawl_name="no_cookies",
+                crawl_name="experimental",
                 cookie_blocklist=(
                     CookieClass.STRICTLY_NECESSARY,
                     CookieClass.PERFORMANCE,
@@ -672,16 +672,18 @@ class Crawler:
         domain = utils.get_domain(self.driver.current_url)
         original_url = self.driver.current_url
 
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(self.time_to_wait)
         if crawl_name:
             self.save_screenshot(uid_data_path + f"{crawl_name}-0.png")
 
         # Clickstream execution loop
-        selectors: list[str] = self.get_selectors()
+        selectors: list[str] = self.get_selectors() if generate_clickstream else []
         clickstream_length = length if generate_clickstream else min(length, len(clickstream))
         i = 0
         while i < clickstream_length:
             # No more possible actions
-            if not selectors and self.driver.current_url == original_url:
+            if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 Crawler.logger.info("No more possible actions. Clickstream complete")
                 return clickstream
 
@@ -735,8 +737,9 @@ class Crawler:
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
-            time.sleep(self.time_to_wait)
 
+            self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(self.time_to_wait)
             if crawl_name:
                 self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
 
