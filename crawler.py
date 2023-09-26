@@ -733,7 +733,7 @@ class Crawler:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=False)
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
