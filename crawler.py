@@ -328,13 +328,7 @@ class Crawler:
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="experimental",
-                cookie_blocklist=(
-                    CookieClass.STRICTLY_NECESSARY,
-                    CookieClass.PERFORMANCE,
-                    CookieClass.FUNCTIONALITY,
-                    CookieClass.TARGETING,
-                    CookieClass.UNCLASSIFIED
-                ),
+                remove_all_cookies_from_request=True,
             )
             self.driver.quit()
 
@@ -591,7 +585,7 @@ class Crawler:
             clickstream: list[str | DriverAction] | None,
             length: int = 10,
             crawl_name: str = "",
-            cookie_blocklist: tuple[CookieClass, ...] = ()
+            remove_all_cookies_from_request: bool = False
     ) -> list[str | DriverAction] | None:
         """
         Crawl website using clickstream.
@@ -605,7 +599,7 @@ class Crawler:
             clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
             length: Maximum length of the clickstream. Defaults to 10.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
-            cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
+            remove_cookies_from_request: Whether to remove cookies from requests. Defaults to False.
 
         Returns:
             The clickstream that was executed.
@@ -619,15 +613,20 @@ class Crawler:
         uid_data_path = self.data_path + f"{self.current_uid}/"
 
         # Define request interceptor
-        def interceptor(request: seleniumwire.request.Request):
-            if cookie_blocklist:
-                remove_cookie_class_interceptor = functools.partial(
-                    interceptors.remove_cookie_class_interceptor,
-                    blacklist=cookie_blocklist,
-                    data_path=uid_data_path
-                )
-                remove_cookie_class_interceptor(request)
-        self.driver.request_interceptor = interceptor
+        def remove_all_interceptor(request: seleniumwire.request.Request):
+            old_header = request.headers["Cookie"]
+
+            interceptors.remove_all_interceptor(request)
+
+            with open(uid_data_path + "logs.txt", "a") as file:
+                file.write(f"GET Request: {request.url}\n")
+                file.write(f"Original Cookie Header: {old_header}\n")
+                file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
+
+        if remove_all_cookies_from_request:
+            self.driver.request_interceptor = remove_all_interceptor
+        else:
+            del self.driver.request_interceptor
 
         # Visit the current URL with exponential backoff reattempts
         attempt = 0

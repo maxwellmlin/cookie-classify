@@ -39,15 +39,17 @@ def remove_cookie_class_interceptor(request: seleniumwire.request.Request, black
     cookie_header = CookieRequestHeader(request.headers["Cookie"])
     cookie_header.remove_by_class(blacklist)
 
+    old_header = request.headers["Cookie"]
+
+    del request.headers["Cookie"]
+    request.headers["Cookie"] = cookie_header.get_header()
+
     # Add to log file if cookie header is modified
     if cookie_header.get_header() != request.headers["Cookie"]:
         with open(data_path + "logs.txt", "a") as file:
             file.write(f"GET Request: {request.url}\n")
-            file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
-            file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
-
-    del request.headers["Cookie"]
-    request.headers["Cookie"] = cookie_header.get_header()
+            file.write(f"Original Cookie Header: {old_header}\n")
+            file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
 
 
 def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
@@ -56,6 +58,7 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
 
     Args:
         request: A GET request.
+        data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
