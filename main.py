@@ -23,7 +23,7 @@ def worker(site_url: str, queue: mp.Queue) -> None:
 def main():
     pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
 
