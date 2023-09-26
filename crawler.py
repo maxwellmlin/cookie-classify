@@ -514,7 +514,7 @@ class Crawler:
 
             # Save a screenshot of the viewport
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}.png")
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
@@ -673,7 +673,7 @@ class Crawler:
         original_url = self.driver.current_url
 
         if crawl_name:
-            self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-0.png")
+            self.save_screenshot(uid_data_path + f"{crawl_name}-0.png")
 
         # Clickstream execution loop
         selectors: list[str] = self.get_selectors()
@@ -716,8 +716,6 @@ class Crawler:
                 try:
                     # Find element
                     element = self.driver.find_element(By.CSS_SELECTOR, action)
-                    # Scroll to element
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
                     # Click
                     element.click()
                 except (
@@ -740,7 +738,7 @@ class Crawler:
             time.sleep(self.time_to_wait)
 
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
 
             if generate_clickstream:
                 clickstream.append(action)
@@ -763,25 +761,30 @@ class Crawler:
 
         return selectors
 
-    def save_viewport_screenshot(self, file_path: str):
+    def save_screenshot(self, file_path: str, full_page: bool = False) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
             file_path: Path to save the screenshot.
+            full_page: Whether to take a screenshot of the entire page. Defaults to False.
         """
-        # Take a screenshot of the viewport
-        try:
-            # NOTE: Rarely, this command will fail
-            # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-            screenshot = self.driver.get_screenshot_as_png()
-        except WebDriverException:
-            Crawler.logger.exception("Failed to take screenshot")
-            return
+        if full_page:
+            el = self.driver.find_element_by_tag_name('body')
+            el.screenshot(file_path)
+        else:
+            # Take a screenshot of the viewport
+            try:
+                # NOTE: Rarely, this command will fail
+                # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                screenshot = self.driver.get_screenshot_as_png()
+            except WebDriverException:
+                Crawler.logger.exception("Failed to take screenshot")
+                return
 
-        # Save the screenshot to a file
-        with open(file_path, "wb") as file:
-            file.write(screenshot)
+            # Save the screenshot to a file
+            with open(file_path, "wb") as file:
+                file.write(screenshot)
 
     def save_har(self, file_path: str) -> None:
         """

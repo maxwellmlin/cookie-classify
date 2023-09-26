@@ -186,6 +186,7 @@ class ImageShingle:
 
         matches = 0
         total = 0
+
         for i, baseline_shingle in enumerate(baseline.shingles):
             if baseline_shingle == control.shingles[i]:
                 total += 1
