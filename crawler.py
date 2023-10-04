@@ -508,7 +508,7 @@ class Crawler:
 
             # Save a screenshot of the viewport
             if crawl_name:
-                self.save_screenshot(uid_data_path + f"{crawl_name}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}")
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
@@ -676,7 +676,7 @@ class Crawler:
         self.driver.execute_script("window.scrollTo(0, 0);")
         time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_screenshot(uid_data_path + f"{crawl_name}-0.png", screenshots=screenshots)
+            self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
 
         # Clickstream execution loop
         selectors: list[str] = self.get_selectors() if generate_clickstream else []
@@ -742,7 +742,7 @@ class Crawler:
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(self.time_to_wait)
             if crawl_name:
-                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png", screenshots=screenshots)
+                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
 
             if generate_clickstream:
                 clickstream.append(action)
@@ -765,16 +765,21 @@ class Crawler:
 
         return selectors
 
-    def save_screenshot(self, file_path: str, full_page: bool = False, screenshots: int = 1) -> None:
+    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
-            file_path: Path to save the screenshot.
+            file_name: Screenshot name.
             full_page: Whether to take a screenshot of the entire page. Defaults to False.
             screenshots: Number of screenshots to take. Defaults to 1.
         """
         for i in range(screenshots):
+            if screenshots > 1:
+                file_path = f"{file_name}-{i+1}.png"
+            else:
+                file_path = f"{file_name}.png"
+
             if full_page:
                 el = self.driver.find_element_by_tag_name('body')
                 el.screenshot(file_path)
