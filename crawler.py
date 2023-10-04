@@ -301,6 +301,7 @@ class Crawler:
             clickstream = self.crawl_clickstream(
                 clickstream=None,
                 crawl_name="baseline",
+                screenshots=10
             )
             self.driver.quit()
 
