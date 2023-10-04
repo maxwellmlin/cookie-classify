@@ -585,7 +585,8 @@ class Crawler:
             clickstream: list[str | DriverAction] | None,
             length: int = 10,
             crawl_name: str = "",
-            remove_all_cookies_from_request: bool = False
+            remove_all_cookies_from_request: bool = False,
+            screenshots: int = 1
     ) -> list[str | DriverAction] | None:
         """
         Crawl website using clickstream.
@@ -600,6 +601,7 @@ class Crawler:
             length: Maximum length of the clickstream. Defaults to 10.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             remove_cookies_from_request: Whether to remove cookies from requests. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
             The clickstream that was executed.
@@ -674,7 +676,7 @@ class Crawler:
         self.driver.execute_script("window.scrollTo(0, 0);")
         time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_screenshot(uid_data_path + f"{crawl_name}-0.png")
+            self.save_screenshot(uid_data_path + f"{crawl_name}-0.png", screenshots=screenshots)
 
         # Clickstream execution loop
         selectors: list[str] = self.get_selectors() if generate_clickstream else []
@@ -740,7 +742,7 @@ class Crawler:
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(self.time_to_wait)
             if crawl_name:
-                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png", screenshots=screenshots)
 
             if generate_clickstream:
                 clickstream.append(action)
@@ -763,30 +765,35 @@ class Crawler:
 
         return selectors
 
-    def save_screenshot(self, file_path: str, full_page: bool = False) -> None:
+    def save_screenshot(self, file_path: str, full_page: bool = False, screenshots: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
             file_path: Path to save the screenshot.
             full_page: Whether to take a screenshot of the entire page. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
         """
-        if full_page:
-            el = self.driver.find_element_by_tag_name('body')
-            el.screenshot(file_path)
-        else:
-            # Take a screenshot of the viewport
-            try:
-                # NOTE: Rarely, this command will fail
-                # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-                screenshot = self.driver.get_screenshot_as_png()
-            except WebDriverException:
-                Crawler.logger.exception("Failed to take screenshot")
-                return
+        for i in range(screenshots):
+            if full_page:
+                el = self.driver.find_element_by_tag_name('body')
+                el.screenshot(file_path)
+            else:
+                # Take a screenshot of the viewport
+                try:
+                    # NOTE: Rarely, this command will fail
+                    # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                    screenshot = self.driver.get_screenshot_as_png()
+                except WebDriverException:
+                    Crawler.logger.exception("Failed to take screenshot")
+                    return
 
-            # Save the screenshot to a file
-            with open(file_path, "wb") as file:
-                file.write(screenshot)
+                # Save the screenshot to a file
+                with open(file_path, "wb") as file:
+                    file.write(screenshot)
+
+            if i < screenshots - 1:
+                time.sleep(1)
 
     def save_har(self, file_path: str) -> None:
         """

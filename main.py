@@ -12,7 +12,7 @@ DEPTH = 0
 
 
 def worker(site_url: str, queue: mp.Queue) -> None:
-    crawler = Crawler(site_url, headless=True)
+    crawler = Crawler(site_url, headless=True, time_to_wait=10)
 
     # result = crawler.compliance_algo(DEPTH)
     result = crawler.classification_algo()
