@@ -584,7 +584,7 @@ class Crawler:
     def crawl_clickstream(
             self,
             clickstream: list[str | DriverAction] | None,
-            length: int = 10,
+            length: int = 5,
             crawl_name: str = "",
             remove_all_cookies_from_request: bool = False,
             screenshots: int = 1
