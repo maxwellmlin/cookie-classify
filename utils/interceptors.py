@@ -4,6 +4,7 @@ import seleniumwire.request
 
 from utils.cookie_request_header import CookieRequestHeader
 from utils.url import URL
+from utils import utils
 from utils.cookie_database import CookieClass
 
 """
@@ -29,7 +30,7 @@ def remove_cookie_class_interceptor(request: seleniumwire.request.Request, black
     Remove cookies by class from a request.
 
     Args:
-        request: A request.
+        request: The request to modify.
         blacklist: A tuple of cookie classes to remove.
     """
     if request.headers.get("Cookie") is None:
@@ -42,12 +43,29 @@ def remove_cookie_class_interceptor(request: seleniumwire.request.Request, black
     request.headers["Cookie"] = cookie_header.get_header()
 
 
+def remove_third_party_interceptor(request: seleniumwire.request.Request, current_url: str) -> None:
+    """
+    Remove all third-party cookies from a request.
+
+    A third-party cookie is a cookie that is not from the website being crawled.
+
+    Args:
+        request: The request to modify.
+        current_url: The URL of the website being crawled.
+    """
+    if request.headers.get("Cookie") is None:
+        return
+
+    if utils.get_domain(request.url) != utils.get_domain(current_url):
+        del request.headers["Cookie"]
+
+
 def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     """
     Removes all cookies from a request.
 
     Args:
-        request: A request.
+        request: The request to modify.
         data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
@@ -63,7 +81,7 @@ def set_referer_interceptor(request: seleniumwire.request.Request, url: str, ref
     If request.url matches url, then the referer header is modified to referer.
 
     Args:
-        request: A request.
+        request: The request to modify.
         url: The URL of the website being crawled.
         referer: The new referer value. If None, do nothing.
     """
