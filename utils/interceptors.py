@@ -26,10 +26,10 @@ driver.request_interceptor = interceptor
 
 def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass, ...]) -> None:
     """
-    Remove cookies by class from a GET request.
+    Remove cookies by class from a request.
 
     Args:
-        request: A GET request.
+        request: A request.
         blacklist: A tuple of cookie classes to remove.
     """
     if request.headers.get("Cookie") is None:
@@ -44,10 +44,10 @@ def remove_cookie_class_interceptor(request: seleniumwire.request.Request, black
 
 def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     """
-    Removes all cookies from a GET request.
+    Removes all cookies from a request.
 
     Args:
-        request: A GET request.
+        request: A request.
         data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
@@ -58,12 +58,12 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
 
 def set_referer_interceptor(request: seleniumwire.request.Request, url: str, referer: Optional[str]) -> None:
     """
-    Spoof the referer header of a GET request to imitate a link click.
+    Spoof the referer header of a request to imitate a link click.
 
     If request.url matches url, then the referer header is modified to referer.
 
     Args:
-        request: A GET request.
+        request: A request.
         url: The URL of the website being crawled.
         referer: The new referer value. If None, do nothing.
     """
