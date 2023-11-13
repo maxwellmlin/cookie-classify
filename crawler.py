@@ -158,9 +158,6 @@ class Crawler:
         }
 
         firefox_profile = webdriver.FirefoxProfile()
-        # TODO: Completely remove disable_cookies later
-        # if disable_cookies:
-        #     firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
 
         driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
@@ -391,12 +388,13 @@ class Crawler:
                 file.write(msg + "\n")
 
             # Define request interceptor
-            def interceptor(request: seleniumwire.request.Request):
+            def request_interceptor(request: seleniumwire.request.Request):
+                old_header = request.headers["Cookie"]
+
                 referer_interceptor = functools.partial(
                     interceptors.set_referer_interceptor,
                     url=current_url.url,
                     referer=previous.get(current_url),
-                    data_path=uid_data_path
                 )
                 referer_interceptor(request)  # Intercept referer to previous page
 
@@ -404,12 +402,16 @@ class Crawler:
                     remove_cookie_class_interceptor = functools.partial(
                         interceptors.remove_cookie_class_interceptor,
                         blacklist=cookie_blocklist,
-                        data_path=uid_data_path
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
+                with open(uid_data_path + "logs.txt", "a") as file:
+                    file.write(f"Request URL: {request.url}\n")
+                    file.write(f"Original Cookie Header: {old_header}\n")
+                    file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
+
             # Set request interceptor
-            self.driver.request_interceptor = interceptor
+            self.driver.request_interceptor = request_interceptor
 
             # Remove previous HAR entries
             del self.driver.requests
@@ -616,18 +618,18 @@ class Crawler:
         uid_data_path = self.data_path + f"{self.current_uid}/"
 
         # Define request interceptor
-        def remove_all_interceptor(request: seleniumwire.request.Request):
+        def request_interceptor(request: seleniumwire.request.Request):
             old_header = request.headers["Cookie"]
 
             interceptors.remove_all_interceptor(request)
 
             with open(uid_data_path + "logs.txt", "a") as file:
-                file.write(f"GET Request: {request.url}\n")
+                file.write(f"Request URL: {request.url}\n")
                 file.write(f"Original Cookie Header: {old_header}\n")
                 file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
 
         if remove_all_cookies_from_request:
-            self.driver.request_interceptor = remove_all_interceptor
+            self.driver.request_interceptor = request_interceptor
         else:
             del self.driver.request_interceptor
 
