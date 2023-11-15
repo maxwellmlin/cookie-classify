@@ -621,7 +621,8 @@ class Crawler:
         def request_interceptor(request: seleniumwire.request.Request):
             old_header = request.headers["Cookie"]
 
-            interceptors.remove_third_party_interceptor(request, self.crawl_url)
+            # interceptors.remove_third_party_interceptor(request, self.crawl_url)
+            interceptors.remove_all_interceptor(request)
 
             with open(uid_data_path + "logs.txt", "a") as file:
                 file.write(f"Request URL: {request.url}\n")
