@@ -326,7 +326,7 @@ class Crawler:
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="experimental",
-                remove_all_cookies_from_request=True,
+                set_request_interceptor=True,
             )
             self.driver.quit()
 
@@ -588,7 +588,7 @@ class Crawler:
             clickstream: list[str | DriverAction] | None,
             length: int = 5,
             crawl_name: str = "",
-            remove_all_cookies_from_request: bool = False,
+            set_request_interceptor: bool = False,
             screenshots: int = 1
     ) -> list[str | DriverAction] | None:
         """
@@ -603,7 +603,7 @@ class Crawler:
             clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
             length: Maximum length of the clickstream. Defaults to 10.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
-            remove_cookies_from_request: Whether to remove cookies from requests. Defaults to False.
+            set_request_interceptor: Whether to set the request interceptor. Defaults to False.
             screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
@@ -629,7 +629,7 @@ class Crawler:
                 file.write(f"Original Cookie Header: {old_header}\n")
                 file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
 
-        if remove_all_cookies_from_request:
+        if set_request_interceptor:
             self.driver.request_interceptor = request_interceptor
         else:
             del self.driver.request_interceptor
