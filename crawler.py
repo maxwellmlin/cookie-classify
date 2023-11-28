@@ -135,7 +135,7 @@ class Crawler:
             "crawl_failure": False
         }
 
-    def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
+    def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
         """
         Initialize and return a Firefox web driver using arguments from `self`.
 
@@ -314,7 +314,7 @@ class Crawler:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
             # Control group
-            self.driver = self.get_driver(enable_har=False, disable_cookies=False)
+            self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="control",
@@ -322,7 +322,7 @@ class Crawler:
             self.driver.quit()
 
             # Experimental group
-            self.driver = self.get_driver(enable_har=False, disable_cookies=True)
+            self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="experimental",
