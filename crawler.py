@@ -683,7 +683,7 @@ class Crawler:
             self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
 
         # Clickstream execution loop
-        selectors: list[str] = self.get_selectors() if generate_clickstream else []
+        selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
         clickstream_length = length if generate_clickstream else min(length, len(clickstream))
         i = 0
         while i < clickstream_length:
@@ -750,7 +750,7 @@ class Crawler:
 
             if generate_clickstream:
                 clickstream.append(action)
-                selectors = self.get_selectors()
+                selectors = self.inject_script("injections/clickable-elements.js")
 
             i += 1
 
@@ -758,16 +758,14 @@ class Crawler:
 
         return clickstream
 
-    def get_selectors(self) -> list[str]:
+    def inject_script(self, path: str) -> Any:
         """
-        Return a list of CSS selectors for clickable elements on the page.
+        Inject a JavaScript file into the current page.
         """
-        with open("injections/clickable-elements.js", "r") as file:
+        with open(path, "r") as file:
             js = file.read()
 
-        selectors: list[str] = self.driver.execute_script(js)
-
-        return selectors
+        return self.driver.execute_script(js)
 
     def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
         """
