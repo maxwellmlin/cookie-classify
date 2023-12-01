@@ -841,7 +841,7 @@ class Crawler:
 
         content = {
             "innerText": extract_words(self.inject_script("injections/inner-text.js")),
-            "urls": reduce_list(self.inject_script("injections/urls.js")),
+            "links": reduce_list(self.inject_script("injections/links.js")),
             "img": reduce_list(self.inject_script("injections/img.js")),
         }
 
