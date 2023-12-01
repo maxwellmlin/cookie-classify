@@ -1,4 +1,4 @@
-CRAWL_NAME = "remove-all"  # Name of crawl
+CRAWL_NAME = "test"  # Name of crawl
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 DEPTH = 0
 

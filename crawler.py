@@ -681,6 +681,7 @@ class Crawler:
         time.sleep(self.time_to_wait)
         if crawl_name:
             self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
+            self.save_content(uid_data_path, crawl_name)
 
         # Clickstream execution loop
         selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
@@ -747,6 +748,7 @@ class Crawler:
             time.sleep(self.time_to_wait)
             if crawl_name:
                 self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
+                self.save_content(uid_data_path, crawl_name)
 
             if generate_clickstream:
                 clickstream.append(action)
@@ -801,6 +803,64 @@ class Crawler:
 
             if i < screenshots - 1:
                 time.sleep(1)
+
+    def save_content(self, path: pathlib.Path | str, crawl_name: str) -> None:
+        """
+        Save the content of the current page to a file.
+
+        Args:
+            file_path: Directory to save the content.
+        """
+        def extract_words(innerText: str):
+            words = []
+            lines = innerText.splitlines()
+            for line in lines:
+                words.extend(line.split())
+
+            counts = {}
+            for word in words:
+                if word in counts:
+                    counts[word] += 1
+                else:
+                    counts[word] = 1
+            return counts
+        
+        def reduce_list(list: list) -> dict:
+            frequencies = {}
+            for item in list:
+                if item in frequencies:
+                    frequencies[item] += 1
+                else:
+                    frequencies[item] = 1
+            return frequencies
+
+        if isinstance(path, str):
+            path = pathlib.Path(path)
+
+        data_path = path / "data.json"
+
+        content = {
+            "innerText": extract_words(self.inject_script("injections/inner-text.js")),
+            "urls": reduce_list(self.inject_script("injections/urls.js")),
+            "img": reduce_list(self.inject_script("injections/img.js")),
+        }
+
+        if (data_path).exists():
+            with open(data_path, "r") as file:
+                data = json.load(file)
+        else:
+            data = {}
+
+        for name, extract in content.items():
+            if name not in data:
+                data[name] = {}
+            if crawl_name not in data[name]:
+                data[name][crawl_name] = []
+
+            data[name][crawl_name].append(extract)
+
+        with open(data_path, 'w') as file:
+            json.dump(data, file)
 
     def save_har(self, file_path: str) -> None:
         """
