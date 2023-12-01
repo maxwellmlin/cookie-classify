@@ -13,11 +13,11 @@ class ImageShingle:
     See https://www.usenix.org/legacy/events/sec07/tech/full_papers/anderson/anderson.pdf.
     """
 
-    def __init__(self, image_path: str, chunk_size: int):
+    def __init__(self, image_path: str, chunk_size: int = 40):
         """
         Args:
             image_path: Path to the image.
-            chunk_size: Width and height of each chunk.
+            chunk_size: Width and height of each chunk. Default is 40.
         """
         self.chunk_size = chunk_size
         self.image = Image.open(image_path).convert("RGBA")  # Convert to RGBA mode (since we are using .png files)
@@ -52,7 +52,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Right side
+        # Right side remainder
         if self.width % self.chunk_size != 0:
             for y in range(self.num_chunks_y):
                 left = self.num_chunks_x * self.chunk_size
@@ -62,7 +62,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Bottom side
+        # Bottom side remainder
         if self.height % self.chunk_size != 0:
             for x in range(self.num_chunks_x):
                 left = x * self.chunk_size
@@ -72,7 +72,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Bottom-right corner
+        # Bottom-right corner remainder
         if self.width % self.chunk_size != 0 and self.height % self.chunk_size != 0:
             left = self.num_chunks_x * self.chunk_size
             upper = self.num_chunks_y * self.chunk_size
@@ -154,3 +154,98 @@ class ImageShingle:
                 matches += min(count, other_shingles.shingle_count[shingle])  # Add the number of matches
 
         return matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
+
+    @staticmethod
+    def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float:
+        """
+        Compare shingles between baseline and experimental excluding all differences between baseline and control.
+
+        I.e., if baseline and control are the same, then we simply return the similarity between baseline and experimental.
+        However, suppose baseline and control differ in the first shingle. Then, we only compare all shingles > 1 between
+        baseline and experimental.
+        NOTE: This is no longer a true Image Shingle comparison since the position of each shingle matters.
+
+        Args:
+            baseline: Image baseline.
+            control: Image without treatement.
+            experimental: Image with treatment.
+
+        Raises:
+            ValueError: If the shingles do not have the same chunk size.
+            ValueError: If the images are not the same size.
+
+        Returns:
+            float: Percentage similarity between baseline and experimental excluding all differences between baseline and control.
+            -1 if there are no shingles to compare (i.e., baseline and control are completely different)
+        """
+        if baseline.chunk_size != control.chunk_size or baseline.chunk_size != experimental.chunk_size:
+            raise ValueError("Shingles must have the same chunk size.")
+
+        if len(baseline.image.size) != len(control.image.size) or len(baseline.image.size) != len(experimental.image.size):
+            raise ValueError("Images must have the same size.")
+
+        matches = 0
+        total = 0
+
+        for i, baseline_shingle in enumerate(baseline.shingles):
+            if baseline_shingle == control.shingles[i]:
+                total += 1
+                if baseline_shingle == experimental.shingles[i]:
+                    matches += 1
+
+        # Baseline and control are completely different
+        if total == 0:
+            return -1
+
+        similarity = matches / total
+        return similarity
+
+    @staticmethod
+    def compare_with_controls(baselines: list[ImageShingle], control: ImageShingle, experimental: ImageShingle) -> float:
+        """
+        Implements compare_with_control for multiple baselines.
+        
+        The union of differences between each baseline and control is excluded from the comparison between control and experimental.
+
+        Args:
+            baseline: List of image baselines.
+            control: Image without treatement.
+            experimental: Image with treatment.
+
+        Raises:
+            ValueError: If the shingles do not have the same chunk size.
+            ValueError: If the images are not the same size.
+
+        Returns:
+            float: Percentage similarity between baseline and experimental excluding all differences between baseline and control.
+            -1 if there are no shingles to compare (i.e., baseline and control are completely different)
+        """
+        if baselines[0].chunk_size != control.chunk_size or baselines[0].chunk_size != experimental.chunk_size:
+            raise ValueError("Shingles must have the same chunk size.")
+
+        if len(baselines[0].image.size) != len(control.image.size) or len(baselines[0].image.size) != len(experimental.image.size):
+            raise ValueError("Images must have the same size.")
+
+        matches = 0
+        total = 0
+
+        excluded_indices = set()
+        for baseline in baselines:
+            for i, baseline_shingle in enumerate(baseline.shingles):
+                if baseline_shingle != control.shingles[i]:
+                    excluded_indices.add(i)
+        
+        for i, control_shingle in enumerate(control.shingles):
+            if i in excluded_indices:
+                continue
+
+            total += 1
+            if control_shingle == experimental.shingles[i]:
+                matches += 1
+
+        # Baseline and control are completely different
+        if total == 0:
+            return -1
+
+        similarity = matches / total
+        return similarity

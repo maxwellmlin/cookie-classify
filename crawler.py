@@ -55,8 +55,6 @@ class CMP(str, Enum):
     Enum values correspond to the name of the exposed CMP JavaScript API object.
     """
 
-    NONE = "NONE"  # No CMP found
-
     ONETRUST = "OneTrust"
     TCF = "__tcfapi"
 
@@ -80,6 +78,7 @@ class CrawlData(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
     down: bool | None  # True if landing page is down or some other critical error occurred
     clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
+    crawl_failure: bool
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -132,10 +131,11 @@ class Crawler:
             "interaction_type": None,
             "interaction_success": None,
             "down": None,
-            "clickstream": None
+            "clickstream": None,
+            "crawl_failure": False
         }
 
-    def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
+    def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
         """
         Initialize and return a Firefox web driver using arguments from `self`.
 
@@ -158,8 +158,6 @@ class Crawler:
         }
 
         firefox_profile = webdriver.FirefoxProfile()
-        if disable_cookies:
-            firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
 
         driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
@@ -178,7 +176,8 @@ class Crawler:
             try:
                 func(*args, **kwargs)
             except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.critical(f"GENERAL CRAWL EXCEPTION: {self.crawl_url}", exc_info=True)
+                Crawler.logger.critical(f"CRAWL FAILURE: {self.crawl_url}", exc_info=True)
+                self.data["crawl_failure"] = True
 
             self.driver.quit()
 
@@ -298,7 +297,8 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
                 clickstream=None,
-                crawl_name="all_cookies",
+                crawl_name="baseline",
+                screenshots=10
             )
             self.driver.quit()
 
@@ -313,17 +313,20 @@ class Crawler:
             with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
-            self.driver = self.get_driver(enable_har=False, disable_cookies=True)
+            # Control group
+            self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                crawl_name="no_cookies",
-                cookie_blocklist=(
-                    CookieClass.STRICTLY_NECESSARY,
-                    CookieClass.PERFORMANCE,
-                    CookieClass.FUNCTIONALITY,
-                    CookieClass.TARGETING,
-                    CookieClass.UNCLASSIFIED
-                ),
+                crawl_name="control",
+            )
+            self.driver.quit()
+
+            # Experimental group
+            self.driver = self.get_driver(enable_har=False)
+            self.crawl_clickstream(
+                clickstream=clickstream,
+                crawl_name="experimental",
+                set_request_interceptor=True,
             )
             self.driver.quit()
 
@@ -385,12 +388,13 @@ class Crawler:
                 file.write(msg + "\n")
 
             # Define request interceptor
-            def interceptor(request: seleniumwire.request.Request):
+            def request_interceptor(request: seleniumwire.request.Request):
+                old_header = request.headers["Cookie"]
+
                 referer_interceptor = functools.partial(
                     interceptors.set_referer_interceptor,
                     url=current_url.url,
                     referer=previous.get(current_url),
-                    data_path=uid_data_path
                 )
                 referer_interceptor(request)  # Intercept referer to previous page
 
@@ -398,12 +402,16 @@ class Crawler:
                     remove_cookie_class_interceptor = functools.partial(
                         interceptors.remove_cookie_class_interceptor,
                         blacklist=cookie_blocklist,
-                        data_path=uid_data_path
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
+                with open(uid_data_path + "logs.txt", "a") as file:
+                    file.write(f"Request URL: {request.url}\n")
+                    file.write(f"Original Cookie Header: {old_header}\n")
+                    file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
+
             # Set request interceptor
-            self.driver.request_interceptor = interceptor
+            self.driver.request_interceptor = request_interceptor
 
             # Remove previous HAR entries
             del self.driver.requests
@@ -503,7 +511,7 @@ class Crawler:
 
             # Save a screenshot of the viewport
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}")
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
@@ -578,9 +586,10 @@ class Crawler:
     def crawl_clickstream(
             self,
             clickstream: list[str | DriverAction] | None,
-            length: int = 10,
+            length: int = 5,
             crawl_name: str = "",
-            cookie_blocklist: tuple[CookieClass, ...] = ()
+            set_request_interceptor: bool = False,
+            screenshots: int = 1
     ) -> list[str | DriverAction] | None:
         """
         Crawl website using clickstream.
@@ -594,7 +603,8 @@ class Crawler:
             clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
             length: Maximum length of the clickstream. Defaults to 10.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
-            cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
+            set_request_interceptor: Whether to set the request interceptor. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
             The clickstream that was executed.
@@ -608,15 +618,21 @@ class Crawler:
         uid_data_path = self.data_path + f"{self.current_uid}/"
 
         # Define request interceptor
-        def interceptor(request: seleniumwire.request.Request):
-            if cookie_blocklist:
-                remove_cookie_class_interceptor = functools.partial(
-                    interceptors.remove_cookie_class_interceptor,
-                    blacklist=cookie_blocklist,
-                    data_path=uid_data_path
-                )
-                remove_cookie_class_interceptor(request)
-        self.driver.request_interceptor = interceptor
+        def request_interceptor(request: seleniumwire.request.Request):
+            old_header = request.headers["Cookie"]
+
+            # interceptors.remove_third_party_interceptor(request, self.crawl_url)
+            interceptors.remove_all_interceptor(request)
+
+            with open(uid_data_path + "logs.txt", "a") as file:
+                file.write(f"Request URL: {request.url}\n")
+                file.write(f"Original Cookie Header: {old_header}\n")
+                file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
+
+        if set_request_interceptor:
+            self.driver.request_interceptor = request_interceptor
+        else:
+            del self.driver.request_interceptor
 
         # Visit the current URL with exponential backoff reattempts
         attempt = 0
@@ -661,16 +677,19 @@ class Crawler:
         domain = utils.get_domain(self.driver.current_url)
         original_url = self.driver.current_url
 
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-0.png")
+            self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
+            self.save_content(uid_data_path, crawl_name)
 
         # Clickstream execution loop
-        selectors: list[str] = self.get_selectors()
+        selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
         clickstream_length = length if generate_clickstream else min(length, len(clickstream))
         i = 0
         while i < clickstream_length:
             # No more possible actions
-            if not selectors and self.driver.current_url == original_url:
+            if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 Crawler.logger.info("No more possible actions. Clickstream complete")
                 return clickstream
 
@@ -705,8 +724,6 @@ class Crawler:
                 try:
                     # Find element
                     element = self.driver.find_element(By.CSS_SELECTOR, action)
-                    # Scroll to element
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
                     # Click
                     element.click()
                 except (
@@ -722,18 +739,20 @@ class Crawler:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=False)
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
-            time.sleep(self.time_to_wait)
 
+            self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(self.time_to_wait)
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
+                self.save_content(uid_data_path, crawl_name)
 
             if generate_clickstream:
                 clickstream.append(action)
-                selectors = self.get_selectors()
+                selectors = self.inject_script("injections/clickable-elements.js")
 
             i += 1
 
@@ -741,36 +760,107 @@ class Crawler:
 
         return clickstream
 
-    def get_selectors(self) -> list[str]:
+    def inject_script(self, path: str) -> Any:
         """
-        Return a list of CSS selectors for clickable elements on the page.
+        Inject a JavaScript file into the current page.
         """
-        with open("injections/clickable-elements.js", "r") as file:
+        with open(path, "r") as file:
             js = file.read()
 
-        selectors: list[str] = self.driver.execute_script(js)
+        return self.driver.execute_script(js)
 
-        return selectors
-
-    def save_viewport_screenshot(self, file_path: str):
+    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
-            file_path: Path to save the screenshot.
+            file_name: Screenshot name.
+            full_page: Whether to take a screenshot of the entire page. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
         """
-        # Take a screenshot of the viewport
-        try:
-            # NOTE: Rarely, this command will fail
-            # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-            screenshot = self.driver.get_screenshot_as_png()
-        except WebDriverException:
-            Crawler.logger.exception("Failed to take screenshot")
-            return
+        for i in range(screenshots):
+            if screenshots > 1:
+                file_path = f"{file_name}-{i+1}.png"
+            else:
+                file_path = f"{file_name}.png"
 
-        # Save the screenshot to a file
-        with open(file_path, "wb") as file:
-            file.write(screenshot)
+            if full_page:
+                el = self.driver.find_element_by_tag_name('body')
+                el.screenshot(file_path)
+            else:
+                # Take a screenshot of the viewport
+                try:
+                    # NOTE: Rarely, this command will fail
+                    # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                    screenshot = self.driver.get_screenshot_as_png()
+                except WebDriverException:
+                    Crawler.logger.exception("Failed to take screenshot")
+                    return
+
+                # Save the screenshot to a file
+                with open(file_path, "wb") as file:
+                    file.write(screenshot)
+
+            if i < screenshots - 1:
+                time.sleep(1)
+
+    def save_content(self, path: pathlib.Path | str, crawl_name: str) -> None:
+        """
+        Save the content of the current page to a file.
+
+        Args:
+            file_path: Directory to save the content.
+        """
+        def extract_words(innerText: str):
+            words = []
+            lines = innerText.splitlines()
+            for line in lines:
+                words.extend(line.split())
+
+            counts = {}
+            for word in words:
+                if word in counts:
+                    counts[word] += 1
+                else:
+                    counts[word] = 1
+            return counts
+        
+        def reduce_list(list: list) -> dict:
+            frequencies = {}
+            for item in list:
+                if item in frequencies:
+                    frequencies[item] += 1
+                else:
+                    frequencies[item] = 1
+            return frequencies
+
+        if isinstance(path, str):
+            path = pathlib.Path(path)
+
+        data_path = path / "data.json"
+
+        content = {
+            "innerText": extract_words(self.inject_script("injections/inner-text.js")),
+            "links": reduce_list(self.inject_script("injections/links.js")),
+            "img": reduce_list(self.inject_script("injections/img.js")),
+        }
+
+        if (data_path).exists():
+            with open(data_path, "r") as file:
+                data = json.load(file)
+        else:
+            data = {}
+
+        for name, extract in content.items():
+            if name not in data:
+                data[name] = {}
+            if crawl_name not in data[name]:
+                data[name][crawl_name] = []
+
+            data[name][crawl_name].append(extract)
+
+        with open(data_path, 'w') as file:
+            json.dump(data, file)
 
     def save_har(self, file_path: str) -> None:
         """
