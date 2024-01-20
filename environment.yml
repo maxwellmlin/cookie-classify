@@ -1,3 +1,5 @@
+# Conda environment configuration file
+
 name: cookie-classify
 channels:
   - defaults
