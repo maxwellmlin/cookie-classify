@@ -27,7 +27,8 @@ class ImageShingle:
         self.num_chunks_y = self.height // self.chunk_size
 
         self.chunks = self.get_chunks()
-        self.shingle_count = self.get_shingle_count(self.chunks)
+        self.shingles = self.get_shingles(self.chunks)
+        self.shingle_count = self.get_shingle_count(self.shingles)
 
     def get_chunks(self) -> list[Image.Image]:
         """
@@ -84,9 +85,9 @@ class ImageShingle:
         return chunks
 
     @staticmethod
-    def get_shingle_count(chunks: list[Image.Image]) -> dict[str, int]:
+    def get_shingles(chunks: list[Image.Image]) -> list[str]:
         """
-        Return map of shingles to counts.
+        Return list of shingles of the image.
 
         Each shingle is the MD5 hash of a chunk.
 
@@ -94,10 +95,10 @@ class ImageShingle:
             chunks: Chunks of the image.
 
         Returns:
-            Map of shingles to counts.
+            Shingles of the image.
         """
+        hashes = []
 
-        map_ = {}
         for chunk in chunks:
             # Convert chunk to bytes
             chunk_bytes = chunk.tobytes()
@@ -105,8 +106,25 @@ class ImageShingle:
             # Compute MD5 hash
             md5_hash = hashlib.md5()
             md5_hash.update(chunk_bytes)
-            shingle = md5_hash.hexdigest()
+            hash_value = md5_hash.hexdigest()
 
+            hashes.append(hash_value)
+
+        return hashes
+
+    @staticmethod
+    def get_shingle_count(shingles: list[str]) -> dict[str, int]:
+        """
+        Return map of shingles to counts.
+
+        Args:
+            shingles: Shingles of the image.
+
+        Returns:
+            Map of shingles to counts.
+        """
+        map_ = {}
+        for shingle in shingles:
             if shingle not in map_:
                 map_[shingle] = 0
             map_[shingle] += 1
