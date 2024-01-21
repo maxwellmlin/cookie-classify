@@ -37,7 +37,7 @@ The function `compliance_algo` in `crawler.py` collects data that is used to cla
 
 For websites that use the OneTrust CMP, we reject tracking cookies (and accept all other types) by modifying the `OptanonConsent` cookie. For all other websites, we use a modified version of [BannerClick](https://github.com/maxwellmlin/bannerclick) to click the reject button. In either case, if any tracking cookies remain after the reject action, we classify the website as non-compliant since they do not respect the user's choice.
 
-To increase robustness, this algorithm can crawl websites up to a given maximum depth. For a website at depth=$d$, we record all links present as the new frontier nodes of depth=$d+1$. This process occurs recursively until the specified max depth is reached.
+To increase robustness, this algorithm can crawl websites up to a given maximum depth. For a website at $`\text{depth}=d`$, we record all links present as the new frontier nodes of $`\text{depth}=d+1`$. This process occurs recursively until the specified max depth is reached.
 
 To analyze the crawl data generated from `compliance_algo`, use the following Jupyter notebooks:
 - `tracker_analysis.ipynb`: Compare the number of trackers before/after BannerClick reject action.
