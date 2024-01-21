@@ -1,4 +1,4 @@
-# cookie-classify
+# Cookie Classify
 This repository contains both web crawling and analysis code for the Duke Independent Study project "Automated HTTP Cookie Classification and Enforcement".
 
 Read our [initial paper](https://maxwellmlin.com/assets/pdf/cookie-2023.pdf).
