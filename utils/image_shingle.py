@@ -138,7 +138,7 @@ class ImageShingle:
         return matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
 
     @staticmethod
-    def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float:
+    def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float | None:
         """
         Compare ordered shingles between baseline and experimental excluding all differences between baseline and control.
 
@@ -160,7 +160,7 @@ class ImageShingle:
 
         Returns:
             float: Percentage similarity between baseline and experimental excluding all differences between baseline and control.
-            -1 if there are no shingles to compare (i.e., baseline and control are completely different).
+            None: if there are no shingles to compare (i.e., baseline and control are completely different).
         """
         if baseline.chunk_size != control.chunk_size or baseline.chunk_size != experimental.chunk_size:
             raise ValueError("Shingles must have the same chunk size.")
@@ -179,13 +179,13 @@ class ImageShingle:
 
         # Baseline and control are completely different
         if total == 0:
-            return -1
+            return None
 
         similarity = matches / total
         return similarity
 
     @staticmethod
-    def compare_with_controls(baseline: ImageShingle, controls: list[ImageShingle], experimental: ImageShingle) -> float:
+    def compare_with_controls(baseline: ImageShingle, controls: list[ImageShingle], experimental: ImageShingle) -> float | None:
         """
         Implements compare_with_control for multiple controls.
 
@@ -193,7 +193,7 @@ class ImageShingle:
 
         Args:
             baseline: Image without treatment.
-            control: More images without treatment.
+            controls: More images without treatment.
             experimental: Image with treatment.
 
         Raises:
@@ -203,6 +203,7 @@ class ImageShingle:
         Returns:
             float: Percentage similarity between baseline and experimental excluding all (unioned) differences 
             between baseline and the controls. -1 if there are no shingles to compare 
+            None: if there are no shingles to compare
         """
         if baseline.chunk_size != experimental.chunk_size:
             raise ValueError("Shingles must have the same chunk size.")
@@ -234,7 +235,7 @@ class ImageShingle:
 
         # Baseline and control are completely different
         if total == 0:
-            return -1
+            return None
 
         similarity = matches / total
         return similarity
