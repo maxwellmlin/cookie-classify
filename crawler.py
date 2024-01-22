@@ -64,20 +64,26 @@ class DriverAction(str, Enum):
 
     BACK = "driver.back"  # Go back to the previous page
 
+class LandingPageDown(Exception):
+    pass
 
-class CrawlData(TypedDict):
+class CrawlResults(TypedDict):
     """
-    Class for storing data about a crawl.
+    Class for storing results about a crawl.
     """
 
     url: str  # URL of the website being crawled
     data_path: str  # Where the crawl data is stored
-    cmp_names: set[CMP] | None  # Empty if no CMP found
+    down: bool | None  # True if landing page is down, None if not attempted
+    unexpected_exception: bool  # Skip this site in the analysis if True
+
+    # Only set during compliance_algo
+    cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
-    down: bool | None  # True if landing page is down
+
+    # Only set during classification_algo
     clickstream: list[list[str | DriverAction] | None] | None  # List of clickstreams where each clickstream is a list of CSS selectors or DriverActions
-    crawl_failure: bool  # Skip this site in the analysis if True
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -128,7 +134,7 @@ class Crawler:
         
         self.clickstream = 0
 
-        self.results: CrawlData = {
+        self.results: CrawlResults = {
             "url": self.crawl_url,
             "data_path": self.data_path,
             "cmp_names": None,
@@ -169,12 +175,12 @@ class Crawler:
         return driver
 
     @staticmethod
-    def crawl_method(func: Callable[..., None]) -> Callable[..., CrawlData]:
+    def crawl_method(func: Callable[..., None]) -> Callable[..., CrawlResults]:
         """
         Decorator that safely ends the web driver and catches any exceptions.
         """
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> CrawlData:
+        def wrapper(*args, **kwargs) -> CrawlResults:
             self = args[0]
 
             try:
