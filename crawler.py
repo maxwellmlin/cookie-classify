@@ -39,9 +39,7 @@ import config
 
 class BannerClick(str, Enum):
     """
-    Type of interaction with Accept/Reject cookie notice.
-
-    Enum values correspond to BannerClick's `CHOICE` variable.
+    Type of BannerClick interaction with Accept/Reject cookie notice.
     """
 
     ACCEPT = "BannerClick Accept"
@@ -72,13 +70,14 @@ class CrawlData(TypedDict):
     Class for storing data about a crawl.
     """
 
-    data_path: str
+    url: str  # URL of the website being crawled
+    data_path: str  # Where the crawl data is stored
     cmp_names: set[CMP] | None  # Empty if no CMP found
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
-    down: bool | None  # True if landing page is down or some other critical error occurred
-    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
-    crawl_failure: bool
+    down: bool | None  # True if landing page is down
+    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or DriverActions
+    crawl_failure: bool  # Skip this site in the analysis if True
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -126,6 +125,7 @@ class Crawler:
         self.current_uid = 0
 
         self.data: CrawlData = {
+            "url": self.crawl_url,
             "data_path": self.data_path,
             "cmp_names": None,
             "interaction_type": None,
@@ -817,7 +817,7 @@ class Crawler:
             for line in lines:
                 words.extend(line.split())
 
-            counts = {}
+            counts: dict[str, int] = {}
             for word in words:
                 if word in counts:
                     counts[word] += 1
@@ -826,7 +826,7 @@ class Crawler:
             return counts
         
         def reduce_list(list: list) -> dict:
-            frequencies = {}
+            frequencies: dict = {}
             for item in list:
                 if item in frequencies:
                     frequencies[item] += 1
