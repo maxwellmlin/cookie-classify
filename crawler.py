@@ -142,7 +142,7 @@ class Crawler:
             "interaction_success": None,
             "down": None,
             "clickstream": None,
-            "crawl_failure": False
+            "unexpected_exception": False
         }
 
     def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
@@ -185,6 +185,9 @@ class Crawler:
 
             try:
                 func(*args, **kwargs)
+            except LandingPageDown:
+                Crawler.logger.critical(f"Landing page is down for '{self.crawl_url}'.")
+                self.results["down"] = True
             except Exception:  # skipcq: PYL-W0703
                 Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
                 self.data["crawl_failure"] = True
@@ -310,9 +313,6 @@ class Crawler:
                 length=length,
             )
             self.driver.quit()
-
-            if self.results["down"]:
-                return
 
             if self.results["clickstream"] is not None:
                 self.results["clickstream"].append(clickstream)
@@ -455,7 +455,7 @@ class Crawler:
                 msg = f"Skipping down site '{site_info}'."
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
-                    self.results["down"] = True
+                    raise LandingPageDown()
                 else:
                     Crawler.logger.warning(msg)
 
@@ -611,17 +611,16 @@ class Crawler:
 
         # Define request interceptor
         def request_interceptor(request: seleniumwire.request.Request):
-            old_header = request.headers["Cookie"]
-
             # interceptors.remove_third_party_interceptor(request, self.crawl_url)
-            interceptors.remove_all_interceptor(request)
+            # interceptors.remove_all_interceptor(request)
+            pass
 
         if set_request_interceptor:
             self.driver.request_interceptor = request_interceptor
         else:
             del self.driver.request_interceptor
 
-        # Visit the current URL with exponential backoff reattempts
+        # Visit the starting URL with exponential backoff reattempts
         attempt = 0
         backoff_time = 0
         while attempt < self.total_get_attempts:
@@ -655,8 +654,7 @@ class Crawler:
         if attempt == self.total_get_attempts:
             Crawler.logger.critical(f"Skipping down site '{self.crawl_url}'.")
 
-            self.results["down"] = True
-            return None
+            raise LandingPageDown()
 
         domain = utils.get_domain(self.driver.current_url)
         original_url = self.driver.current_url
