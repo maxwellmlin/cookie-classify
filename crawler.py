@@ -118,15 +118,17 @@ class Crawler:
 
         self.crawl_url = crawl_url
 
+        # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{utils.get_domain(crawl_url)}/"
         pathlib.Path(self.data_path).mkdir(parents=True, exist_ok=False)
 
+        # Each URL is assigned a unique ID
         self.uids: dict[Any, int] = {}
         self.current_uid = 0
         
         self.clickstream = 0
 
-        self.data: CrawlData = {
+        self.results: CrawlData = {
             "url": self.crawl_url,
             "data_path": self.data_path,
             "cmp_names": None,
@@ -212,7 +214,7 @@ class Crawler:
         #
         # Website Cookie Compliance Algorithm
         #
-        if self.data["cmp_names"] and CMP.ONETRUST in self.data["cmp_names"]:
+        if self.results["cmp_names"] and CMP.ONETRUST in self.results["cmp_names"]:
             self.driver.quit()
             self.driver = self.get_driver()
 
@@ -235,7 +237,7 @@ class Crawler:
             self.crawl_inner_pages(
                 interaction_type=CMP.ONETRUST,
             )
-            if not self.data["interaction_success"]:  # unable to BannerClick reject
+            if not self.results["interaction_success"]:  # unable to BannerClick reject
                 return
 
             # Log
@@ -246,7 +248,7 @@ class Crawler:
 
             return
 
-        if self.data["interaction_success"]:  # able to BannerClick reject
+        if self.results["interaction_success"]:  # able to BannerClick reject
             self.driver.quit()
             self.driver = self.get_driver()  # Reset driver
 
@@ -269,7 +271,7 @@ class Crawler:
             self.crawl_inner_pages(
                 interaction_type=BannerClick.REJECT,
             )
-            if not self.data["interaction_success"]:  # unable to BannerClick reject
+            if not self.results["interaction_success"]:  # unable to BannerClick reject
                 Crawler.logger.critical(f"BannerClick failed to reject '{self.crawl_url}'.")
                 return
 
@@ -303,13 +305,13 @@ class Crawler:
             )
             self.driver.quit()
 
-            if self.data["down"]:
+            if self.results["down"]:
                 return
 
-            if self.data["clickstream"] is not None:
-                self.data["clickstream"].append(clickstream)
+            if self.results["clickstream"] is not None:
+                self.results["clickstream"].append(clickstream)
             else:
-                self.data["clickstream"] = [clickstream]
+                self.results["clickstream"] = [clickstream]
 
             with open(f'{self.data_path}/{self.clickstream}/results.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
@@ -428,7 +430,7 @@ class Crawler:
                     self.driver.set_page_load_timeout(self.page_load_timeout)
 
                     if current_depth == 0:
-                        self.data["down"] = False
+                        self.results["down"] = False
 
                     break  # If successful, break out of the loop
 
@@ -447,7 +449,7 @@ class Crawler:
                 msg = f"Skipping down site '{site_info}'."
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
-                    self.data["down"] = True
+                    self.results["down"] = True
                 else:
                     Crawler.logger.warning(msg)
 
@@ -468,10 +470,10 @@ class Crawler:
 
                 cmp_names = [CMP(name) for name in self.driver.execute_script(js)]
 
-                if self.data["cmp_names"] is None:
-                    self.data["cmp_names"] = set(cmp_names)
+                if self.results["cmp_names"] is None:
+                    self.results["cmp_names"] = set(cmp_names)
                 else:
-                    self.data["cmp_names"].update(cmp_names)  # Taking union of detected CMPs
+                    self.results["cmp_names"].update(cmp_names)  # Taking union of detected CMPs
 
             after_redirect = URL(self.driver.current_url)
 
@@ -499,7 +501,7 @@ class Crawler:
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
-                self.data["interaction_type"] = interaction_type
+                self.results["interaction_type"] = interaction_type
 
                 if type(interaction_type) is BannerClick:
                     if interaction_type == BannerClick.ACCEPT:
@@ -517,7 +519,7 @@ class Crawler:
                     -1 = Accept (Settings) Success
                     -2 = Reject (Settings) Success
                     """
-                    self.data["interaction_success"] = status is not None
+                    self.results["interaction_success"] = status is not None
 
                 elif type(interaction_type) is CMP:
                     if interaction_type == CMP.ONETRUST:
@@ -537,7 +539,7 @@ class Crawler:
                         else:
                             Crawler.logger.critical(f"Failed to inject groups field. {result['message']}")
 
-                        self.data["interaction_success"] = result["success"]
+                        self.results["interaction_success"] = result["success"]
 
             # Save HAR file
             if crawl_name:
@@ -629,7 +631,7 @@ class Crawler:
                 self.driver.get(self.crawl_url)
                 self.driver.set_page_load_timeout(self.page_load_timeout)
 
-                self.data["down"] = False
+                self.results["down"] = False
 
                 break  # If successful, break out of the loop
 
@@ -647,7 +649,7 @@ class Crawler:
         if attempt == self.total_get_attempts:
             Crawler.logger.critical(f"Skipping down site '{self.crawl_url}'.")
 
-            self.data["down"] = True
+            self.results["down"] = True
             return None
 
         domain = utils.get_domain(self.driver.current_url)
