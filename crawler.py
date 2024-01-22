@@ -74,8 +74,8 @@ class CrawlResults(TypedDict):
 
     url: str  # URL of the website being crawled
     data_path: str  # Where the crawl data is stored
-    down: bool | None  # True if landing page is down, None if not attempted
-    unexpected_exception: bool  # Skip this site in the analysis if True
+    down: bool | None  # True/False if landing page is down/up, None if not attempted
+    unexpected_exception: bool  # True iff an unexpected exception occurred
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -83,12 +83,12 @@ class CrawlResults(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
 
     # Only set during classification_algo
-    clickstream: list[list[str | DriverAction] | None] | None  # List of clickstreams where each clickstream is a list of CSS selectors or DriverActions
+    clickstream: list[list[str | DriverAction]] | None # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
 
 
 class CrawlDataEncoder(json.JSONEncoder):
     """
-    Class for encoding `CrawlData` as JSON.
+    Class for encoding CrawlData as JSON.
     """
     def default(self, obj):
         if isinstance(obj, set):
@@ -101,6 +101,9 @@ class CrawlDataEncoder(json.JSONEncoder):
 class Crawler:
     """
     Crawl websites, intercept requests, and take screenshots.
+    
+    Crawl algorithms are decorated by @crawl_algo.
+    See README.md for more information.
     """
 
     logger = logging.getLogger(config.LOGGER_NAME)
@@ -109,7 +112,7 @@ class Crawler:
         """
         Args:
             crawl_url: The URL of the website to crawl.
-            time_to_wait: Time to wait between driver get requests. Defaults to 10 seconds.
+            time_to_wait: Time to wait between actions. Defaults to 10 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
@@ -131,23 +134,26 @@ class Crawler:
         # Each URL is assigned a unique ID
         self.uids: dict[Any, int] = {}
         self.current_uid = 0
-        
+
+        # Each clickstream is assigned a unique ID
         self.clickstream = 0
 
         self.results: CrawlResults = {
             "url": self.crawl_url,
             "data_path": self.data_path,
+            "down": None,
+            "unexpected_exception": False,
+
             "cmp_names": None,
             "interaction_type": None,
             "interaction_success": None,
-            "down": None,
+
             "clickstream": None,
-            "unexpected_exception": False
         }
 
     def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
         """
-        Initialize and return a Firefox web driver using arguments from `self`.
+        Initialize and return a Firefox web driver using arguments from self.
 
         Args:
             enable_har: Whether to enable HAR logging. Defaults to True.
@@ -175,7 +181,7 @@ class Crawler:
         return driver
 
     @staticmethod
-    def crawl_method(func: Callable[..., None]) -> Callable[..., CrawlResults]:
+    def crawl_algo(func: Callable[..., None]) -> Callable[..., CrawlResults]:
         """
         Decorator that safely ends the web driver and catches any exceptions.
         """
@@ -198,7 +204,7 @@ class Crawler:
 
         return wrapper
 
-    @crawl_method
+    @crawl_algo
     def compliance_algo(self, depth: int = 0):
         """
         Run the website cookie compliance algorithm.
@@ -292,8 +298,8 @@ class Crawler:
 
             return
 
-    @crawl_method
-    def classification_algo(self, trials: int = 10, length: int = 5, screenshots: int = 10):
+    @crawl_algo
+    def classification_algo(self, num_clickstreams: int = 10, clickstream_length: int = 5, control_screenshots: int = 10):
         """
         Cookie classification algorithm.
 
@@ -302,15 +308,17 @@ class Crawler:
             length: Length of each clickstream. Defaults to 5.
             screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
-        for _ in range(trials):
-            Path(self.data_path + f"{self.clickstream}/").mkdir(parents=True)
+        for _ in range(num_clickstreams):
+            clickstream_path = self.data_path + f"{self.clickstream}/"
+            Path(clickstream_path).mkdir(parents=True)
 
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
                 clickstream=None,
+                length=clickstream_length,
                 crawl_name="baseline",
-                screenshots=screenshots,
-                length=length,
+                set_request_interceptor=False,
+                screenshots=1,
             )
             self.driver.quit()
 
@@ -319,15 +327,17 @@ class Crawler:
             else:
                 self.results["clickstream"] = [clickstream]
 
-            with open(f'{self.data_path}/{self.clickstream}/results.json', 'w') as log_file:
+            with open(clickstream_path + 'clickstream.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
             # Control group
             self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
+                length=clickstream_length,
                 crawl_name="control",
-                length=length,
+                set_request_interceptor=False,
+                screenshots=control_screenshots,
             )
             self.driver.quit()
 
@@ -335,9 +345,10 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
+                length=clickstream_length,
                 crawl_name="experimental",
                 set_request_interceptor=True,
-                length=length,
+                screenshots=1,
             )
             self.driver.quit()
 
@@ -582,18 +593,14 @@ class Crawler:
             crawl_name: str = "",
             set_request_interceptor: bool = False,
             screenshots: int = 1
-    ) -> list[str | DriverAction] | None:
+    ) -> list[str | DriverAction]:
         """
         Crawl website using clickstream.
-
-        Screenshot folder structure: domain/uid/crawl_name.png
-        The domain is the domain of the url (before any redirect)
-        to ensure consistency with the site list.
 
         Args:
             start_node: URL where traversal will begin.
             clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
-            length: Maximum length of the clickstream. Defaults to 10.
+            length: Maximum length of the clickstream. Defaults to 5.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             set_request_interceptor: Whether to set the request interceptor. Defaults to False.
             screenshots: Number of screenshots to take. Defaults to 1.
