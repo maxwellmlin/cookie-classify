@@ -123,6 +123,8 @@ class Crawler:
 
         self.uids: dict[Any, int] = {}
         self.current_uid = 0
+        
+        self.clickstream = 0
 
         self.data: CrawlData = {
             "url": self.crawl_url,
@@ -290,7 +292,7 @@ class Crawler:
             screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
         for _ in range(trials):
-            Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
+            Path(self.data_path + f"{self.clickstream}/").mkdir(parents=True)
 
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
@@ -309,7 +311,7 @@ class Crawler:
             else:
                 self.data["clickstream"] = [clickstream]
 
-            with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
+            with open(f'{self.data_path}/{self.clickstream}/results.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
             # Control group
@@ -331,7 +333,7 @@ class Crawler:
             )
             self.driver.quit()
 
-            self.current_uid += 1
+            self.clickstream += 1
 
     @log
     def crawl_inner_pages(
@@ -597,7 +599,7 @@ class Crawler:
         else:
             generate_clickstream = False
 
-        uid_data_path = self.data_path + f"{self.current_uid}/"
+        uid_data_path = self.data_path + f"{self.clickstream}/"
 
         # Define request interceptor
         def request_interceptor(request: seleniumwire.request.Request):
@@ -713,7 +715,7 @@ class Crawler:
                         Crawler.logger.debug(f"{len(selectors)} potential selectors remaining.")
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}.", exc_info=False)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.", exc_info=False)
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
@@ -730,7 +732,7 @@ class Crawler:
 
             i += 1
 
-        Crawler.logger.info(f"Completed clickstream {self.current_uid}.")
+        Crawler.logger.info(f"Completed clickstream {self.clickstream}.")
 
         return clickstream
 
