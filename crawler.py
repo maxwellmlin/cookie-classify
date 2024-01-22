@@ -100,11 +100,11 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, crawl_url: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
+    def __init__(self, crawl_url: str, time_to_wait: int = 10, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.
-            time_to_wait: Time to wait between driver get requests. Defaults to 5 seconds.
+            time_to_wait: Time to wait between driver get requests. Defaults to 10 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
