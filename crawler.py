@@ -619,8 +619,7 @@ class Crawler:
         # Define request interceptor
         def request_interceptor(request: seleniumwire.request.Request):
             # interceptors.remove_third_party_interceptor(request, self.crawl_url)
-            # interceptors.remove_all_interceptor(request)
-            pass
+            interceptors.remove_all_interceptor(request)
 
         if set_request_interceptor:
             self.driver.request_interceptor = request_interceptor
