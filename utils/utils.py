@@ -16,7 +16,7 @@ def get_domain(url: str) -> str:
         url: URL to get the domain from.
 
     Returns:
-        domain of `url`.
+        domain of url.
     """
     separated_url = tldextract.extract(url)
     return f"{separated_url.domain}.{separated_url.suffix}"
@@ -24,7 +24,7 @@ def get_domain(url: str) -> str:
 
 def get_full_domain(url: str) -> str:
     """
-    Return full domain of `url`.
+    Return full domain of url.
 
     A full domain consists of the subdomain, second-level domain, and top-level domain.
 
@@ -32,7 +32,7 @@ def get_full_domain(url: str) -> str:
         url: URL to get the full domain from.
 
     Returns:
-        full domain of `url`.
+        full domain of url.
     """
     separated_url = tldextract.extract(url)
 
@@ -48,7 +48,7 @@ def log(func):
     """
     def wrapper(*args, **kwargs):
         logger = logging.getLogger(config.LOGGER_NAME)
-        logger.info(f"Calling `{func.__name__}` with args: {args}, kwargs: {kwargs}")
+        logger.info(f"Calling '{func.__name__}' with args: {args}, kwargs: {kwargs}.")
         return func(*args, **kwargs)
 
     return wrapper

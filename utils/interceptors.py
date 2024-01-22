@@ -11,17 +11,14 @@ from utils.cookie_database import CookieClass
 Interceptors for seleniumwire.
 
 Many of these functions are general functions and must be partially applied when used as an interceptor.
-All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
+All interceptors must have the following signature: (request: seleniumwire.request.Request) -> None
 
 For example, to use the remove_cookie_class_interceptor, use:
-```python3
 interceptor = functools.partial(
     interceptors.remove_cookie_class_interceptor,
-    blacklist=blacklist,  # A tuple of cookie classes to remove
-    data_path=data_path,  # The path to store log files
+    blacklist=blacklist,
 )
 driver.request_interceptor = interceptor
-```
 """
 
 
@@ -47,11 +44,11 @@ def remove_third_party_interceptor(request: seleniumwire.request.Request, curren
     """
     Remove all third-party cookies from a request.
 
-    A third-party cookie is a cookie that is not from the website being crawled.
+    A third-party cookie is a cookie that is not from the current website being crawled.
 
     Args:
         request: The request to modify.
-        current_url: The URL of the website being crawled.
+        current_url: The URL of the website currently being crawled.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -66,7 +63,6 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
 
     Args:
         request: The request to modify.
-        data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -82,12 +78,14 @@ def set_referer_interceptor(request: seleniumwire.request.Request, url: str, ref
 
     Args:
         request: The request to modify.
-        url: The URL of the website being crawled.
+        url: The URL of the website currently being crawled.
         referer: The new referer value. If None, do nothing.
     """
     if referer is None:
         return
 
+    # The exact URL must be matched, so that the referer is only
+    # spoofed for the immediate website (not any external resources).
     if URL(request.url) == URL(url):
         del request.headers["Referer"]
         request.headers["Referer"] = referer
