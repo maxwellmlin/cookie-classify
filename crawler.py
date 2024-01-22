@@ -176,7 +176,7 @@ class Crawler:
             try:
                 func(*args, **kwargs)
             except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.critical(f"CRAWL FAILURE: {self.crawl_url}", exc_info=True)
+                Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
                 self.data["crawl_failure"] = True
 
             self.driver.quit()
@@ -268,7 +268,7 @@ class Crawler:
                 interaction_type=BannerClick.REJECT,
             )
             if not self.data["interaction_success"]:  # unable to BannerClick reject
-                Crawler.logger.critical(f"BannerClick failed to reject: {self.crawl_url}")
+                Crawler.logger.critical(f"BannerClick failed to reject '{self.crawl_url}'.")
                 return
 
             # Log
@@ -383,7 +383,7 @@ class Crawler:
             site_info = f"'{current_url.url}' (UID: {uid})"  # for logging
 
             # Log site visit
-            Crawler.logger.info(f"Visiting: {site_info} at depth {current_depth}")
+            Crawler.logger.info(f"Visiting '{site_info}' at depth {current_depth}.")
 
             # Define request interceptor
             def request_interceptor(request: seleniumwire.request.Request):
@@ -432,17 +432,17 @@ class Crawler:
 
                 except TimeoutException:
                     attempt += 1
-                    Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
                         time.sleep(backoff_time)
                 except Exception:
                     attempt += 1
-                    Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
                         time.sleep(backoff_time)
 
             if attempt == self.total_get_attempts:
-                msg = f"Skipping down site: {site_info}"
+                msg = f"Skipping down site '{site_info}'."
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
                     self.data["down"] = True
@@ -475,7 +475,7 @@ class Crawler:
 
             # Account for redirects
             if after_redirect in redirects:
-                Crawler.logger.warning(f"Skipping duplicate site: {site_info}")
+                Crawler.logger.warning(f"Skipping duplicate site '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Mark as duplicate
@@ -485,7 +485,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                Crawler.logger.warning(f"Skipping domain redirect: {site_info}")
+                Crawler.logger.warning(f"Skipping domain redirect '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1
@@ -529,11 +529,11 @@ class Crawler:
                         except JavascriptException as e:
                             result = {"success": False, "message": e}
 
-                        Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}")
+                        Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}.")
                         if result["success"] is True:
-                            Crawler.logger.info(f"Successfully injected with '{result['message']}'")
+                            Crawler.logger.info(f"Successfully injected groups field '{result['message']}'.")
                         else:
-                            Crawler.logger.critical(f"Failed to inject: {result['message']}")
+                            Crawler.logger.critical(f"Failed to inject groups field. {result['message']}")
 
                         self.data["interaction_success"] = result["success"]
 
@@ -633,17 +633,17 @@ class Crawler:
 
             except TimeoutException:
                 attempt += 1
-                Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {self.crawl_url}")
+                Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
                     time.sleep(backoff_time)
             except Exception:
                 attempt += 1
-                Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {self.crawl_url}")
+                Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
                     time.sleep(backoff_time)
 
         if attempt == self.total_get_attempts:
-            Crawler.logger.critical(f"Skipping down site: {self.crawl_url}")
+            Crawler.logger.critical(f"Skipping down site '{self.crawl_url}'.")
 
             self.data["down"] = True
             return None
@@ -664,7 +664,7 @@ class Crawler:
         while i < clickstream_length:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
-                Crawler.logger.info("No more possible actions. Clickstream complete")
+                Crawler.logger.info("No more possible actions. Clickstream complete.")
                 return clickstream
 
             # Close all tabs except the first one
@@ -692,7 +692,7 @@ class Crawler:
             if type(action) is DriverAction:
                 if action == DriverAction.BACK:
                     self.back()
-                Crawler.logger.info("All selectors exhausted. Navigating to previous page")
+                Crawler.logger.info("All selectors exhausted. Navigating to previous page.")
 
             else:
                 try:
@@ -710,13 +710,13 @@ class Crawler:
                     WebDriverException
                 ):
                     if generate_clickstream:
-                        Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
+                        Crawler.logger.debug(f"{len(selectors)} potential selectors remaining.")
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=False)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}.", exc_info=False)
                         return clickstream
 
-            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
+            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(self.time_to_wait)
@@ -730,7 +730,7 @@ class Crawler:
 
             i += 1
 
-        Crawler.logger.info(f"Completed clickstream {self.current_uid}")
+        Crawler.logger.info(f"Completed clickstream {self.current_uid}.")
 
         return clickstream
 
@@ -768,7 +768,7 @@ class Crawler:
                     # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
                     screenshot = self.driver.get_screenshot_as_png()
                 except WebDriverException:
-                    Crawler.logger.exception("Failed to take screenshot")
+                    Crawler.logger.exception("Failed to take screenshot.")
                     return
 
                 # Save the screenshot to a file
