@@ -268,11 +268,7 @@ class Crawler:
                 interaction_type=BannerClick.REJECT,
             )
             if not self.data["interaction_success"]:  # unable to BannerClick reject
-                msg = f"BannerClick failed to reject: {self.crawl_url}"
-                Crawler.logger.critical(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
-
+                Crawler.logger.critical(f"BannerClick failed to reject: {self.crawl_url}")
                 return
 
             # Log
@@ -387,10 +383,7 @@ class Crawler:
             site_info = f"'{current_url.url}' (UID: {uid})"  # for logging
 
             # Log site visit
-            msg = f"Visiting: {site_info} at depth {current_depth}"
-            Crawler.logger.info(msg)
-            with open(uid_data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
+            Crawler.logger.info(f"Visiting: {site_info} at depth {current_depth}")
 
             # Define request interceptor
             def request_interceptor(request: seleniumwire.request.Request):
@@ -409,11 +402,6 @@ class Crawler:
                         blacklist=cookie_blocklist,
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
-
-                with open(uid_data_path + "logs.txt", "a") as file:
-                    file.write(f"Request URL: {request.url}\n")
-                    file.write(f"Original Cookie Header: {old_header}\n")
-                    file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
 
             # Set request interceptor
             self.driver.request_interceptor = request_interceptor
@@ -455,16 +443,11 @@ class Crawler:
 
             if attempt == self.total_get_attempts:
                 msg = f"Skipping down site: {site_info}"
-
                 if current_depth == 0:
                     Crawler.logger.critical(msg)  # down landing page is more serious
                     self.data["down"] = True
-
                 else:
                     Crawler.logger.warning(msg)
-
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
@@ -492,10 +475,7 @@ class Crawler:
 
             # Account for redirects
             if after_redirect in redirects:
-                msg = f"Skipping duplicate site: {site_info}"
-                Crawler.logger.warning(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+                Crawler.logger.warning(f"Skipping duplicate site: {site_info}")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Mark as duplicate
@@ -505,10 +485,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                msg = f"Skipping domain redirect: {site_info}"
-                Crawler.logger.warning(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+                Crawler.logger.warning(f"Skipping domain redirect: {site_info}")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1
@@ -629,11 +606,6 @@ class Crawler:
             # interceptors.remove_third_party_interceptor(request, self.crawl_url)
             interceptors.remove_all_interceptor(request)
 
-            with open(uid_data_path + "logs.txt", "a") as file:
-                file.write(f"Request URL: {request.url}\n")
-                file.write(f"Original Cookie Header: {old_header}\n")
-                file.write(f"Modified Cookie Header: {request.headers['Cookie']}\n\n")
-
         if set_request_interceptor:
             self.driver.request_interceptor = request_interceptor
         else:
@@ -671,10 +643,7 @@ class Crawler:
                     time.sleep(backoff_time)
 
         if attempt == self.total_get_attempts:
-            msg = f"Skipping down site: {self.crawl_url}"
-            Crawler.logger.critical(msg)
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
+            Crawler.logger.critical(f"Skipping down site: {self.crawl_url}")
 
             self.data["down"] = True
             return None
