@@ -76,7 +76,7 @@ class CrawlData(TypedDict):
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
     down: bool | None  # True if landing page is down
-    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or DriverActions
+    clickstream: list[list[str | DriverAction] | None] | None  # List of clickstreams where each clickstream is a list of CSS selectors or DriverActions
     crawl_failure: bool  # Skip this site in the analysis if True
 
 
@@ -284,13 +284,14 @@ class Crawler:
             return
 
     @crawl_method
-    def classification_algo(self, trials: int = 10, length: int = 5):
+    def classification_algo(self, trials: int = 10, length: int = 5, screenshots: int = 10):
         """
         Cookie classification algorithm.
 
         Args:
             trials: Number of clickstreams to generate. Defaults to 10.
             length: Length of each clickstream. Defaults to 5.
+            screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
         for _ in range(trials):
             Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
@@ -299,7 +300,7 @@ class Crawler:
             clickstream = self.crawl_clickstream(
                 clickstream=None,
                 crawl_name="baseline",
-                screenshots=10,
+                screenshots=screenshots,
                 length=length,
             )
             self.driver.quit()
