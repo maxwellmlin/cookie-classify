@@ -670,7 +670,7 @@ class Crawler:
         time.sleep(self.time_to_wait)
         if crawl_name:
             self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
-            self.save_content(uid_data_path, crawl_name)
+            self.extract_features(uid_data_path, crawl_name)
 
         # Clickstream execution loop
         selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
@@ -737,7 +737,7 @@ class Crawler:
             time.sleep(self.time_to_wait)
             if crawl_name:
                 self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
-                self.save_content(uid_data_path, crawl_name)
+                self.extract_features(uid_data_path, crawl_name)
 
             if generate_clickstream:
                 clickstream.append(action)
@@ -758,7 +758,7 @@ class Crawler:
 
         return self.driver.execute_script(js)
 
-    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
+    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1, delay: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
@@ -766,6 +766,7 @@ class Crawler:
             file_name: Screenshot name.
             full_page: Whether to take a screenshot of the entire page. Defaults to False.
             screenshots: Number of screenshots to take. Defaults to 1.
+            delay: Time to wait between screenshots. Defaults to 1 second.
         """
         for i in range(screenshots):
             if screenshots > 1:
@@ -791,16 +792,23 @@ class Crawler:
                     file.write(screenshot)
 
             if i < screenshots - 1:
-                time.sleep(1)
+                time.sleep(delay)
 
-    def save_content(self, path: pathlib.Path | str, crawl_name: str) -> None:
+    def extract_features(self, path: pathlib.Path | str, crawl_name: str) -> None:
         """
-        Save the content of the current page to a file.
+        Extract features from the current page and save them to a file.
 
         Args:
-            file_path: Directory to save the content.
+            path: Directory to save the content.
+            crawl_name: Name of the crawl (e.g., "baseline", "control", "experimental") used for file names.
         """
-        def extract_words(innerText: str):
+        def extract_word_counts(innerText: str):
+            """
+            Extract words from innerText and return a dictionary of word counts.
+            
+            Args:
+                innerText: The innerText of the page.
+            """
             words = []
             lines = innerText.splitlines()
             for line in lines:
@@ -814,7 +822,10 @@ class Crawler:
                     counts[word] = 1
             return counts
         
-        def reduce_list(list: list) -> dict:
+        def count_list_items(list: list) -> dict:
+            """
+            Reduce a list to a dictionary of frequencies.
+            """
             frequencies: dict = {}
             for item in list:
                 if item in frequencies:
@@ -826,12 +837,12 @@ class Crawler:
         if isinstance(path, str):
             path = pathlib.Path(path)
 
-        data_path = path / "data.json"
+        data_path = path / "features.json"
 
         content = {
-            "innerText": extract_words(self.inject_script("injections/inner-text.js")),
-            "links": reduce_list(self.inject_script("injections/links.js")),
-            "img": reduce_list(self.inject_script("injections/img.js")),
+            "innerText": extract_word_counts(self.inject_script("injections/inner-text.js")),
+            "links": count_list_items(self.inject_script("injections/links.js")),
+            "img": count_list_items(self.inject_script("injections/img.js")),
         }
 
         if (data_path).exists():
@@ -853,13 +864,13 @@ class Crawler:
 
     def save_har(self, file_path: str) -> None:
         """
-        Save current HAR file to `file_path`.
+        Save current HAR file to file_path.
 
         NOTE: Requests continually get logged to the same HAR file.
-        To start logging a new HAR file, use: `del self.driver.requests`.
+        To start logging a new HAR file, use: 'del self.driver.requests'.
 
         Args:
-            file_path: Path to save the HAR file. The file extension should be `.json`.
+            file_path: Path to save the HAR file. The file extension should be '.json'.
         """
         if not file_path.lower().endswith(".json"):
             raise ValueError("File extension must be `.json`.")
@@ -876,7 +887,5 @@ class Crawler:
         try:
             self.driver.back()
         except (TimeoutException, WebDriverException):
+            # Use JavaScript to go back if the driver fails
             self.driver.execute_script("window.history.go(-1)")
-
-    def __repr__(self) -> str:
-        return self.crawl_url
