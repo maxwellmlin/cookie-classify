@@ -284,12 +284,13 @@ class Crawler:
             return
 
     @crawl_method
-    def classification_algo(self, trials: int = 10):
+    def classification_algo(self, trials: int = 10, length: int = 5):
         """
         Cookie classification algorithm.
 
         Args:
             trials: Number of clickstreams to generate. Defaults to 10.
+            length: Length of each clickstream. Defaults to 5.
         """
         for _ in range(trials):
             Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
@@ -298,7 +299,8 @@ class Crawler:
             clickstream = self.crawl_clickstream(
                 clickstream=None,
                 crawl_name="baseline",
-                screenshots=10
+                screenshots=10,
+                length=length,
             )
             self.driver.quit()
 
@@ -318,6 +320,7 @@ class Crawler:
             self.crawl_clickstream(
                 clickstream=clickstream,
                 crawl_name="control",
+                length=length,
             )
             self.driver.quit()
 
@@ -327,6 +330,7 @@ class Crawler:
                 clickstream=clickstream,
                 crawl_name="experimental",
                 set_request_interceptor=True,
+                length=length,
             )
             self.driver.quit()
 
