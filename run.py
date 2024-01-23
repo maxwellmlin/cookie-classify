@@ -13,7 +13,7 @@ def sbatchRun(command, commandName, jobs=1, memory=4):
         "#SBATCH --cpus-per-task=2",
         "#SBATCH --mem-per-cpu=%dG" % memory,
         "#SBATCH --job-name=%s" % commandName,
-        "#SBATCH -o {slurm_log_path}/slurm-%j.out",
+        f"#SBATCH -o {slurm_log_path}/slurm-%j.out",
 
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
         "conda activate cookie-classify",
