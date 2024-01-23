@@ -6,7 +6,7 @@ shFileName = '.temp_run.sh'
 if not os.path.exists(slurm_log_path):
     os.mkdir(slurm_log_path)
 
-def sbatchRun(command, commandName, jobs=1, memory=4):
+def sbatchRun(command, commandName, jobs, memory):
     shFile = [
         "#!/bin/bash",
         "#SBATCH --array=1-%d" % jobs,
@@ -28,5 +28,6 @@ def sbatchRun(command, commandName, jobs=1, memory=4):
     print(f'Running {commandName}.')
     os.system('sbatch %s' % shFileName)
 
-jobs = 5
-sbatchRun(f'python3 -u main.py --jobs {jobs}', commandName='cookie', jobs=jobs)
+jobs = 10
+memory = 3
+sbatchRun(f'python3 -u main.py --jobs {jobs}', commandName='cookie', jobs=jobs, memory=memory)
