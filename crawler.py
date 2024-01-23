@@ -139,7 +139,7 @@ class Crawler:
         self.current_uid = 0
 
         # Each clickstream is assigned a unique ID
-        self.clickstream = 0
+        self.clickstream = 1
 
         self.results: CrawlResults = {
             "url": self.crawl_url,
@@ -332,9 +332,6 @@ class Crawler:
                 self.results["clickstream"].append(clickstream)
             else:
                 self.results["clickstream"] = [clickstream]
-
-            with open(clickstream_path + 'clickstream.json', 'w') as log_file:
-                json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
             # Control group
             self.driver = self.get_driver(enable_har=False)
