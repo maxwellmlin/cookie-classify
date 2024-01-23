@@ -109,7 +109,7 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, crawl_url: str, time_to_wait: int = 10, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    def __init__(self, crawl_url: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.

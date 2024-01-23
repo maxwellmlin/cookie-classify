@@ -10,7 +10,7 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 
 def worker(site_url: str, queue: mp.Queue) -> None:
-    crawler = Crawler(site_url, headless=True, time_to_wait=10)
+    crawler = Crawler(site_url, headless=True)
 
     # result = crawler.compliance_algo(config.DEPTH)
     result = crawler.classification_algo(num_clickstreams=10, clickstream_length=5, control_screenshots=5)
