@@ -460,12 +460,10 @@ class Crawler:
                         time.sleep(self.time_to_wait)
 
             if attempt == self.total_get_attempts:
-                msg = f"Skipping down site '{site_info}'."
                 if current_depth == 0:
-                    Crawler.logger.critical(msg)  # down landing page is more serious
                     raise LandingPageDown()
                 else:
-                    Crawler.logger.warning(msg)
+                    Crawler.logger.warning(f"Skipping down site '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
@@ -640,13 +638,11 @@ class Crawler:
                     time.sleep(self.time_to_wait)
             except Exception:
                 attempt += 1
-                Crawler.logger.exception(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.", exc_info=True)
                 if attempt < self.total_get_attempts:
                     time.sleep(self.time_to_wait)
 
         if attempt == self.total_get_attempts:
-            Crawler.logger.critical(f"Skipping down site '{self.crawl_url}'.")
-
             raise LandingPageDown()
 
         domain = utils.get_domain(self.driver.current_url)
@@ -665,6 +661,7 @@ class Crawler:
         while i < clickstream_length:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
+                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             # Close all tabs except the first one
@@ -711,7 +708,7 @@ class Crawler:
                     if generate_clickstream:
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.", exc_info=False)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.")
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
