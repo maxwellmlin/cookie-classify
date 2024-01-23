@@ -1,4 +1,6 @@
 /**
+ * NOTE: This code is no longer useful since we can directly access the desired mapping via the JS OneTrust API.
+ * 
  * Retrieve a mapping of OneTrust Cookie Group IDs to their corresponding category names.
  * 
  * The function scans the document for elements with IDs that start with 'ot-header-id-' and 

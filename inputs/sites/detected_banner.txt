@@ -15,7 +15,6 @@ casalemedia.com
 surveymonkey.com
 paloaltonetworks.com
 nvidia.com
-imgsmail.ru
 verisign.com
 swrve.com
 businesswire.com
@@ -27,7 +26,6 @@ abc.net.au
 plos.org
 doubleverify.com
 bmj.com
-getpocket.com
 supersonicads.com
 gartner.com
 branch.io

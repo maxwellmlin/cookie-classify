@@ -1,12 +1,11 @@
+# cookie-classify specific
 geckodriver.log
 playground.py
 playground.js
 crawls
-.idea
+
+# general
 __pycache__
-archive
-screenshots
-settings.json
+.idea
 .mypy_cache
-analysis
 .vscode

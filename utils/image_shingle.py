@@ -9,15 +9,16 @@ class ImageShingle:
     """
     Image shingles are a way to compare two images for similarity. The idea is to break the image
     into chunks, compute a hash for each chunk, and then compare the hashes between images.
+    This technique ignores the position of each chunk in the image.
 
     See https://www.usenix.org/legacy/events/sec07/tech/full_papers/anderson/anderson.pdf.
     """
 
-    def __init__(self, image_path: str, chunk_size: int):
+    def __init__(self, image_path: str, chunk_size: int = 40):
         """
         Args:
             image_path: Path to the image.
-            chunk_size: Width and height of each chunk.
+            chunk_size: Width and height of each chunk. Default is 40.
         """
         self.chunk_size = chunk_size
         self.image = Image.open(image_path).convert("RGBA")  # Convert to RGBA mode (since we are using .png files)
@@ -52,7 +53,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Right side
+        # Right side remainder
         if self.width % self.chunk_size != 0:
             for y in range(self.num_chunks_y):
                 left = self.num_chunks_x * self.chunk_size
@@ -62,7 +63,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Bottom side
+        # Bottom side remainder
         if self.height % self.chunk_size != 0:
             for x in range(self.num_chunks_x):
                 left = x * self.chunk_size
@@ -72,7 +73,7 @@ class ImageShingle:
                 chunk = self.image.crop((left, upper, right, lower))
                 chunks.append(chunk)
 
-        # Bottom-right corner
+        # Bottom-right corner remainder
         if self.width % self.chunk_size != 0 and self.height % self.chunk_size != 0:
             left = self.num_chunks_x * self.chunk_size
             upper = self.num_chunks_y * self.chunk_size
@@ -130,7 +131,7 @@ class ImageShingle:
 
         return map_
 
-    def compare(self, other_shingles: Self) -> float:
+    def compare_similarity(self, other_shingles: Self) -> float:
         """
         Compare two shingles and return the percentage of matches.
 
@@ -138,7 +139,6 @@ class ImageShingle:
             other_shingles: Another set of shingles.
 
         Raises:
-            ValueError: If the images are not the same size.
             ValueError: If the shingles do not have the same chunk size.
 
         Returns:
@@ -154,3 +154,106 @@ class ImageShingle:
                 matches += min(count, other_shingles.shingle_count[shingle])  # Add the number of matches
 
         return matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
+
+    @staticmethod
+    def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float | None:
+        """
+        Compare ordered shingles between baseline and experimental excluding all differences between baseline and control.
+
+        If baseline and control are the same, then we simply return the similarity between baseline and experimental.
+        However, suppose baseline and control only differ in the first chunk. Then, we only compare shingles after the first
+        between baseline and experimental. This way, we exclude all naturally occurring differences and only measure
+        differences due to the experimental condition.
+
+        NOTE: This is no longer a image shingle comparison since the position of each chunk matters.
+
+        Args:
+            baseline: Image without treatment.
+            control: Another image without treatment.
+            experimental: Image with treatment.
+
+        Raises:
+            ValueError: If the shingles do not have the same chunk size.
+            ValueError: If the images are not the same size.
+
+        Returns:
+            float: Percentage similarity between baseline and experimental excluding all differences between baseline and control.
+            None: if there are no shingles to compare (i.e., baseline and control are completely different).
+        """
+        if baseline.chunk_size != control.chunk_size or baseline.chunk_size != experimental.chunk_size:
+            raise ValueError("Shingles must have the same chunk size.")
+
+        if len(baseline.image.size) != len(control.image.size) or len(baseline.image.size) != len(experimental.image.size):
+            raise ValueError("Images must have the same size.")
+
+        matches = 0
+        total = 0
+
+        for i, baseline_shingle in enumerate(baseline.shingles):
+            if baseline_shingle == control.shingles[i]:
+                total += 1
+                if baseline_shingle == experimental.shingles[i]:
+                    matches += 1
+
+        # Baseline and control are completely different
+        if total == 0:
+            return None
+
+        similarity = matches / total
+        return similarity
+
+    @staticmethod
+    def compare_with_controls(baseline: ImageShingle, controls: list[ImageShingle], experimental: ImageShingle) -> float | None:
+        """
+        Implements compare_with_control for multiple controls.
+
+        The union of differences between each control with the baseline is excluded from the comparison between baseline and experimental.
+
+        Args:
+            baseline: Image without treatment.
+            controls: More images without treatment.
+            experimental: Image with treatment.
+
+        Raises:
+            ValueError: If the shingles do not have the same chunk size.
+            ValueError: If the images are not the same size.
+
+        Returns:
+            float: Percentage similarity between baseline and experimental excluding all (unioned) differences 
+            between baseline and the controls. -1 if there are no shingles to compare 
+            None: if there are no shingles to compare
+        """
+        if baseline.chunk_size != experimental.chunk_size:
+            raise ValueError("Shingles must have the same chunk size.")
+
+        if len(baseline.image.size) != len(experimental.image.size):
+            raise ValueError("Images must have the same size.")
+
+        matches = 0
+        total = 0
+
+        excluded_indices = set()
+        for control in controls:
+            if baseline.chunk_size != control.chunk_size:
+                raise ValueError("Shingles must have the same chunk size.")
+            if len(baseline.image.size) != len(control.image.size):
+                raise ValueError("Images must have the same size.")
+            
+            for i, baseline_shingle in enumerate(baseline.shingles):
+                if baseline_shingle != control.shingles[i]:
+                    excluded_indices.add(i)
+        
+        for i, baseline_shingle in enumerate(baseline.shingles):
+            if i in excluded_indices:
+                continue
+
+            total += 1
+            if baseline_shingle == experimental.shingles[i]:
+                matches += 1
+
+        # Baseline and control are completely different
+        if total == 0:
+            return None
+
+        similarity = matches / total
+        return similarity

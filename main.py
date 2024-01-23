@@ -8,14 +8,12 @@ import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
-DEPTH = 0
-
 
 def worker(site_url: str, queue: mp.Queue) -> None:
-    crawler = Crawler(site_url, headless=False)
+    crawler = Crawler(site_url, headless=True, time_to_wait=10)
 
-    # result = crawler.compliance_algo(DEPTH)
-    result = crawler.classification_algo()
+    # result = crawler.compliance_algo(config.DEPTH)
+    result = crawler.classification_algo(num_clickstreams=10, clickstream_length=5, control_screenshots=5)
 
     queue.put(result)
 
@@ -23,7 +21,7 @@ def worker(site_url: str, queue: mp.Queue) -> None:
 def main():
     pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
 
@@ -44,14 +42,6 @@ def main():
     with open(config.SITE_LIST_PATH) as file:
         for line in file:
             sites.append(line.strip())
-
-    # All OneTrust sites
-    # with open("inputs/sites/results-cmp_name-annotated.json") as log_file:
-    #     results = json.load(log_file)
-    #     for path in results:
-    #         if CMP.ONETRUST in results[path]["cmp_names"]:
-    #             site = os.path.basename(os.path.normpath(path))
-    #             sites.append(site)
 
     # Create input for pool
     output = mp.Queue()

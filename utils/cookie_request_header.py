@@ -4,6 +4,7 @@ from utils.cookie_database import CookieDatabase, CookieClass
 class CookieRequestHeader:
     """Related functions to parse and modify a cookie request header."""
 
+    # Open Cookie Database has less unclassified cookies than Cookie-Script
     cookie_database = CookieDatabase.load_open_cookie_database()
 
     def __init__(self, cookie_header_value: str) -> None:

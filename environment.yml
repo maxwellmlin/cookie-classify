@@ -1,3 +1,5 @@
+# Conda environment configuration file
+
 name: cookie-classify
 channels:
   - defaults
@@ -21,3 +23,5 @@ dependencies:
     - pandas
     - validators
     - matplotlib
+    - lxml
+    - scipy

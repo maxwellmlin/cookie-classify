@@ -4,34 +4,31 @@ import seleniumwire.request
 
 from utils.cookie_request_header import CookieRequestHeader
 from utils.url import URL
+from utils import utils
 from utils.cookie_database import CookieClass
 
 """
 Interceptors for seleniumwire.
 
 Many of these functions are general functions and must be partially applied when used as an interceptor.
-All interceptors must have the following signature: `(request: seleniumwire.request.Request) -> None`
+All interceptors must have the following signature: (request: seleniumwire.request.Request) -> None
 
 For example, to use the remove_cookie_class_interceptor, use:
-```python3
 interceptor = functools.partial(
     interceptors.remove_cookie_class_interceptor,
-    blacklist=blacklist,  # A tuple of cookie classes to remove
-    data_path=data_path,  # The path to store log files
+    blacklist=blacklist,
 )
 driver.request_interceptor = interceptor
-```
 """
 
 
-def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass, ...], data_path: str) -> None:
+def remove_cookie_class_interceptor(request: seleniumwire.request.Request, blacklist: tuple[CookieClass, ...]) -> None:
     """
-    Remove cookies by class from a GET request.
+    Remove cookies by class from a request.
 
     Args:
-        request: A GET request.
+        request: The request to modify.
         blacklist: A tuple of cookie classes to remove.
-        data_path: The path to store log files.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -39,23 +36,33 @@ def remove_cookie_class_interceptor(request: seleniumwire.request.Request, black
     cookie_header = CookieRequestHeader(request.headers["Cookie"])
     cookie_header.remove_by_class(blacklist)
 
-    # Add to log file if cookie header is modified
-    if cookie_header.get_header() != request.headers["Cookie"]:
-        with open(data_path + "logs.txt", "a") as file:
-            file.write(f"GET Request: {request.url}\n")
-            file.write(f"Original Cookie Header: {request.headers['Cookie']}\n")
-            file.write(f"Modified Cookie Header: {cookie_header.get_header()}\n\n")
-
     del request.headers["Cookie"]
     request.headers["Cookie"] = cookie_header.get_header()
 
 
-def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
+def remove_third_party_interceptor(request: seleniumwire.request.Request, current_url: str) -> None:
     """
-    Removes all cookies from a GET request.
+    Remove all third-party cookies from a request.
+
+    A third-party cookie is a cookie that is not from the current website being crawled.
 
     Args:
-        request: A GET request.
+        request: The request to modify.
+        current_url: The URL of the website currently being crawled.
+    """
+    if request.headers.get("Cookie") is None:
+        return
+
+    if utils.get_domain(request.url) != utils.get_domain(current_url):
+        del request.headers["Cookie"]
+
+
+def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
+    """
+    Removes all cookies from a request.
+
+    Args:
+        request: The request to modify.
     """
     if request.headers.get("Cookie") is None:
         return
@@ -63,24 +70,22 @@ def remove_all_interceptor(request: seleniumwire.request.Request) -> None:
     del request.headers["Cookie"]
 
 
-def set_referer_interceptor(request: seleniumwire.request.Request, url: str, referer: Optional[str], data_path: str) -> None:
+def set_referer_interceptor(request: seleniumwire.request.Request, url: str, referer: Optional[str]) -> None:
     """
-    Spoof the referer header of a GET request to imitate a link click.
+    Spoof the referer header of a request to imitate a link click.
 
     If request.url matches url, then the referer header is modified to referer.
 
     Args:
-        request: A GET request.
-        url: The URL of the website being crawled.
+        request: The request to modify.
+        url: The URL of the website currently being crawled.
         referer: The new referer value. If None, do nothing.
-        data_path: The path to store log files.
     """
     if referer is None:
         return
 
+    # The exact URL must be matched, so that the referer is only
+    # spoofed for the immediate website (not any external resources).
     if URL(request.url) == URL(url):
-        with open(data_path + "logs.txt", "a") as file:
-            file.write(f"Injecting Referer Header: {referer}\n")
-
         del request.headers["Referer"]
         request.headers["Referer"] = referer

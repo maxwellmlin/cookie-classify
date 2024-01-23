@@ -25,7 +25,7 @@ class URL():
         Return domain of URL.
 
         Returns:
-            Domain of `self.url`.
+            Domain of self.url
         """
         return utils.get_domain(self.url)
 

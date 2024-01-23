@@ -4,6 +4,9 @@ from enum import Enum
 import json
 import csv
 
+"""
+Lookup a cookie's CookieClass by its key (name).
+"""
 
 class CookieClass(Enum):
     """
@@ -32,7 +35,7 @@ class CookieDatabase:
     @classmethod
     def load_cookie_script(cls, data_path="inputs/databases/cookie_script.json") -> CookieDatabase:
         """
-        Initalize `CookieDatabase` using Cookie-Script JSON file.
+        Initialize CookieDatabase using Cookie-Script JSON file.
 
         Args:
             cookie_script_path: Path of the Cookie-Script JSON file.
@@ -68,11 +71,11 @@ class CookieDatabase:
     @classmethod
     def load_open_cookie_database(cls, data_path="inputs/databases/open_cookie_database.csv") -> CookieDatabase:
         """
-        Initalize `CookieDatabase` using Open Cookie Database CSV file.
+        Initialize CookieDatabase using Open Cookie Database CSV file.
         See: https://github.com/jkwakman/Open-Cookie-Database
 
         Args:
-            data_path: Path of the Open Cookie Databse CSV file.
+            data_path: Path of the Open Cookie Database CSV file.
             Defaults to "inputs/databases/open_cookie_database.csv".
 
         Returns:
@@ -108,7 +111,9 @@ class CookieDatabase:
         Returns:
             The class of the cookie.
         """
+        # NOTE: no differentiation is made between unknown (not in database)
+        # and unclassified (in database, but category unknown) cookies
         if cookie_key not in self.classes:
-            return CookieClass.UNCLASSIFIED  # NOTE: no differentiation is made between unclassified and unknown cookies
+            return CookieClass.UNCLASSIFIED
 
         return self.classes[cookie_key]

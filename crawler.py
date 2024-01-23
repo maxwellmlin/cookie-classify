@@ -39,9 +39,7 @@ import config
 
 class BannerClick(str, Enum):
     """
-    Type of interaction with Accept/Reject cookie notice.
-
-    Enum values correspond to BannerClick's `CHOICE` variable.
+    Type of BannerClick interaction with Accept/Reject cookie notice.
     """
 
     ACCEPT = "BannerClick Accept"
@@ -55,8 +53,6 @@ class CMP(str, Enum):
     Enum values correspond to the name of the exposed CMP JavaScript API object.
     """
 
-    NONE = "NONE"  # No CMP found
-
     ONETRUST = "OneTrust"
     TCF = "__tcfapi"
 
@@ -68,23 +64,32 @@ class DriverAction(str, Enum):
 
     BACK = "driver.back"  # Go back to the previous page
 
+class LandingPageDown(Exception):
+    pass
 
-class CrawlData(TypedDict):
+class CrawlResults(TypedDict):
     """
-    Class for storing data about a crawl.
+    Class for storing results about a crawl.
     """
 
-    data_path: str
-    cmp_names: set[CMP] | None  # Empty if no CMP found
+    url: str  # URL of the website being crawled
+    data_path: str  # Where the crawl data is stored
+    down: bool | None  # True/False if landing page is down/up, None if not attempted
+    unexpected_exception: bool  # True iff an unexpected exception occurred
+    time: int | None  # Time to crawl the website, initialized to None
+
+    # Only set during compliance_algo
+    cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
-    down: bool | None  # True if landing page is down or some other critical error occurred
-    clickstream: list[list[str | DriverAction] | None] | None  # List of CSS selectors or `DriverAction`s
+
+    # Only set during classification_algo
+    clickstream: list[list[str | DriverAction]] | None # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
 
 
 class CrawlDataEncoder(json.JSONEncoder):
     """
-    Class for encoding `CrawlData` as JSON.
+    Class for encoding CrawlData as JSON.
     """
     def default(self, obj):
         if isinstance(obj, set):
@@ -97,19 +102,24 @@ class CrawlDataEncoder(json.JSONEncoder):
 class Crawler:
     """
     Crawl websites, intercept requests, and take screenshots.
+    
+    Crawl algorithms are decorated by @crawl_algo.
+    See README.md for more information.
     """
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, crawl_url: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
+    def __init__(self, crawl_url: str, time_to_wait: int = 10, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.
-            time_to_wait: Time to wait between driver get requests. Defaults to 5 seconds.
+            time_to_wait: Time to wait between actions. Defaults to 10 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
-            page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
+            page_load_timeout: Time to wait for a page to load. Defaults to 60 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
+        self.start_time = time.time()
+
         self.driver: webdriver.Firefox
 
         self.headless = headless
@@ -120,24 +130,34 @@ class Crawler:
 
         self.crawl_url = crawl_url
 
+        # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{utils.get_domain(crawl_url)}/"
         pathlib.Path(self.data_path).mkdir(parents=True, exist_ok=False)
 
+        # Each URL is assigned a unique ID
         self.uids: dict[Any, int] = {}
         self.current_uid = 0
 
-        self.data: CrawlData = {
+        # Each clickstream is assigned a unique ID
+        self.clickstream = 0
+
+        self.results: CrawlResults = {
+            "url": self.crawl_url,
             "data_path": self.data_path,
+            "down": None,
+            "unexpected_exception": False,
+            "time": None,
+
             "cmp_names": None,
             "interaction_type": None,
             "interaction_success": None,
-            "down": None,
-            "clickstream": None
+
+            "clickstream": None,
         }
 
-    def get_driver(self, enable_har: bool = True, disable_cookies: bool = False) -> webdriver.Firefox:
+    def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
         """
-        Initialize and return a Firefox web driver using arguments from `self`.
+        Initialize and return a Firefox web driver using arguments from self.
 
         Args:
             enable_har: Whether to enable HAR logging. Defaults to True.
@@ -158,8 +178,6 @@ class Crawler:
         }
 
         firefox_profile = webdriver.FirefoxProfile()
-        if disable_cookies:
-            firefox_profile.set_preference("network.cookie.cookieBehavior", 2)
 
         driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
@@ -167,26 +185,32 @@ class Crawler:
         return driver
 
     @staticmethod
-    def crawl_method(func: Callable[..., None]) -> Callable[..., CrawlData]:
+    def crawl_algo(func: Callable[..., None]) -> Callable[..., CrawlResults]:
         """
         Decorator that safely ends the web driver and catches any exceptions.
         """
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> CrawlData:
+        def wrapper(*args, **kwargs) -> CrawlResults:
             self = args[0]
 
             try:
                 func(*args, **kwargs)
+            except LandingPageDown:
+                Crawler.logger.critical(f"Landing page is down for '{self.crawl_url}'.")
+                self.results["down"] = True
             except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.critical(f"GENERAL CRAWL EXCEPTION: {self.crawl_url}", exc_info=True)
+                Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
+                self.results["crawl_failure"] = True
 
             self.driver.quit()
 
-            return self.data
+            self.results["time"] = time.time() - self.start_time
+
+            return self.results
 
         return wrapper
 
-    @crawl_method
+    @crawl_algo
     def compliance_algo(self, depth: int = 0):
         """
         Run the website cookie compliance algorithm.
@@ -211,7 +235,7 @@ class Crawler:
         #
         # Website Cookie Compliance Algorithm
         #
-        if self.data["cmp_names"] and CMP.ONETRUST in self.data["cmp_names"]:
+        if self.results["cmp_names"] and CMP.ONETRUST in self.results["cmp_names"]:
             self.driver.quit()
             self.driver = self.get_driver()
 
@@ -234,7 +258,7 @@ class Crawler:
             self.crawl_inner_pages(
                 interaction_type=CMP.ONETRUST,
             )
-            if not self.data["interaction_success"]:  # unable to BannerClick reject
+            if not self.results["interaction_success"]:  # unable to BannerClick reject
                 return
 
             # Log
@@ -245,7 +269,7 @@ class Crawler:
 
             return
 
-        if self.data["interaction_success"]:  # able to BannerClick reject
+        if self.results["interaction_success"]:  # able to BannerClick reject
             self.driver.quit()
             self.driver = self.get_driver()  # Reset driver
 
@@ -268,12 +292,8 @@ class Crawler:
             self.crawl_inner_pages(
                 interaction_type=BannerClick.REJECT,
             )
-            if not self.data["interaction_success"]:  # unable to BannerClick reject
-                msg = f"BannerClick failed to reject: {self.crawl_url}"
-                Crawler.logger.critical(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
-
+            if not self.results["interaction_success"]:  # unable to BannerClick reject
+                Crawler.logger.critical(f"BannerClick failed to reject '{self.crawl_url}'.")
                 return
 
             # Log
@@ -284,50 +304,61 @@ class Crawler:
 
             return
 
-    @crawl_method
-    def classification_algo(self, trials: int = 10):
+    @crawl_algo
+    def classification_algo(self, num_clickstreams: int = 10, clickstream_length: int = 5, control_screenshots: int = 10):
         """
         Cookie classification algorithm.
 
         Args:
             trials: Number of clickstreams to generate. Defaults to 10.
+            length: Length of each clickstream. Defaults to 5.
+            screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
-        for _ in range(trials):
-            Path(self.data_path + f"{self.current_uid}/").mkdir(parents=True)
+        for _ in range(num_clickstreams):
+            clickstream_path = self.data_path + f"{self.clickstream}/"
+            Path(clickstream_path).mkdir(parents=True)
 
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
                 clickstream=None,
-                crawl_name="all_cookies",
+                clickstream_length=clickstream_length,
+                crawl_name="baseline",
+                set_request_interceptor=False,
+                screenshots=1,
             )
             self.driver.quit()
 
-            if self.data["down"]:
-                return
-
-            if self.data["clickstream"] is not None:
-                self.data["clickstream"].append(clickstream)
+            if self.results["clickstream"] is not None:
+                self.results["clickstream"].append(clickstream)
             else:
-                self.data["clickstream"] = [clickstream]
+                self.results["clickstream"] = [clickstream]
 
-            with open(f'{self.data_path}/{self.current_uid}/results.json', 'w') as log_file:
+            with open(clickstream_path + 'clickstream.json', 'w') as log_file:
                 json.dump(clickstream, log_file, cls=CrawlDataEncoder)
 
-            self.driver = self.get_driver(enable_har=False, disable_cookies=True)
+            # Control group
+            self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                crawl_name="no_cookies",
-                cookie_blocklist=(
-                    CookieClass.STRICTLY_NECESSARY,
-                    CookieClass.PERFORMANCE,
-                    CookieClass.FUNCTIONALITY,
-                    CookieClass.TARGETING,
-                    CookieClass.UNCLASSIFIED
-                ),
+                clickstream_length=clickstream_length,
+                crawl_name="control",
+                set_request_interceptor=False,
+                screenshots=control_screenshots,
             )
             self.driver.quit()
 
-            self.current_uid += 1
+            # Experimental group
+            self.driver = self.get_driver(enable_har=False)
+            self.crawl_clickstream(
+                clickstream=clickstream,
+                clickstream_length=clickstream_length,
+                crawl_name="experimental",
+                set_request_interceptor=True,
+                screenshots=1,
+            )
+            self.driver.quit()
+
+            self.clickstream += 1
 
     @log
     def crawl_inner_pages(
@@ -379,18 +410,16 @@ class Crawler:
             site_info = f"'{current_url.url}' (UID: {uid})"  # for logging
 
             # Log site visit
-            msg = f"Visiting: {site_info} at depth {current_depth}"
-            Crawler.logger.info(msg)
-            with open(uid_data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
+            Crawler.logger.info(f"Visiting '{site_info}' at depth {current_depth}.")
 
             # Define request interceptor
-            def interceptor(request: seleniumwire.request.Request):
+            def request_interceptor(request: seleniumwire.request.Request):
+                old_header = request.headers["Cookie"]
+
                 referer_interceptor = functools.partial(
                     interceptors.set_referer_interceptor,
                     url=current_url.url,
                     referer=previous.get(current_url),
-                    data_path=uid_data_path
                 )
                 referer_interceptor(request)  # Intercept referer to previous page
 
@@ -398,60 +427,43 @@ class Crawler:
                     remove_cookie_class_interceptor = functools.partial(
                         interceptors.remove_cookie_class_interceptor,
                         blacklist=cookie_blocklist,
-                        data_path=uid_data_path
                     )
                     remove_cookie_class_interceptor(request)  # Intercept cookies
 
             # Set request interceptor
-            self.driver.request_interceptor = interceptor
+            self.driver.request_interceptor = request_interceptor
 
             # Remove previous HAR entries
             del self.driver.requests
 
-            # Visit the current URL with exponential backoff reattempts
+            # Visit the current URL with reattempts
             attempt = 0
-            backoff_time = 0
             while attempt < self.total_get_attempts:
                 try:
-                    # Calculate wait time for exponential backoff
-                    backoff_time = self.time_to_wait * (2 ** attempt)  # 5, 10, 20, ...
-                    backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
-
-                    load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
-                    self.driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
-
                     # Attempt to get the website
                     self.driver.get(current_url.url)
-                    self.driver.set_page_load_timeout(self.page_load_timeout)
 
                     if current_depth == 0:
-                        self.data["down"] = False
+                        self.results["down"] = False
 
                     break  # If successful, break out of the loop
 
                 except TimeoutException:
                     attempt += 1
-                    Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(backoff_time)
+                        time.sleep(self.time_to_wait)
                 except Exception:
                     attempt += 1
-                    Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {site_info}")
+                    Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(backoff_time)
+                        time.sleep(self.time_to_wait)
 
             if attempt == self.total_get_attempts:
-                msg = f"Skipping down site: {site_info}"
-
                 if current_depth == 0:
-                    Crawler.logger.critical(msg)  # down landing page is more serious
-                    self.data["down"] = True
-
+                    raise LandingPageDown()
                 else:
-                    Crawler.logger.warning(msg)
-
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+                    Crawler.logger.warning(f"Skipping down site '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Website appears to be down, skip in future runs
@@ -470,19 +482,16 @@ class Crawler:
 
                 cmp_names = [CMP(name) for name in self.driver.execute_script(js)]
 
-                if self.data["cmp_names"] is None:
-                    self.data["cmp_names"] = set(cmp_names)
+                if self.results["cmp_names"] is None:
+                    self.results["cmp_names"] = set(cmp_names)
                 else:
-                    self.data["cmp_names"].update(cmp_names)  # Taking union of detected CMPs
+                    self.results["cmp_names"].update(cmp_names)  # Taking union of detected CMPs
 
             after_redirect = URL(self.driver.current_url)
 
             # Account for redirects
             if after_redirect in redirects:
-                msg = f"Skipping duplicate site: {site_info}"
-                Crawler.logger.warning(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+                Crawler.logger.warning(f"Skipping duplicate site '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1  # Mark as duplicate
@@ -492,10 +501,7 @@ class Crawler:
 
             # Account for domain name changes
             if after_redirect.domain() != domain:
-                msg = f"Skipping domain redirect: {site_info}"
-                Crawler.logger.warning(msg)
-                with open(self.data_path + "logs.txt", "a") as file:
-                    file.write(msg + "\n")
+                Crawler.logger.warning(f"Skipping domain redirect '{site_info}'.")
 
                 shutil.rmtree(uid_data_path)
                 self.uids[current_url] = -1
@@ -503,11 +509,11 @@ class Crawler:
 
             # Save a screenshot of the viewport
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}.png")
+                self.save_screenshot(uid_data_path + f"{crawl_name}")
 
             # NOTE: We are assumming notice interaction propagates to all inner pages
             if current_depth == 0 and interaction_type is not None:
-                self.data["interaction_type"] = interaction_type
+                self.results["interaction_type"] = interaction_type
 
                 if type(interaction_type) is BannerClick:
                     if interaction_type == BannerClick.ACCEPT:
@@ -525,7 +531,7 @@ class Crawler:
                     -1 = Accept (Settings) Success
                     -2 = Reject (Settings) Success
                     """
-                    self.data["interaction_success"] = status is not None
+                    self.results["interaction_success"] = status is not None
 
                 elif type(interaction_type) is CMP:
                     if interaction_type == CMP.ONETRUST:
@@ -539,13 +545,13 @@ class Crawler:
                         except JavascriptException as e:
                             result = {"success": False, "message": e}
 
-                        Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}")
+                        Crawler.logger.info(f"Injecting '{injection_script}' on {site_info}.")
                         if result["success"] is True:
-                            Crawler.logger.info(f"Successfully injected with '{result['message']}'")
+                            Crawler.logger.info(f"Successfully injected groups field '{result['message']}'.")
                         else:
-                            Crawler.logger.critical(f"Failed to inject: {result['message']}")
+                            Crawler.logger.critical(f"Failed to inject groups field. {result['message']}")
 
-                        self.data["interaction_success"] = result["success"]
+                        self.results["interaction_success"] = result["success"]
 
             # Save HAR file
             if crawl_name:
@@ -578,23 +584,21 @@ class Crawler:
     def crawl_clickstream(
             self,
             clickstream: list[str | DriverAction] | None,
-            length: int = 10,
+            clickstream_length: int = 5,
             crawl_name: str = "",
-            cookie_blocklist: tuple[CookieClass, ...] = ()
-    ) -> list[str | DriverAction] | None:
+            set_request_interceptor: bool = False,
+            screenshots: int = 1
+    ) -> list[str | DriverAction]:
         """
         Crawl website using clickstream.
-
-        Screenshot folder structure: domain/uid/crawl_name.png
-        The domain is the domain of the url (before any redirect)
-        to ensure consistency with the site list.
 
         Args:
             start_node: URL where traversal will begin.
             clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
-            length: Maximum length of the clickstream. Defaults to 10.
+            length: Maximum length of the clickstream. Defaults to 5.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
-            cookie_blacklist: A tuple of cookie classes to remove. Defaults to (), where no cookies are removed.
+            set_request_interceptor: Whether to set the request interceptor. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
             The clickstream that was executed.
@@ -605,73 +609,59 @@ class Crawler:
         else:
             generate_clickstream = False
 
-        uid_data_path = self.data_path + f"{self.current_uid}/"
+        clickstream_path = self.data_path + f"{self.clickstream}/"
 
         # Define request interceptor
-        def interceptor(request: seleniumwire.request.Request):
-            if cookie_blocklist:
-                remove_cookie_class_interceptor = functools.partial(
-                    interceptors.remove_cookie_class_interceptor,
-                    blacklist=cookie_blocklist,
-                    data_path=uid_data_path
-                )
-                remove_cookie_class_interceptor(request)
-        self.driver.request_interceptor = interceptor
+        def request_interceptor(request: seleniumwire.request.Request):
+            # interceptors.remove_third_party_interceptor(request, self.crawl_url)
+            interceptors.remove_all_interceptor(request)
 
-        # Visit the current URL with exponential backoff reattempts
+        if set_request_interceptor:
+            self.driver.request_interceptor = request_interceptor
+        else:
+            del self.driver.request_interceptor
+
+        # Visit the starting URL with reattempts
         attempt = 0
-        backoff_time = 0
         while attempt < self.total_get_attempts:
             try:
-                # Calculate wait time for exponential backoff
-                backoff_time = self.time_to_wait * (2 ** attempt)  # 5, 10, 20, ...
-                backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
-
-                load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
-                self.driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
-
                 # Attempt to get the website
                 self.driver.get(self.crawl_url)
-                self.driver.set_page_load_timeout(self.page_load_timeout)
-
-                self.data["down"] = False
+                self.results["down"] = False
 
                 break  # If successful, break out of the loop
 
             except TimeoutException:
                 attempt += 1
-                Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts}: {self.crawl_url}")
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
-                    time.sleep(backoff_time)
+                    time.sleep(self.time_to_wait)
             except Exception:
                 attempt += 1
-                Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts}: {self.crawl_url}")
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.", exc_info=True)
                 if attempt < self.total_get_attempts:
-                    time.sleep(backoff_time)
+                    time.sleep(self.time_to_wait)
 
         if attempt == self.total_get_attempts:
-            msg = f"Skipping down site: {self.crawl_url}"
-            Crawler.logger.critical(msg)
-            with open(self.data_path + "logs.txt", "a") as file:
-                file.write(msg + "\n")
-
-            self.data["down"] = True
-            return None
+            raise LandingPageDown()
 
         domain = utils.get_domain(self.driver.current_url)
         original_url = self.driver.current_url
 
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-0.png")
+            self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
+            self.extract_features(clickstream_path, crawl_name)
 
         # Clickstream execution loop
-        selectors: list[str] = self.get_selectors()
-        clickstream_length = length if generate_clickstream else min(length, len(clickstream))
+        selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
+        clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
         i = 0
         while i < clickstream_length:
             # No more possible actions
-            if not selectors and self.driver.current_url == original_url:
-                Crawler.logger.info("No more possible actions. Clickstream complete")
+            if generate_clickstream and not selectors and self.driver.current_url == original_url:
+                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             # Close all tabs except the first one
@@ -694,19 +684,16 @@ class Crawler:
                 action = clickstream[i]
 
             #
-            # Execute Clickstream
+            # Execute clickstream
             #
             if type(action) is DriverAction:
                 if action == DriverAction.BACK:
                     self.back()
-                Crawler.logger.info("All selectors exhausted. Navigating to previous page")
 
             else:
                 try:
                     # Find element
                     element = self.driver.find_element(By.CSS_SELECTOR, action)
-                    # Scroll to element
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
                     # Click
                     element.click()
                 except (
@@ -719,68 +706,151 @@ class Crawler:
                     WebDriverException
                 ):
                     if generate_clickstream:
-                        Crawler.logger.debug(f"{len(selectors)} potential selectors remaining")
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.current_uid} on action {i+1}/{clickstream_length}", exc_info=True)
+                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.")
                         return clickstream
 
-            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}")
-            time.sleep(self.time_to_wait)
+            Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
+            self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(self.time_to_wait)
             if crawl_name:
-                self.save_viewport_screenshot(uid_data_path + f"{crawl_name}-{i+1}.png")
+                self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
+                self.extract_features(clickstream_path, crawl_name)
 
             if generate_clickstream:
                 clickstream.append(action)
-                selectors = self.get_selectors()
+                selectors = self.inject_script("injections/clickable-elements.js")
 
             i += 1
 
-        Crawler.logger.info(f"Completed clickstream {self.current_uid}")
+        Crawler.logger.info(f"Completed clickstream {self.clickstream}.")
 
         return clickstream
 
-    def get_selectors(self) -> list[str]:
+    def inject_script(self, path: str) -> Any:
         """
-        Return a list of CSS selectors for clickable elements on the page.
+        Inject a JavaScript file into the current page.
         """
-        with open("injections/clickable-elements.js", "r") as file:
+        with open(path, "r") as file:
             js = file.read()
 
-        selectors: list[str] = self.driver.execute_script(js)
+        return self.driver.execute_script(js)
 
-        return selectors
-
-    def save_viewport_screenshot(self, file_path: str):
+    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1, delay: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
-            file_path: Path to save the screenshot.
+            file_name: Screenshot name.
+            full_page: Whether to take a screenshot of the entire page. Defaults to False.
+            screenshots: Number of screenshots to take. Defaults to 1.
+            delay: Time to wait between screenshots. Defaults to 1 second.
         """
-        # Take a screenshot of the viewport
-        try:
-            # NOTE: Rarely, this command will fail
-            # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-            screenshot = self.driver.get_screenshot_as_png()
-        except WebDriverException:
-            Crawler.logger.exception("Failed to take screenshot")
-            return
+        for i in range(screenshots):
+            if screenshots > 1:
+                file_path = f"{file_name}-{i+1}.png"
+            else:
+                file_path = f"{file_name}.png"
 
-        # Save the screenshot to a file
-        with open(file_path, "wb") as file:
-            file.write(screenshot)
+            if full_page:
+                el = self.driver.find_element_by_tag_name('body')
+                el.screenshot(file_path)
+            else:
+                # Take a screenshot of the viewport
+                try:
+                    # NOTE: Rarely, this command will fail
+                    # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                    screenshot = self.driver.get_screenshot_as_png()
+                except WebDriverException:
+                    Crawler.logger.exception("Failed to take screenshot.")
+                    return
+
+                # Save the screenshot to a file
+                with open(file_path, "wb") as file:
+                    file.write(screenshot)
+
+            if i < screenshots - 1:
+                time.sleep(delay)
+
+    def extract_features(self, path: pathlib.Path | str, crawl_name: str) -> None:
+        """
+        Extract features from the current page and save them to a file.
+
+        Args:
+            path: Directory to save the content.
+            crawl_name: Name of the crawl (e.g., "baseline", "control", "experimental") used for file names.
+        """
+        def extract_word_counts(innerText: str):
+            """
+            Extract words from innerText and return a dictionary of word counts.
+            
+            Args:
+                innerText: The innerText of the page.
+            """
+            words = []
+            lines = innerText.splitlines()
+            for line in lines:
+                words.extend(line.split())
+
+            counts: dict[str, int] = {}
+            for word in words:
+                if word in counts:
+                    counts[word] += 1
+                else:
+                    counts[word] = 1
+            return counts
+        
+        def count_list_items(list: list) -> dict:
+            """
+            Reduce a list to a dictionary of frequencies.
+            """
+            frequencies: dict = {}
+            for item in list:
+                if item in frequencies:
+                    frequencies[item] += 1
+                else:
+                    frequencies[item] = 1
+            return frequencies
+
+        if isinstance(path, str):
+            path = pathlib.Path(path)
+
+        data_path = path / "features.json"
+
+        content = {
+            "innerText": extract_word_counts(self.inject_script("injections/inner-text.js")),
+            "links": count_list_items(self.inject_script("injections/links.js")),
+            "img": count_list_items(self.inject_script("injections/img.js")),
+        }
+
+        if (data_path).exists():
+            with open(data_path, "r") as file:
+                data = json.load(file)
+        else:
+            data = {}
+
+        for name, extract in content.items():
+            if name not in data:
+                data[name] = {}
+            if crawl_name not in data[name]:
+                data[name][crawl_name] = []
+
+            data[name][crawl_name].append(extract)
+
+        with open(data_path, 'w') as file:
+            json.dump(data, file)
 
     def save_har(self, file_path: str) -> None:
         """
-        Save current HAR file to `file_path`.
+        Save current HAR file to file_path.
 
         NOTE: Requests continually get logged to the same HAR file.
-        To start logging a new HAR file, use: `del self.driver.requests`.
+        To start logging a new HAR file, use: 'del self.driver.requests'.
 
         Args:
-            file_path: Path to save the HAR file. The file extension should be `.json`.
+            file_path: Path to save the HAR file. The file extension should be '.json'.
         """
         if not file_path.lower().endswith(".json"):
             raise ValueError("File extension must be `.json`.")
@@ -797,7 +867,5 @@ class Crawler:
         try:
             self.driver.back()
         except (TimeoutException, WebDriverException):
+            # Use JavaScript to go back if the driver fails
             self.driver.execute_script("window.history.go(-1)")
-
-    def __repr__(self) -> str:
-        return self.crawl_url

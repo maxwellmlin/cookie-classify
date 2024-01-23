@@ -1,5 +1,6 @@
 /**
- * Inject a groups field into the OneTrust `OptanonConsent` cookie.
+ * Inject a groups field into the OneTrust `OptanonConsent` cookie to emulate varying levels of user cookie consent.
+ * Currently, the script only disables tracking cookies (and enables all other cookies).
  * @return {res}
  */
 
@@ -11,6 +12,7 @@
 
 /*
     js-cookie v3.0.5 | MIT 
+    A simple, lightweight JavaScript API for handling browser cookies
     See: https://github.com/js-cookie/js-cookie
 */
 !function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self,function(){var n=e.Cookies,o=e.Cookies=t();o.noConflict=function(){return e.Cookies=n,o}}())}(this,(function(){"use strict";function e(e){for(var t=1;t<arguments.length;t++){var n=arguments[t];for(var o in n)e[o]=n[o]}return e}var t=function t(n,o){function r(t,r,i){if("undefined"!=typeof document){"number"==typeof(i=e({},o,i)).expires&&(i.expires=new Date(Date.now()+864e5*i.expires)),i.expires&&(i.expires=i.expires.toUTCString()),t=encodeURIComponent(t).replace(/%(2[346B]|5E|60|7C)/g,decodeURIComponent).replace(/[()]/g,escape);var c="";for(var u in i)i[u]&&(c+="; "+u,!0!==i[u]&&(c+="="+i[u].split(";")[0]));return document.cookie=t+"="+n.write(r,t)+c}}return Object.create({set:r,get:function(e){if("undefined"!=typeof document&&(!arguments.length||e)){for(var t=document.cookie?document.cookie.split("; "):[],o={},r=0;r<t.length;r++){var i=t[r].split("="),c=i.slice(1).join("=");try{var u=decodeURIComponent(i[0]);if(o[u]=n.read(c,u),e===u)break}catch(e){}}return e?o[e]:o}},remove:function(t,n){r(t,"",e({},n,{expires:-1}))},withAttributes:function(n){return t(this.converter,e({},this.attributes,n))},withConverter:function(n){return t(e({},this.converter,n),this.attributes)}},{attributes:{value:Object.freeze(o)},converter:{value:Object.freeze(n)}})}({read:function(e){return'"'===e[0]&&(e=e.slice(1,-1)),e.replace(/(%[\dA-F]{2})+/gi,decodeURIComponent)},write:function(e){return encodeURIComponent(e).replace(/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,decodeURIComponent)}},{path:"/"});return t}));
@@ -99,14 +101,20 @@ function encodeGroups(obj) {
 }
 
 /**
- * Generate an encoded groups string where only tracking cookies are disabled.
+ * Generate an encoded groups string where only tracking cookies are disabled (and all other cookies are enabled).
  * 
  * @returns {string}
  */
 function disableOnlyTracking() {
     cookieMapping = getCookieGroupIDs()
+
+    // Any category that contains one of these words as a substring is considered a tracking category.
+    // For example, "track" is a substring of "track", "tracking", and "tracker".
     trackingCorpus = ["track", "target", "advert"]
-    trackingCorpusExact = ["ad", "ads"]  // These words are not included in trackingCorpus because they are too common
+
+    // Any category that contains one of these words (exactly) is considered a tracking category.
+    // We do this to avoid false positives.
+    trackingCorpusExact = ["ad", "ads"]
 
     groupsObject = {}
     for (let id in cookieMapping) {
@@ -138,11 +146,11 @@ function disableOnlyTracking() {
     return encodeGroups(groupsObject);
 }
 
-/*
-    onetrust.js
-*/
+/**
+ * Check whether we can execute the script.
+ */
 if (window.OneTrust === undefined) {
-    msg = "OneTrust API not found"
+    msg = "OneTrust API not found."
 
     console.error(`ERROR: ${msg}`)
     return {
@@ -153,7 +161,7 @@ if (window.OneTrust === undefined) {
 
 let OptanonConsent = Cookies.get('OptanonConsent')
 if (OptanonConsent === undefined) {
-    msg = "OptanonConsent cookie not found"
+    msg = "OptanonConsent cookie not found."
 
     console.error(`ERROR: ${msg}`)
     return {
@@ -164,7 +172,7 @@ if (OptanonConsent === undefined) {
 
 let CookieGroupIDs = getCookieGroupIDs()
 if (CookieGroupIDs === null) {
-    msg = "No cookie categories found"
+    msg = "No cookie categories found."
 
     console.error(`ERROR: ${msg}`)
     return {
@@ -173,6 +181,9 @@ if (CookieGroupIDs === null) {
     }
 }
 
+/**
+ * Inject a groups field into the OptanonConsent cookie to disable only tracking cookies.
+ */
 OptanonConsentObject = decodeString(OptanonConsent)
 OptanonConsentObject['groups'] = disableOnlyTracking()
 
@@ -182,9 +193,9 @@ console.log(`Injected groups field: ${OptanonConsentObject['groups']}`)
 OptanonConsentObject['interactionCount'] = (parseInt(OptanonConsentObject['interactionCount']) + 1).toString()
 OptanonConsentObject['landingPath'] = "NotLandingPage"
 
-// otBannerSdk.js uses this domain to set cookies
+// otBannerSdk.js uses this domain when setting cookies
 if ((domain = OneTrust?.GetDomainData()?.Domain) === undefined) {
-    msg = "OneTrust domain is undefined"
+    msg = "OneTrust domain is undefined."
 
     console.error(`ERROR: ${msg}`)
     return {
@@ -197,7 +208,7 @@ domain = `.${domain}`
 Cookies.remove("OptanonConsent", { path: '/', domain: domain })
 Cookies.set('OptanonConsent', encodeObject(OptanonConsentObject), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
 
-// Optional: Close the OneTrust banner
+// Close the OneTrust banner
 Cookies.set('OptanonAlertBoxClosed', (new Date).toISOString(), { path: '/', domain: domain, expires: 1, secure: false, sameSite: 'Lax' })
 
 return {
