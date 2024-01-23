@@ -13,7 +13,7 @@ def worker(site_url: str, queue: mp.Queue) -> None:
     crawler = Crawler(site_url, headless=True, time_to_wait=10)
 
     # result = crawler.compliance_algo(config.DEPTH)
-    result = crawler.classification_algo(trials=10, length=5, screenshots=5)
+    result = crawler.classification_algo(num_clickstreams=10, clickstream_length=5, control_screenshots=5)
 
     queue.put(result)
 
