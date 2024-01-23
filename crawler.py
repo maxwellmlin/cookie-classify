@@ -76,7 +76,7 @@ class CrawlResults(TypedDict):
     data_path: str  # Where the crawl data is stored
     down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
-    time: int  # Time to crawl the website
+    time: int | None  # Time to crawl the website, initialized to None
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -109,13 +109,13 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, crawl_url: str, time_to_wait: int = 10, total_get_attempts: int = 3, page_load_timeout: int = 30, headless: bool = True) -> None:
+    def __init__(self, crawl_url: str, time_to_wait: int = 10, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.
             time_to_wait: Time to wait between actions. Defaults to 10 seconds.
             total_get_attempts: Number of attempts to get a website. Defaults to 3.
-            page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
+            page_load_timeout: Time to wait for a page to load. Defaults to 60 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
         self.start_time = time.time()
@@ -146,6 +146,7 @@ class Crawler:
             "data_path": self.data_path,
             "down": None,
             "unexpected_exception": False,
+            "time": None,
 
             "cmp_names": None,
             "interaction_type": None,
@@ -437,19 +438,10 @@ class Crawler:
 
             # Visit the current URL with exponential backoff reattempts
             attempt = 0
-            backoff_time = 0
             while attempt < self.total_get_attempts:
                 try:
-                    # Calculate wait time for exponential backoff
-                    backoff_time = self.time_to_wait * (2 ** attempt)  # 5, 10, 20, ...
-                    backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
-
-                    load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
-                    self.driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
-
                     # Attempt to get the website
                     self.driver.get(current_url.url)
-                    self.driver.set_page_load_timeout(self.page_load_timeout)
 
                     if current_depth == 0:
                         self.results["down"] = False
@@ -460,12 +452,12 @@ class Crawler:
                     attempt += 1
                     Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(backoff_time)
+                        time.sleep(self.time_to_wait)
                 except Exception:
                     attempt += 1
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(backoff_time)
+                        time.sleep(self.time_to_wait)
 
             if attempt == self.total_get_attempts:
                 msg = f"Skipping down site '{site_info}'."
@@ -633,20 +625,10 @@ class Crawler:
 
         # Visit the starting URL with exponential backoff reattempts
         attempt = 0
-        backoff_time = 0
         while attempt < self.total_get_attempts:
             try:
-                # Calculate wait time for exponential backoff
-                backoff_time = self.time_to_wait * (2 ** attempt)  # 10, 20, 40, ...
-                backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
-
-                load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
-                self.driver.set_page_load_timeout(load_timeout)  # Increase page load timeout by 15s with each attempt
-
                 # Attempt to get the website
                 self.driver.get(self.crawl_url)
-                self.driver.set_page_load_timeout(self.page_load_timeout)
-
                 self.results["down"] = False
 
                 break  # If successful, break out of the loop
@@ -655,12 +637,12 @@ class Crawler:
                 attempt += 1
                 Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
-                    time.sleep(backoff_time)
+                    time.sleep(self.time_to_wait)
             except Exception:
                 attempt += 1
                 Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
-                    time.sleep(backoff_time)
+                    time.sleep(self.time_to_wait)
 
         if attempt == self.total_get_attempts:
             Crawler.logger.critical(f"Skipping down site '{self.crawl_url}'.")
