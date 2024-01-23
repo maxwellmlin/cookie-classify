@@ -866,3 +866,9 @@ class Crawler:
         except (TimeoutException, WebDriverException):
             # Use JavaScript to go back if the driver fails
             self.driver.execute_script("window.history.go(-1)")
+
+    def __repr__(self) -> str:
+        """
+        Return crawl_url in logs.
+        """
+        return self.crawl_url
