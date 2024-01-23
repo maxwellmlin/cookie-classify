@@ -74,9 +74,9 @@ class CrawlResults(TypedDict):
 
     url: str  # URL of the website being crawled
     data_path: str  # Where the crawl data is stored
-    down: bool | None  # True/False if landing page is down/up, None if not attempted
+    landing_page_down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
-    time: int | None  # Time to crawl the website, initialized to None
+    total_time: int | None  # Time to crawl the website, initialized to None
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
