@@ -1,4 +1,4 @@
-CRAWL_NAME = "cookie-classify"  # Name of crawl
+CRAWL_NAME = "slurm-test"  # Name of crawl
 SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
 DEPTH = 0
 
