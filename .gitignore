@@ -4,6 +4,10 @@ playground.py
 playground.js
 crawls
 
+# slurm
+slurm_logs
+.temp_run.sh
+
 # general
 __pycache__
 .idea
