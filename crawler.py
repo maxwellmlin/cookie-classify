@@ -635,12 +635,12 @@ class Crawler:
 
             except TimeoutException:
                 attempt += 1
-                Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
                     time.sleep(self.time_to_wait)
             except Exception:
                 attempt += 1
-                Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
+                Crawler.logger.exception(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
                 if attempt < self.total_get_attempts:
                     time.sleep(self.time_to_wait)
 
@@ -665,7 +665,6 @@ class Crawler:
         while i < clickstream_length:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
-                Crawler.logger.info("No more possible actions. Clickstream complete.")
                 return clickstream
 
             # Close all tabs except the first one
@@ -710,7 +709,6 @@ class Crawler:
                     WebDriverException
                 ):
                     if generate_clickstream:
-                        Crawler.logger.debug(f"{len(selectors)} potential selectors remaining.")
                         continue
                     else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.", exc_info=False)
