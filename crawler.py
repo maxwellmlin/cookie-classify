@@ -76,6 +76,7 @@ class CrawlResults(TypedDict):
     data_path: str  # Where the crawl data is stored
     down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
+    time: int  # Time to crawl the website
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -117,6 +118,8 @@ class Crawler:
             page_load_timeout: Time to wait for a page to load. Defaults to 30 seconds.
             headless: Whether to run the web driver in headless mode. Defaults to True.
         """
+        self.start_time = time.time()
+
         self.driver: webdriver.Firefox
 
         self.headless = headless
@@ -199,6 +202,8 @@ class Crawler:
                 self.data["crawl_failure"] = True
 
             self.driver.quit()
+
+            self.results["time"] = time.time() - self.start_time
 
             return self.data
 
@@ -614,7 +619,7 @@ class Crawler:
         else:
             generate_clickstream = False
 
-        uid_data_path = self.data_path + f"{self.clickstream}/"
+        clickstream_path = self.data_path + f"{self.clickstream}/"
 
         # Define request interceptor
         def request_interceptor(request: seleniumwire.request.Request):
@@ -632,7 +637,7 @@ class Crawler:
         while attempt < self.total_get_attempts:
             try:
                 # Calculate wait time for exponential backoff
-                backoff_time = self.time_to_wait * (2 ** attempt)  # 5, 10, 20, ...
+                backoff_time = self.time_to_wait * (2 ** attempt)  # 10, 20, 40, ...
                 backoff_time = min(backoff_time, 60)  # Cap the maximum waiting time at 60 seconds
 
                 load_timeout = min(self.page_load_timeout + (attempt * 15), 60)
@@ -668,8 +673,8 @@ class Crawler:
         self.driver.execute_script("window.scrollTo(0, 0);")
         time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_screenshot(uid_data_path + f"{crawl_name}-0", screenshots=screenshots)
-            self.extract_features(uid_data_path, crawl_name)
+            self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
+            self.extract_features(clickstream_path, crawl_name)
 
         # Clickstream execution loop
         selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
@@ -735,8 +740,8 @@ class Crawler:
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(self.time_to_wait)
             if crawl_name:
-                self.save_screenshot(uid_data_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
-                self.extract_features(uid_data_path, crawl_name)
+                self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
+                self.extract_features(clickstream_path, crawl_name)
 
             if generate_clickstream:
                 clickstream.append(action)
