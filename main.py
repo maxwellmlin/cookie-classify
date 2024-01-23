@@ -10,7 +10,7 @@ from crawler import Crawler, CrawlDataEncoder
 import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
-
+SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 def worker(site_url: str, queue: mp.Queue) -> None:
     crawler = Crawler(site_url, headless=True)
@@ -32,13 +32,14 @@ def main(jobs=1):
     log_stream = logging.StreamHandler()
     log_stream.setLevel(logging.DEBUG)
     log_stream.setFormatter(formatter)
+    logger.addHandler(log_stream)
 
-    log_file = logging.FileHandler(f'{config.CRAWL_PATH}/crawl.log', 'a')
+    log_file = logging.FileHandler(f'{config.CRAWL_PATH}/{SLURM_ARRAY_TASK_ID}.log', 'a')
     log_file.setLevel(logging.DEBUG)
     log_file.setFormatter(formatter)
-
-    logger.addHandler(log_stream)
     logger.addHandler(log_file)
+
+    logger.info(f"SLURM_ARRAY_TASK_ID: {SLURM_ARRAY_TASK_ID}")
 
     sites = []
 
@@ -50,9 +51,6 @@ def main(jobs=1):
     # Create input for pool
     output = mp.Queue()
     data = {}
-
-    SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID'))
-    print("SLURM_ARRAY_TASK_ID:", SLURM_ARRAY_TASK_ID)
 
     results_path = config.CRAWL_PATH + 'results.json'
     with open(results_path, 'w') as results:
