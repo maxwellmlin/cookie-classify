@@ -200,13 +200,13 @@ class Crawler:
                 self.results["down"] = True
             except Exception:  # skipcq: PYL-W0703
                 Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
-                self.data["crawl_failure"] = True
+                self.results["crawl_failure"] = True
 
             self.driver.quit()
 
             self.results["time"] = time.time() - self.start_time
 
-            return self.data
+            return self.results
 
         return wrapper
 
