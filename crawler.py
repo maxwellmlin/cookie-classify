@@ -321,7 +321,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             clickstream = self.crawl_clickstream(
                 clickstream=None,
-                length=clickstream_length,
+                clickstream_length=clickstream_length,
                 crawl_name="baseline",
                 set_request_interceptor=False,
                 screenshots=1,
@@ -340,7 +340,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                length=clickstream_length,
+                clickstream_length=clickstream_length,
                 crawl_name="control",
                 set_request_interceptor=False,
                 screenshots=control_screenshots,
@@ -351,7 +351,7 @@ class Crawler:
             self.driver = self.get_driver(enable_har=False)
             self.crawl_clickstream(
                 clickstream=clickstream,
-                length=clickstream_length,
+                clickstream_length=clickstream_length,
                 crawl_name="experimental",
                 set_request_interceptor=True,
                 screenshots=1,
@@ -436,7 +436,7 @@ class Crawler:
             # Remove previous HAR entries
             del self.driver.requests
 
-            # Visit the current URL with exponential backoff reattempts
+            # Visit the current URL with reattempts
             attempt = 0
             while attempt < self.total_get_attempts:
                 try:
@@ -586,7 +586,7 @@ class Crawler:
     def crawl_clickstream(
             self,
             clickstream: list[str | DriverAction] | None,
-            length: int = 5,
+            clickstream_length: int = 5,
             crawl_name: str = "",
             set_request_interceptor: bool = False,
             screenshots: int = 1
@@ -623,7 +623,7 @@ class Crawler:
         else:
             del self.driver.request_interceptor
 
-        # Visit the starting URL with exponential backoff reattempts
+        # Visit the starting URL with reattempts
         attempt = 0
         while attempt < self.total_get_attempts:
             try:
@@ -660,7 +660,7 @@ class Crawler:
 
         # Clickstream execution loop
         selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
-        clickstream_length = length if generate_clickstream else min(length, len(clickstream))
+        clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
         i = 0
         while i < clickstream_length:
             # No more possible actions
@@ -688,12 +688,11 @@ class Crawler:
                 action = clickstream[i]
 
             #
-            # Execute Clickstream
+            # Execute clickstream
             #
             if type(action) is DriverAction:
                 if action == DriverAction.BACK:
                     self.back()
-                Crawler.logger.info("All selectors exhausted. Navigating to previous page.")
 
             else:
                 try:
