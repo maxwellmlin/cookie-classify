@@ -72,6 +72,8 @@ def main(jobs=1):
                 data = json.load(results)
 
         key = result.pop('url')
+        key['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
+        
         data[key] = result
 
         with lock:
