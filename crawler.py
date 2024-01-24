@@ -144,9 +144,9 @@ class Crawler:
         self.results: CrawlResults = {
             "url": self.crawl_url,
             "data_path": self.data_path,
-            "down": None,
+            "landing_page_down": None,
             "unexpected_exception": False,
-            "time": None,
+            "total_time": None,
 
             "cmp_names": None,
             "interaction_type": None,
@@ -200,11 +200,11 @@ class Crawler:
                 self.results["down"] = True
             except Exception:  # skipcq: PYL-W0703
                 Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
-                self.results["crawl_failure"] = True
+                self.results["unexpected_exception"] = True
 
             self.driver.quit()
 
-            self.results["time"] = time.time() - self.start_time
+            self.results["total_time"] = time.time() - self.start_time
 
             return self.results
 
@@ -441,7 +441,7 @@ class Crawler:
                     self.driver.get(current_url.url)
 
                     if current_depth == 0:
-                        self.results["down"] = False
+                        self.results["landing_page_down"] = False
 
                     break  # If successful, break out of the loop
 
@@ -624,7 +624,7 @@ class Crawler:
             try:
                 # Attempt to get the website
                 self.driver.get(self.crawl_url)
-                self.results["down"] = False
+                self.results["landing_page_down"] = False
 
                 break  # If successful, break out of the loop
 
@@ -705,7 +705,7 @@ class Crawler:
                     if generate_clickstream:
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} on action {i+1}/{clickstream_length}.")
+                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
@@ -722,7 +722,7 @@ class Crawler:
 
             i += 1
 
-        Crawler.logger.info(f"Completed clickstream {self.clickstream}.")
+        Crawler.logger.info(f"Completed clickstream {self.clickstream} ({crawl_name}).")
 
         return clickstream
 
