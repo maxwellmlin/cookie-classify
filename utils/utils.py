@@ -1,9 +1,6 @@
 import tldextract
 import logging
 import os
-import sys
-
-sys.path.append('../')
 import config
 
 # Utility functions for cookie-classify.
