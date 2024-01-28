@@ -28,6 +28,6 @@ def sbatchRun(command, commandName, jobs, memory):
     print(f'Running {commandName}.')
     os.system('sbatch %s' % shFileName)
 
-jobs = 10
+jobs = 25
 memory = 3
 sbatchRun(f'python3 -u main.py --jobs {jobs}', commandName='cookie', jobs=jobs, memory=memory)
