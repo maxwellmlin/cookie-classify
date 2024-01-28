@@ -3,6 +3,7 @@ geckodriver.log
 playground.py
 playground.js
 crawls
+sites.txt
 
 # slurm
 slurm_logs
