@@ -6,21 +6,19 @@ import os
 import argparse
 from filelock import Timeout, FileLock
 
-from crawler import Crawler, CrawlDataEncoder
+from crawler import Crawler, CrawlDataEncoder, CrawlResults
 import config
 
 logger = logging.getLogger(config.LOGGER_NAME)
-SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
 
 def worker(site_url: str, queue: mp.Queue) -> None:
-    crawler = Crawler(site_url, headless=True)
+    crawler = Crawler(site_url, headless=True, time_to_wait=config.TIME_TO_WAIT)
 
     # result = crawler.compliance_algo(config.DEPTH)
-    result = crawler.classification_algo(num_clickstreams=10, clickstream_length=5, control_screenshots=5)
-    # result = crawler.classification_algo(num_clickstreams=1, clickstream_length=1, control_screenshots=1)
+    result = crawler.classification_algo(num_clickstreams=config.NUM_CLICKSTREAMS, clickstream_length=config.CLICKSTREAM_LENGTH)
 
     queue.put(result)
-
 
 def main(jobs=1):
     pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
@@ -53,28 +51,25 @@ def main(jobs=1):
     data = {}
 
     results_path = config.CRAWL_PATH + 'results.json'
-    with open(results_path, 'w') as results:
-        results.write("{}")
-
     lock_path = results_path + '.lock'
-
-    lock = FileLock(lock_path, timeout=1)
+    lock = FileLock(lock_path, timeout=10)
 
     for i in range(SLURM_ARRAY_TASK_ID-1, len(sites), jobs):
-        process = mp.Process(target=worker, args=(f"https://{sites[i]}", output))
+        domain = sites[i]
+        
+        process = mp.Process(target=worker, args=(f"https://{domain}", output))
         process.start()
 
-        result = output.get()
+        result: CrawlResults = output.get()
 
         # Read existing data, update it, and write back
         with lock:
             with open(results_path, 'r') as results:
                 data = json.load(results)
 
-        key = result.pop('url')
-        key['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
+        result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
         
-        data[key] = result
+        data[domain] = result
 
         with lock:
             with open(results_path, 'w') as results:

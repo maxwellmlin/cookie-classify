@@ -1,10 +1,15 @@
 import os
+import config
 
 slurm_log_path = 'slurm_logs'
 shFileName = '.temp_run.sh'
 
 if not os.path.exists(slurm_log_path):
     os.mkdir(slurm_log_path)
+
+results_path = config.CRAWL_PATH + 'results.json'
+with open(results_path, 'w') as results:
+    results.write("{}")
 
 def sbatchRun(command, commandName, jobs, memory):
     shFile = [

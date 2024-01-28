@@ -77,6 +77,7 @@ class CrawlResults(TypedDict):
     landing_page_down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
     total_time: int | None  # Time to crawl the website, initialized to None
+    SLURM_ARRAY_TASK_ID: int | None  # Set by main.py
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -147,6 +148,7 @@ class Crawler:
             "landing_page_down": None,
             "unexpected_exception": False,
             "total_time": None,
+            "SLURM_ARRAY_TASK_ID": None,
 
             "cmp_names": None,
             "interaction_type": None,
@@ -305,7 +307,7 @@ class Crawler:
             return
 
     @crawl_algo
-    def classification_algo(self, num_clickstreams: int = 10, clickstream_length: int = 5, control_screenshots: int = 10):
+    def classification_algo(self, num_clickstreams: int = 10, clickstream_length: int = 5, control_screenshots: int = 1):
         """
         Cookie classification algorithm.
 
