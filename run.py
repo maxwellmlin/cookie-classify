@@ -4,6 +4,10 @@ import yaml
 import argparse
 
 def init():
+    """
+    Initialize everything needed for all workers.
+    """
+    # Create directory for slurm logs
     slurm_log_path = 'slurm_logs'
     if not os.path.exists(slurm_log_path):
         os.mkdir(slurm_log_path)
@@ -22,27 +26,42 @@ def init():
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
 
-def sbatchRun(command, commandName, jobs, memory):
+def sbatchRun(command, jobName, jobs, memory, cpus):
+    """
+    Create a temporary bash script and run it with sbatch.
+
+    Args:
+        command: The command to run.
+        commandName: The name of the command.
+        jobs: The number of jobs to run.
+        memory: The amount of memory to allocate to each job.
+        cpus: The number of cpus to allocate to each job.
+    """
     shFile = [
         "#!/bin/bash",
         "#SBATCH --array=1-%d" % jobs,
-        "#SBATCH --cpus-per-task=2",
+        "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
-        "#SBATCH --job-name=%s" % commandName,
+        "#SBATCH --job-name=%s" % jobName,
+        
+        # All standard output is redundant since we log to file
         f"#SBATCH -o /dev/null",
         f'#SBATCH -e /dev/null',
 
+        # Load conda environment
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
         "conda activate cookie-classify",
         
         command
         ]
 
+    # Create temporary bash script
     shFileName = '.temp_run.sh'
     with open(shFileName, 'w') as f:
         f.write('\n'.join(shFile))
 
-    print(f'Running {commandName}.')
+    # Run bash script with sbatch
+    print(f'Running {jobName}.')
     os.system('sbatch %s' % shFileName)
 
 if __name__ == "__main__":
@@ -54,4 +73,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
-    sbatchRun(f'python3 -u main.py --jobs {args.jobs}', commandName='cookie', jobs=args.jobs, memory=3)
+    sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=3, cpus=2)
