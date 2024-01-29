@@ -190,9 +190,9 @@ class Crawler:
         options = FirefoxOptions()
 
         # See: https://stackoverflow.com/a/64724390/21055641
-        options.add_argument("--disable-extensions")
-        options.add_argument('--disable-application-cache')
-        options.add_argument('--disable-gpu')
+        # options.add_argument("--disable-extensions")
+        # options.add_argument('--disable-application-cache')
+        # options.add_argument('--disable-gpu')
 
         if self.headless:
             options.add_argument("--headless")
