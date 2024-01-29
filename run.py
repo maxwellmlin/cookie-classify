@@ -1,5 +1,6 @@
 import os
 import config
+import yaml
 
 slurm_log_path = 'slurm_logs'
 shFileName = '.temp_run.sh'
@@ -7,9 +8,19 @@ shFileName = '.temp_run.sh'
 if not os.path.exists(slurm_log_path):
     os.mkdir(slurm_log_path)
 
-sites_path = config.CRAWL_PATH + 'sites.json'
-with open(sites_path, 'w') as results:
+# Initialize sites.json
+with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
     results.write("{}")
+    
+# Initialize meta.yaml
+meta = {
+    "CRAWL_NAME": config.CRAWL_NAME,
+    "SITE_LIST_PATH": config.SITE_LIST_PATH,
+    "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
+    "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
+}
+with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
+    yaml.dump(meta, outfile, default_flow_style=False)
 
 def sbatchRun(command, commandName, jobs, memory):
     shFile = [
