@@ -164,7 +164,6 @@ class Crawler:
                 "link": 0,
                 "onclick": 0,
                 "pointer": 0,
-                "driver.back": 0
             }
         }
 
@@ -601,7 +600,7 @@ class Crawler:
             crawl_name: str = "",
             set_request_interceptor: bool = False,
             screenshots: int = 1
-    ) -> list[str | DriverAction]:
+    ) -> list[tuple[str | DriverAction, str | None]]:
         """
         Crawl website using clickstream.
 
@@ -668,7 +667,7 @@ class Crawler:
             self.extract_features(clickstream_path, crawl_name)
 
         # Clickstream execution loop
-        selectors: list[str] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
+        selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
         clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
         i = 0
         while i < clickstream_length:
@@ -680,12 +679,13 @@ class Crawler:
                 Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
+            element_type = None
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
                     action, element_type = selectors.pop(random.randrange(len(selectors)))
                 else:
-                    action = element_type = DriverAction.BACK
+                    action = DriverAction.BACK
             else:
                 action, element_type = clickstream[i]
 
