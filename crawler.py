@@ -331,7 +331,7 @@ class Crawler:
             clickstream_path = self.data_path + f"{self.clickstream}/"
             Path(clickstream_path).mkdir(parents=True)
 
-            self.driver = self.get_driver(enable_har=False)
+            self.driver = self.get_driver()
             clickstream = self.crawl_clickstream(
                 clickstream=None,
                 clickstream_length=clickstream_length,
@@ -339,6 +339,7 @@ class Crawler:
                 set_request_interceptor=False,
                 screenshots=1,
             )
+            self.save_har(clickstream_path + "baseline.json")
             self.driver.quit()
 
             if self.results["clickstream"] is not None:
@@ -347,7 +348,7 @@ class Crawler:
                 self.results["clickstream"] = [clickstream]
 
             # Control group
-            self.driver = self.get_driver(enable_har=False)
+            self.driver = self.get_driver()
             self.crawl_clickstream(
                 clickstream=clickstream,
                 clickstream_length=clickstream_length,
@@ -355,10 +356,11 @@ class Crawler:
                 set_request_interceptor=False,
                 screenshots=control_screenshots,
             )
+            self.save_har(clickstream_path + "control.json")
             self.driver.quit()
 
             # Experimental group
-            self.driver = self.get_driver(enable_har=False)
+            self.driver = self.get_driver()
             self.crawl_clickstream(
                 clickstream=clickstream,
                 clickstream_length=clickstream_length,
@@ -366,6 +368,7 @@ class Crawler:
                 set_request_interceptor=True,
                 screenshots=1,
             )
+            self.save_har(clickstream_path + "experimental.json")
             self.driver.quit()
 
             self.clickstream += 1
