@@ -680,16 +680,6 @@ class Crawler:
                 Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
-            # Close all tabs except the first one
-            while len(self.driver.window_handles) > 1:
-                self.driver.switch_to.window(self.driver.window_handles[1])
-                self.driver.close()
-            self.driver.switch_to.window(self.driver.window_handles[0])
-
-            # Restrict within original domain
-            while utils.get_domain(self.driver.current_url) != domain:
-                self.back()
-
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
@@ -731,12 +721,24 @@ class Crawler:
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
+            # Close all tabs except the first one
+            while len(self.driver.window_handles) > 1:
+                self.driver.switch_to.window(self.driver.window_handles[1])
+                self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
+
+            # Restrict within original domain
+            while utils.get_domain(self.driver.current_url) != domain:
+                self.back()
+
+            # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(self.time_to_wait)
             if crawl_name:
                 self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
                 self.extract_features(clickstream_path, crawl_name)
 
+            # Save action and generate new action
             if generate_clickstream:
                 clickstream.append((action, element_type))
                 selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
