@@ -1,26 +1,26 @@
 import os
 import config
 import yaml
+import argparse
 
-slurm_log_path = 'slurm_logs'
-shFileName = '.temp_run.sh'
+def init():
+    slurm_log_path = 'slurm_logs'
+    if not os.path.exists(slurm_log_path):
+        os.mkdir(slurm_log_path)
 
-if not os.path.exists(slurm_log_path):
-    os.mkdir(slurm_log_path)
-
-# Initialize sites.json
-with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
-    results.write("{}")
-    
-# Initialize meta.yaml
-meta = {
-    "CRAWL_NAME": config.CRAWL_NAME,
-    "SITE_LIST_PATH": config.SITE_LIST_PATH,
-    "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
-    "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
-}
-with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
-    yaml.dump(meta, outfile, default_flow_style=False)
+    # Initialize sites.json
+    with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
+        results.write("{}")
+        
+    # Initialize meta.yaml
+    meta = {
+        "CRAWL_NAME": config.CRAWL_NAME,
+        "SITE_LIST_PATH": config.SITE_LIST_PATH,
+        "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
+        "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
+    }
+    with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
+        yaml.dump(meta, outfile, default_flow_style=False)
 
 def sbatchRun(command, commandName, jobs, memory):
     shFile = [
@@ -38,12 +38,20 @@ def sbatchRun(command, commandName, jobs, memory):
         command
         ]
 
+    shFileName = '.temp_run.sh'
     with open(shFileName, 'w') as f:
         f.write('\n'.join(shFile))
 
     print(f'Running {commandName}.')
     os.system('sbatch %s' % shFileName)
 
-jobs = 25
-memory = 3
-sbatchRun(f'python3 -u main.py --jobs {jobs}', commandName='cookie', jobs=jobs, memory=memory)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--jobs',
+        type=int,
+        required=True
+    )
+    args = parser.parse_args()
+    
+    sbatchRun(f'python3 -u main.py --jobs {args.jobs}', commandName='cookie', jobs=args.jobs, memory=3)
