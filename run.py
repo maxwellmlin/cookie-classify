@@ -32,6 +32,8 @@ def init():
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
         
+    # Copy sites.txt to crawl path
+    os.system(f'cp {config.SITE_LIST_PATH} {config.CRAWL_PATH}')
 
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """
