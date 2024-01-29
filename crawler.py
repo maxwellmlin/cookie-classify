@@ -164,6 +164,7 @@ class Crawler:
                 "link": 0,
                 "onclick": 0,
                 "pointer": 0,
+                "driver.back": 0
             }
         }
 
@@ -686,15 +687,14 @@ class Crawler:
             while utils.get_domain(self.driver.current_url) != domain:
                 self.back()
 
-            element_type = None # the type of element that was clicked (see clickable-elements.js)
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
                     action, element_type = selectors.pop(random.randrange(len(selectors)))
                 else:
-                    action = DriverAction.BACK
+                    action = element_type = DriverAction.BACK
             else:
-                action = clickstream[i]
+                action, element_type = clickstream[i]
 
             #
             # Execute clickstream
