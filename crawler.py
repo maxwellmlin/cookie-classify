@@ -210,7 +210,7 @@ class Crawler:
                 func(*args, **kwargs)
             except LandingPageDown:
                 Crawler.logger.critical(f"Landing page is down for '{self.crawl_url}'.")
-                self.results["down"] = True
+                self.results["landing_page_down"] = True
             except Exception:  # skipcq: PYL-W0703
                 Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
                 self.results["unexpected_exception"] = True
