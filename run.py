@@ -4,14 +4,18 @@ import yaml
 import argparse
 import pathlib
 
+SLURM_LOG_PATH = 'slurm_logs'
+
 def init():
     """
     Initialize everything needed for all workers.
     """
     # Create directory for slurm logs
-    slurm_log_path = 'slurm_logs'
-    if not os.path.exists(slurm_log_path):
-        os.mkdir(slurm_log_path)
+    if not os.path.exists(SLURM_LOG_PATH):
+        os.mkdir(SLURM_LOG_PATH)
+
+    # Create crawl path
+    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
     # Initialize sites.json
     with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
@@ -23,12 +27,11 @@ def init():
         "SITE_LIST_PATH": config.SITE_LIST_PATH,
         "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
+        "NUM_SITES": sum(1 for _ in open(config.SITE_LIST_PATH))
     }
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
         
-    # Create crawl path
-    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """
@@ -52,6 +55,10 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         f"#SBATCH -o /dev/null",
         f'#SBATCH -e /dev/null',
 
+        # Uncomment this line if something is breaking before the logger is initialized
+        # f"#SBATCH -o {SLURM_LOG_PATH}/slurm-%j.out",
+
+
         # Load conda environment
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
         "conda activate cookie-classify",
@@ -65,7 +72,6 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         f.write('\n'.join(shFile))
 
     # Run bash script with sbatch
-    print(f'Running {jobName}.')
     os.system('sbatch %s' % shFileName)
 
 if __name__ == "__main__":
@@ -77,4 +83,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
+    init()
     sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=3, cpus=2)
