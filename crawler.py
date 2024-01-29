@@ -46,6 +46,18 @@ class BannerClick(str, Enum):
     REJECT = "BannerClick Reject"
 
 
+class ClickableElement(str, Enum):
+    """
+    Type of clickable element.
+    See clickable-elements.js for definitions.
+    """
+
+    BUTTON = "button"
+    LINK = "link"
+    ONCLICK = "onclick"
+    POINTER = "pointer"
+
+
 class CMP(str, Enum):
     """
     Type of CMP API.
@@ -89,7 +101,7 @@ class CrawlResults(TypedDict):
     # Each CSS selector is paired with the type of element that was clicked (see clickable-elements.js)
     # Each DriverAction is paired with None
     clickstream: list[list[tuple[str | DriverAction, str | None]]] | None
-    click_failures: dict # Number of click failures for each type of click (See clickable-elements.js)
+    traversal_failures: dict[ClickableElement, int] # Number of click failures for each type of click
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -159,11 +171,11 @@ class Crawler:
             "interaction_success": None,
 
             "clickstream": None,
-            "click_failures": {
-                "button": 0,
-                "link": 0,
-                "onclick": 0,
-                "pointer": 0,
+            "traversal_failures": {
+                ClickableElement.BUTTON: 0,
+                ClickableElement.LINK: 0,
+                ClickableElement.ONCLICK: 0,
+                ClickableElement.POINTER: 0,
             }
         }
 
@@ -716,7 +728,7 @@ class Crawler:
                     else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
 
-                        self.results["click_failures"][element_type] += 1
+                        self.results["traversal_failures"][ClickableElement(element_type)] += 1
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
