@@ -654,17 +654,16 @@ class Crawler:
             self.extract_features(clickstream_path, crawl_name)
 
         # Clickstream execution loop
-        selectors: list[str] = self.inject_script("injections/clickable-elements.js") if generate_clickstream else []
+        selectors: list[str] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
         clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
         i = 0
         while i < clickstream_length:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 # Assume that the landing page is down if we are unable to generate a single action
+                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 if len(clickstream) == 0:
                     raise LandingPageDown()
-                
-                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             # Close all tabs except the first one
@@ -680,7 +679,7 @@ class Crawler:
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
-                    action = selectors.pop(random.randrange(len(selectors)))
+                    action, element_type = selectors.pop(random.randrange(len(selectors)))
                 else:
                     action = DriverAction.BACK
             else:
@@ -712,6 +711,9 @@ class Crawler:
                         continue
                     else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
+                        
+                        # TODO: save element type
+
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
@@ -724,7 +726,7 @@ class Crawler:
 
             if generate_clickstream:
                 clickstream.append(action)
-                selectors = self.inject_script("injections/clickable-elements.js")
+                selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
 
             i += 1
 

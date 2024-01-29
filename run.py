@@ -15,7 +15,7 @@ def init():
         os.mkdir(SLURM_LOG_PATH)
 
     # Create crawl path
-    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=False)
 
     # Initialize sites.json
     with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
