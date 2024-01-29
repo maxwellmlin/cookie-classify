@@ -58,7 +58,6 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         # Uncomment this line if something is breaking before the logger is initialized
         # f"#SBATCH -o {SLURM_LOG_PATH}/slurm-%j.out",
 
-
         # Load conda environment
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
         "conda activate cookie-classify",
