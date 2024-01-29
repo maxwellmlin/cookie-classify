@@ -7,8 +7,8 @@ shFileName = '.temp_run.sh'
 if not os.path.exists(slurm_log_path):
     os.mkdir(slurm_log_path)
 
-results_path = config.CRAWL_PATH + 'results.json'
-with open(results_path, 'w') as results:
+sites_path = config.CRAWL_PATH + 'sites.json'
+with open(sites_path, 'w') as results:
     results.write("{}")
 
 def sbatchRun(command, commandName, jobs, memory):
