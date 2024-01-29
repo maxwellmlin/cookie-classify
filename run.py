@@ -27,7 +27,6 @@ def init():
         "SITE_LIST_PATH": config.SITE_LIST_PATH,
         "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
-        "NUM_SITES": sum(1 for _ in open(config.SITE_LIST_PATH)),
     }
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
