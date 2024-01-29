@@ -1,17 +1,18 @@
 DEBUG = false
 
 /**
- * Return CSS selectors for clickable elements.
+ * Return CSS selectors and types for clickable elements.
  * 
- * Clickable elements are defined as:
- * - <button> elements
- * - <a> elements
- * - Elements with an onclick attribute
- * - Elements with a pointer cursor style
+ * Clickable elements have the following types:
+ * - "button": <button> elements
+ * - "link": <a> elements
+ * - "onclick": Elements with an onclick attribute
+ * - "pointer": Elements with a pointer cursor style
+ * The first matching type is used. (Types get more general from top to bottom.)
  * 
  * Adapted from: https://gist.github.com/iiLaurens/81b1b47f6259485c93ce6f0cdd17490a
  * 
- * @returns {string[]} CSS selectors for clickable elements.
+ * @returns {string[], string[]} CSS selectors, types for clickable elements.
  */
 
 var items = Array.prototype.slice.call(
@@ -20,9 +21,27 @@ var items = Array.prototype.slice.call(
     return {
         element: element,
         include: (element.tagName === "BUTTON" || element.tagName === "A" || (element.onclick != null) || window.getComputedStyle(element).cursor == "pointer"),
+        type: determineType(element),
     };
 }).filter(item =>
     item.include);
+
+
+function determineType(element) {
+    if (element.tagName === "BUTTON") {
+        return "button";
+    }
+    if (element.tagName === "A") {
+        return "link";
+    }
+    if (element.onclick != null) {
+        return "onclick";
+    }
+    if (window.getComputedStyle(element).cursor == "pointer") {
+        return "pointer";
+    }
+    return null; // In case none of the conditions match
+}
 
 // See: https://stackoverflow.com/a/4588211
 function fullPath(el) {
@@ -44,8 +63,10 @@ function fullPath(el) {
 }
 
 selectors = []
+types = []
 for (item of items) {
     selectors.push(fullPath(item.element))
+    types.push(item.type)
 }
 
-return selectors
+return [selectors, types]
