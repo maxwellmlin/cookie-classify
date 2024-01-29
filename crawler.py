@@ -86,6 +86,7 @@ class CrawlResults(TypedDict):
 
     # Only set during classification_algo
     clickstream: list[list[str | DriverAction]] | None # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
+    click_failures: dict # Number of click failures for each type of click (See clickable-elements.js)
 
 
 class CrawlDataEncoder(json.JSONEncoder):
@@ -155,6 +156,12 @@ class Crawler:
             "interaction_success": None,
 
             "clickstream": None,
+            "click_failures": {
+                "button": 0,
+                "link": 0,
+                "onclick": 0,
+                "pointer": 0,
+            }
         }
 
     def get_driver(self, enable_har: bool = True) -> webdriver.Firefox:
@@ -711,9 +718,8 @@ class Crawler:
                         continue
                     else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
-                        
-                        # TODO: save element type
 
+                        self.results["click_failures"][element_type] += 1
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
