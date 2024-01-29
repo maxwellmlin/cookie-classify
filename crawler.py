@@ -85,7 +85,10 @@ class CrawlResults(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
 
     # Only set during classification_algo
-    clickstream: list[list[str | DriverAction]] | None # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
+    # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
+    # Each CSS selector is paired with the type of element that was clicked (see clickable-elements.js)
+    # Each DriverAction is paired with None
+    clickstream: list[list[tuple[str | DriverAction, str | None]]] | None
     click_failures: dict # Number of click failures for each type of click (See clickable-elements.js)
 
 
@@ -589,7 +592,7 @@ class Crawler:
     @log
     def crawl_clickstream(
             self,
-            clickstream: list[str | DriverAction] | None,
+            clickstream: list[tuple[str | DriverAction, str | None]] | None,
             clickstream_length: int = 5,
             crawl_name: str = "",
             set_request_interceptor: bool = False,
@@ -600,7 +603,7 @@ class Crawler:
 
         Args:
             start_node: URL where traversal will begin.
-            clickstream: List of CSS selectors/driver actions. Defaults to None, where a clickstream is instead generated.
+            clickstream: List of CSS selectors/driver actions and their corresponding type. Defaults to None, where a clickstream is instead generated.
             length: Maximum length of the clickstream. Defaults to 5.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             set_request_interceptor: Whether to set the request interceptor. Defaults to False.
@@ -683,6 +686,7 @@ class Crawler:
             while utils.get_domain(self.driver.current_url) != domain:
                 self.back()
 
+            element_type = None # the type of element that was clicked (see clickable-elements.js)
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
@@ -731,7 +735,7 @@ class Crawler:
                 self.extract_features(clickstream_path, crawl_name)
 
             if generate_clickstream:
-                clickstream.append(action)
+                clickstream.append((action, element_type))
                 selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
 
             i += 1
