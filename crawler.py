@@ -675,9 +675,9 @@ class Crawler:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 # Assume that the landing page is down if we are unable to generate a single action
-                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 if len(clickstream) == 0:
                     raise LandingPageDown()
+                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             # Close all tabs except the first one
