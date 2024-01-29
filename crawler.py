@@ -100,7 +100,7 @@ class CrawlResults(TypedDict):
     # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
     # Each CSS selector is paired with the type of element that was clicked (see clickable-elements.js)
     # Each DriverAction is paired with None
-    clickstream: list[list[tuple[str | DriverAction, str | None]]] | None
+    clickstream: list[list[tuple[str | DriverAction, ClickableElement | None]]] | None
     traversal_failures: dict[ClickableElement, int] # Number of click failures for each type of click
 
 
@@ -607,12 +607,12 @@ class Crawler:
     @log
     def crawl_clickstream(
             self,
-            clickstream: list[tuple[str | DriverAction, str | None]] | None,
+            clickstream: list[tuple[str | DriverAction, ClickableElement | None]] | None,
             clickstream_length: int = 5,
             crawl_name: str = "",
             set_request_interceptor: bool = False,
             screenshots: int = 1
-    ) -> list[tuple[str | DriverAction, str | None]]:
+    ) -> list[tuple[str | DriverAction, ClickableElement | None]]:
         """
         Crawl website using clickstream.
 
@@ -695,7 +695,8 @@ class Crawler:
             if generate_clickstream:
                 # Randomly click on an element; if all elements have been exhausted, go back
                 if selectors:
-                    action, element_type = selectors.pop(random.randrange(len(selectors)))
+                    action, _element_type = selectors.pop(random.randrange(len(selectors)))
+                    element_type = ClickableElement(_element_type)
                 else:
                     action = DriverAction.BACK
             else:
@@ -728,7 +729,9 @@ class Crawler:
                     else:  # skipcq: PYL-R1724
                         Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
 
-                        self.results["traversal_failures"][ClickableElement(element_type)] += 1
+                        if element_type is not None:
+                            self.results["traversal_failures"][element_type] += 1
+
                         return clickstream
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
