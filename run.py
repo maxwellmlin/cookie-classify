@@ -2,6 +2,7 @@ import os
 import config
 import yaml
 import argparse
+import pathlib
 
 def init():
     """
@@ -25,6 +26,9 @@ def init():
     }
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
+        
+    # Create crawl path
+    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
 
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """

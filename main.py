@@ -13,6 +13,11 @@ logger = logging.getLogger(config.LOGGER_NAME)
 SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
 
 def worker(site_url: str, queue: mp.Queue) -> None:
+    """
+    We need to use multiprocessing to explicitly free up memory after each crawl.
+    See https://stackoverflow.com/questions/38164635/selenium-not-freeing-up-memory-even-after-calling-close-quit
+    for more details.
+    """    
     crawler = Crawler(site_url, headless=True, time_to_wait=config.TIME_TO_WAIT)
 
     # result = crawler.compliance_algo(config.DEPTH)
@@ -21,8 +26,6 @@ def worker(site_url: str, queue: mp.Queue) -> None:
     queue.put(result)
 
 def main(jobs=1):
-    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=True)
-
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
@@ -39,9 +42,8 @@ def main(jobs=1):
 
     logger.info(f"SLURM_ARRAY_TASK_ID: {SLURM_ARRAY_TASK_ID}")
 
-    sites = []
-
     # Read sites from text file
+    sites = []
     with open(config.SITE_LIST_PATH) as file:
         for line in file:
             sites.append(line.strip())
@@ -50,13 +52,13 @@ def main(jobs=1):
     output = mp.Queue()
     data = {}
 
-    sites_path = config.CRAWL_PATH + 'sites.json'
+    sites_path = config.CRAWL_PATH + 'sites.json'  # where to store results for individual sites
     sites_lock = FileLock(sites_path + '.lock', timeout=10)
 
     for i in range(SLURM_ARRAY_TASK_ID-1, len(sites), jobs):
-        domain = sites[i]
+        crawl_domain = sites[i]
         
-        process = mp.Process(target=worker, args=(f"https://{domain}", output))
+        process = mp.Process(target=worker, args=(f"https://{crawl_domain}", output))
         process.start()
 
         result: CrawlResults = output.get()
@@ -68,7 +70,7 @@ def main(jobs=1):
 
         result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
         
-        data[domain] = result
+        data[crawl_domain] = result
 
         with sites_lock:
             with open(sites_path, 'w') as results:
