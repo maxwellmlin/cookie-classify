@@ -201,7 +201,7 @@ class Crawler:
             'enable_har': enable_har,
         }
 
-        firefox_profile = webdriver.FirefoxProfile()
+        firefox_profile = webdriver.FirefoxProfile()  # by default, will create a fresh profile
 
         driver = webdriver.Firefox(options=options, seleniumwire_options=seleniumwire_options, firefox_profile=firefox_profile)
         driver.set_page_load_timeout(self.page_load_timeout)
