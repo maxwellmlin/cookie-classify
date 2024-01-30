@@ -3,6 +3,7 @@ from __future__ import annotations
 from PIL import Image
 import hashlib
 from typing import Self
+import pathlib
 
 
 class ImageShingle:
@@ -14,7 +15,7 @@ class ImageShingle:
     See https://www.usenix.org/legacy/events/sec07/tech/full_papers/anderson/anderson.pdf.
     """
 
-    def __init__(self, image_path: str, chunk_size: int = 40):
+    def __init__(self, image_path: str | pathlib.Path, chunk_size: int = 40):
         """
         Args:
             image_path: Path to the image.
@@ -186,18 +187,21 @@ class ImageShingle:
         if len(baseline.image.size) != len(control.image.size) or len(baseline.image.size) != len(experimental.image.size):
             raise ValueError("Images must have the same size.")
 
+        if len(baseline.shingles) != len(control.shingles) or len(baseline.shingles) != len(experimental.shingles):
+            raise ValueError("Images must have the same number of shingles.")
+
         matches = 0
         total = 0
 
-        for i, baseline_shingle in enumerate(baseline.shingles):
-            if baseline_shingle == control.shingles[i]:
+        for baseline_shingle, control_shingle, experimental_shingle in zip(baseline.shingles, control.shingles, experimental.shingles):
+            if baseline_shingle == control_shingle:
                 total += 1
-                if baseline_shingle == experimental.shingles[i]:
+                if baseline_shingle == experimental_shingle:
                     matches += 1
 
         # Baseline and control are completely different
         if total == 0:
-            return None
+            raise ValueError("Baseline and control are completely different.")
 
         similarity = matches / total
         return similarity

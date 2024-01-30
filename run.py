@@ -24,7 +24,7 @@ def init():
     # Initialize meta.yaml
     meta = {
         "CRAWL_NAME": config.CRAWL_NAME,
-        "SITE_LIST_PATH": config.SITE_LIST_PATH,
+        "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
         "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
     }
