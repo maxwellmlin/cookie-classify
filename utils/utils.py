@@ -2,6 +2,7 @@ import tldextract
 import logging
 import os
 import config
+from pathlib import Path
 
 # Utility functions for cookie-classify.
 
@@ -54,7 +55,7 @@ def log(func):
     return wrapper
 
 
-def get_directories(root: str) -> list[str]:
+def get_directories(root: str) -> list[Path]:
     """
     Return a list of directories in a given root directory.
 
@@ -64,10 +65,8 @@ def get_directories(root: str) -> list[str]:
     Returns:
         A list of directories.
     """
-    dirs = []
-    for item in os.listdir(root):
-        path = os.path.join(root, item)
-        if os.path.isdir(path):
-            dirs.append(path)
-
-    return dirs
+    p = Path(root)
+    
+    # List all directories in the path
+    directories = [entry for entry in p.iterdir() if entry.is_dir()]
+    return directories
