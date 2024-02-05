@@ -146,7 +146,7 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.domain = domain
-        self.crawl_url = f"https://{domain}"
+        self.crawl_url = self.resolve_url(domain)
 
         # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{domain}/"
@@ -234,6 +234,16 @@ class Crawler:
             return self.results
 
         return wrapper
+
+    @crawl_algo
+    def resolve_url(self, domain: str) -> str:
+        """
+        Resolve the domain to a URL.
+
+        Args:
+            domain: The domain to resolve.
+        """
+        return f"https://{domain}"
 
     @crawl_algo
     def compliance_algo(self, depth: int = 0):
