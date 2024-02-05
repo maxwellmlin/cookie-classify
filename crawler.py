@@ -126,7 +126,7 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, crawl_url: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    def __init__(self, domain: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.
@@ -145,10 +145,11 @@ class Crawler:
         self.time_to_wait = time_to_wait
         self.total_get_attempts = total_get_attempts
 
-        self.crawl_url = crawl_url
+        self.domain = domain
+        self.crawl_url = f"https://{domain}"
 
         # Where the crawl data is stored
-        self.data_path = f"{config.CRAWL_PATH}{utils.get_domain(crawl_url)}/"
+        self.data_path = f"{config.CRAWL_PATH}{domain}/"
         pathlib.Path(self.data_path).mkdir(parents=True, exist_ok=False)
 
         # Each URL is assigned a unique ID

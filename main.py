@@ -12,13 +12,13 @@ import config
 logger = logging.getLogger(config.LOGGER_NAME)
 SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
 
-def worker(site_url: str, queue: mp.Queue) -> None:
+def worker(domain: str, queue: mp.Queue) -> None:
     """
     We need to use multiprocessing to explicitly free up memory after each crawl.
     See https://stackoverflow.com/questions/38164635/selenium-not-freeing-up-memory-even-after-calling-close-quit
     for more details.
     """    
-    crawler = Crawler(site_url, headless=True, time_to_wait=config.TIME_TO_WAIT)
+    crawler = Crawler(domain, headless=True, time_to_wait=config.TIME_TO_WAIT)
 
     # result = crawler.compliance_algo(config.DEPTH)
     result = crawler.classification_algo(num_clickstreams=config.NUM_CLICKSTREAMS, clickstream_length=config.CLICKSTREAM_LENGTH)
@@ -58,7 +58,7 @@ def main(jobs=1):
     for i in range(SLURM_ARRAY_TASK_ID-1, len(sites), jobs):
         crawl_domain = sites[i]
         
-        process = mp.Process(target=worker, args=(f"https://{crawl_domain}", output))
+        process = mp.Process(target=worker, args=(crawl_domain, output))
         process.start()
 
         result: CrawlResults = output.get()
