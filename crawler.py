@@ -738,10 +738,9 @@ class Crawler:
         domain = utils.get_domain(original_url)
 
         self.driver.execute_script("window.scrollTo(0, 0);")
-        time.sleep(self.time_to_wait)
         if crawl_name:
-            self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
             self.extract_features(clickstream_path, crawl_name)
+            self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
 
         # Clickstream execution loop
         selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
