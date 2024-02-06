@@ -797,6 +797,7 @@ class Crawler:
                         return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
+            time.sleep(self.time_to_wait)
 
             # Close all tabs except the first one
             while len(self.driver.window_handles) > 1:
