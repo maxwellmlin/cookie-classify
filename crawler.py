@@ -77,6 +77,23 @@ class DriverAction(str, Enum):
     BACK = "driver.back"  # Go back to the previous page
 
 class LandingPageDown(Exception):
+    """
+    This exception is raised when the landing page is down.
+    @crawl_algo catches this exception.
+    
+    If an inner page is down, the crawler should continue traversing the website,
+    going back to the previous page if necessary. However, if the landing page is down,
+    no data can be generated at all. Therefore, this exception is raised to indicate
+    that the website should be skipped in the analysis.
+    """
+    pass
+
+class UrlDown(Exception):
+    """
+    This exception is raised in self.get if the URL cannot be accessed.
+    
+    If appropriate, this exception should be escalated to LandingPageDown.
+    """
     pass
 
 class CrawlResults(TypedDict):
@@ -84,7 +101,7 @@ class CrawlResults(TypedDict):
     Class for storing results about a crawl.
     """
 
-    url: str  # URL of the website being crawled
+    url: str | None  # URL of the website being crawled. None if Domain->URL resolution failed.
     data_path: str  # Where the crawl data is stored
     landing_page_down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
@@ -146,7 +163,7 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.domain = domain
-        self.crawl_url = self.resolve_url(domain)
+        self.crawl_url = None # Must be resolved in a crawl_algo
 
         # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{domain}/"
@@ -160,7 +177,7 @@ class Crawler:
         self.clickstream = 1
 
         self.results: CrawlResults = {
-            "url": self.crawl_url,
+            "url": None,
             "data_path": self.data_path,
             "landing_page_down": None,
             "unexpected_exception": False,
@@ -221,10 +238,10 @@ class Crawler:
             try:
                 func(*args, **kwargs)
             except LandingPageDown:
-                Crawler.logger.critical(f"Landing page is down for '{self.crawl_url}'.")
+                Crawler.logger.critical(f"Landing page is down for '{self.domain}'.")
                 self.results["landing_page_down"] = True
             except Exception:  # skipcq: PYL-W0703
-                Crawler.logger.critical(f"Unexpected exception for '{self.crawl_url}'.", exc_info=True)
+                Crawler.logger.critical(f"Unexpected exception for '{self.domain}'.", exc_info=True)
                 self.results["unexpected_exception"] = True
 
             self.driver.quit()
@@ -235,15 +252,49 @@ class Crawler:
 
         return wrapper
 
-    @crawl_algo
-    def resolve_url(self, domain: str) -> str:
+    def get(self, url: str) -> None:
         """
-        Resolve the domain to a URL.
+        Get the website at the given URL with multiple reattempts.
+
+        Args:
+            url: The URL of the website to get.
+
+        Raises:
+            UrlDown: If the url cannot be accessed.
+        """
+        # Visit the url with reattempts
+        for attempt in range(self.total_get_attempts):
+            try:
+                # Attempt to get the website
+                self.driver.get(url)
+                break  # If successful, break out of the loop
+
+            except TimeoutException:
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{url}'.")
+            except Exception:
+                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{url}'.", exc_info=True)
+
+            if attempt != self.total_get_attempts - 1:
+                time.sleep(self.time_to_wait)
+        else:
+            # Unable to get the website after all attempts
+            raise UrlDown()
+
+    def resolve_domain(self, domain: str) -> str:
+        """
+        Resolve a domain to a URL.
 
         Args:
             domain: The domain to resolve.
         """
-        return f"https://{domain}"
+        for url in [f"https://{domain}", f"https://www.{domain}", f"http://{domain}", f"http://www.{domain}"]:
+            try:
+                self.get(url)
+                return self.driver.current_url
+            except UrlDown:
+                continue
+        
+        raise LandingPageDown()
 
     @crawl_algo
     def compliance_algo(self, depth: int = 0):
@@ -349,6 +400,10 @@ class Crawler:
             length: Length of each clickstream. Defaults to 5.
             screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
+        self.crawl_url = self.resolve_domain(self.domain)
+        self.results["url"] = self.crawl_url
+        self.logger.info(f"Resolved domain '{self.domain}' to '{self.crawl_url}'.")
+
         for _ in range(num_clickstreams):
             clickstream_path = self.data_path + f"{self.clickstream}/"
             Path(clickstream_path).mkdir(parents=True)
@@ -646,38 +701,19 @@ class Crawler:
 
         clickstream_path = self.data_path + f"{self.clickstream}/"
 
-        # Define request interceptor
-        def request_interceptor(request: seleniumwire.request.Request):
-            interceptors.remove_third_party_interceptor(request, self.crawl_url)
-            # interceptors.remove_all_interceptor(request)
-
         if set_request_interceptor:
+            # Define request interceptor
+            def request_interceptor(request: seleniumwire.request.Request):
+                interceptors.remove_third_party_interceptor(request, self.crawl_url)
+                # interceptors.remove_all_interceptor(request)
             self.driver.request_interceptor = request_interceptor
         else:
             del self.driver.request_interceptor
 
-        # Visit the starting URL with reattempts
-        attempt = 0
-        while attempt < self.total_get_attempts:
-            try:
-                # Attempt to get the website
-                self.driver.get(self.crawl_url)
-                self.results["landing_page_down"] = False
-
-                break  # If successful, break out of the loop
-
-            except TimeoutException:
-                attempt += 1
-                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.")
-                if attempt < self.total_get_attempts:
-                    time.sleep(self.time_to_wait)
-            except Exception:
-                attempt += 1
-                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{self.crawl_url}'.", exc_info=True)
-                if attempt < self.total_get_attempts:
-                    time.sleep(self.time_to_wait)
-
-        if attempt == self.total_get_attempts:
+        try:
+            self.get(self.crawl_url)
+            self.results["landing_page_down"] = False
+        except UrlDown:
             raise LandingPageDown()
 
         domain = utils.get_domain(self.driver.current_url)
