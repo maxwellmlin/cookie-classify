@@ -464,6 +464,8 @@ class Crawler:
             self.save_har(clickstream_path + "experimental.json")
             self.driver.quit()
 
+            Crawler.logger.info(f"Data collected for {current_actions}/{total_actions} actions.")
+
             self.clickstream += 1
 
     @log
