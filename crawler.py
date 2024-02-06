@@ -252,7 +252,7 @@ class Crawler:
 
         return wrapper
 
-    def get(self, url: str) -> None:
+    def get(self, url: str) -> str:
         """
         Get the website at the given URL with multiple reattempts.
 
@@ -261,6 +261,9 @@ class Crawler:
 
         Raises:
             UrlDown: If the url cannot be accessed.
+            
+        Returns:
+            The final resolved URL of the website.
         """
         # Visit the url with reattempts
         for attempt in range(self.total_get_attempts):
@@ -280,6 +283,13 @@ class Crawler:
             # Unable to get the website after all attempts
             raise UrlDown()
 
+        # If there are no clickable elements, the website is down
+        selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js")))
+        if len(selectors) == 0:
+            raise UrlDown()
+        
+        return self.driver.current_url
+
     def resolve_domain(self, domain: str) -> str:
         """
         Resolve a domain to a URL.
@@ -289,8 +299,7 @@ class Crawler:
         """
         for url in [f"https://{domain}", f"https://www.{domain}", f"http://{domain}", f"http://www.{domain}"]:
             try:
-                self.get(url)
-                return self.driver.current_url
+                return self.get(url)
             except UrlDown:
                 continue
         
@@ -400,10 +409,15 @@ class Crawler:
             length: Length of each clickstream. Defaults to 5.
             screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
+
+        # Domain -> URL Resolution
+        self.driver = self.get_driver(enable_har=False)
         self.crawl_url = self.resolve_domain(self.domain)
         self.results["url"] = self.crawl_url
         self.logger.info(f"Resolved domain '{self.domain}' to '{self.crawl_url}'.")
+        self.driver.quit()
 
+        # Classification Algorithm
         for _ in range(num_clickstreams):
             clickstream_path = self.data_path + f"{self.clickstream}/"
             Path(clickstream_path).mkdir(parents=True)
@@ -711,13 +725,12 @@ class Crawler:
             del self.driver.request_interceptor
 
         try:
-            self.get(self.crawl_url)
+            original_url = self.get(self.crawl_url)
             self.results["landing_page_down"] = False
         except UrlDown:
             raise LandingPageDown()
 
-        domain = utils.get_domain(self.driver.current_url)
-        original_url = self.driver.current_url
+        domain = utils.get_domain(original_url)
 
         self.driver.execute_script("window.scrollTo(0, 0);")
         time.sleep(self.time_to_wait)
@@ -732,9 +745,6 @@ class Crawler:
         while i < clickstream_length:
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
-                # Assume that the landing page is down if we are unable to generate a single action
-                if len(clickstream) == 0:
-                    raise LandingPageDown()
                 Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
