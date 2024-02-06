@@ -797,7 +797,6 @@ class Crawler:
                         return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
-            time.sleep(self.time_to_wait)
 
             # Close all tabs except the first one
             while len(self.driver.window_handles) > 1:
@@ -811,6 +810,7 @@ class Crawler:
 
             # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(self.time_to_wait)
             if crawl_name:
                 self.extract_features(clickstream_path, crawl_name)
                 self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
