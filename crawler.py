@@ -443,12 +443,12 @@ class Crawler:
             self.driver = self.get_driver()
             control_clickstream = self.crawl_clickstream(
                 clickstream=clickstream,
-                clickstream_length=len(clickstream),
+                clickstream_length=clickstream_length,
                 crawl_name="control",
                 set_request_interceptor=False,
                 screenshots=control_screenshots,
             )
-            current_actions += len(control_clickstream)
+            current_actions += len(control_clickstream) + 1 # We add one since we count just getting the website as an action
             self.save_har(clickstream_path + "control.json")
             self.driver.quit()
 
@@ -456,7 +456,7 @@ class Crawler:
             self.driver = self.get_driver()
             self.crawl_clickstream(
                 clickstream=clickstream,
-                clickstream_length=len(control_clickstream), # No need to traverse more than the control group
+                clickstream_length=clickstream_length, # No need to traverse more than the control group
                 crawl_name="experimental",
                 set_request_interceptor=True,
                 screenshots=1,
