@@ -745,7 +745,8 @@ class Crawler:
         # Clickstream execution loop
         selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
         clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
-        for i in range(clickstream_length):
+        i = 0
+        while i < clickstream_length:  # Note: we need a while loop here since we don't want to increment i if we fail to click
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
@@ -818,6 +819,8 @@ class Crawler:
             if generate_clickstream:
                 clickstream.append((action, element_type))
                 selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
+            
+            i += 1
 
         Crawler.logger.info(f"Completed clickstream {self.clickstream} ({crawl_name}).")
 
