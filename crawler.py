@@ -163,7 +163,7 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.domain = domain
-        self.url = None # Must be resolved in a crawl_algo
+        self.url: str # Must be resolved in a crawl_algo
 
         # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{domain}/"
