@@ -143,7 +143,7 @@ class Crawler:
 
     logger = logging.getLogger(config.LOGGER_NAME)
 
-    def __init__(self, domain: str, time_to_wait: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
+    def __init__(self, domain: str, wait_time: int = 5, total_get_attempts: int = 3, page_load_timeout: int = 60, headless: bool = True) -> None:
         """
         Args:
             crawl_url: The URL of the website to crawl.
@@ -159,14 +159,14 @@ class Crawler:
         self.headless = headless
         self.page_load_timeout = page_load_timeout
 
-        self.time_to_wait = time_to_wait
+        self.wait_time = wait_time
         self.total_get_attempts = total_get_attempts
 
         self.domain = domain
         self.url: str # Must be resolved in a crawl_algo
 
         # Where the crawl data is stored
-        self.data_path = f"{config.CRAWL_PATH}{domain}/"
+        self.data_path = f"{config.DATA_PATH}{domain}/"
         pathlib.Path(self.data_path).mkdir(parents=True, exist_ok=False)
 
         # Each URL is assigned a unique ID
@@ -270,7 +270,7 @@ class Crawler:
             try:
                 # Attempt to get the website
                 self.driver.get(url)
-                time.sleep(self.time_to_wait)
+                time.sleep(self.wait_time)
                 break  # If successful, break out of the loop
 
             except TimeoutException:
@@ -279,7 +279,7 @@ class Crawler:
                 Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{url}'.", exc_info=True)
 
             if attempt != self.total_get_attempts - 1:
-                time.sleep(self.time_to_wait)
+                time.sleep(self.wait_time)
         else:
             # Unable to get the website after all attempts
             raise UrlDown()
@@ -561,12 +561,12 @@ class Crawler:
                     attempt += 1
                     Crawler.logger.warning(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(self.time_to_wait)
+                        time.sleep(self.wait_time)
                 except Exception:
                     attempt += 1
                     Crawler.logger.exception(f"Failed attempt {attempt}/{self.total_get_attempts} for {site_info}.")
                     if attempt < self.total_get_attempts:
-                        time.sleep(self.time_to_wait)
+                        time.sleep(self.wait_time)
 
             if attempt == self.total_get_attempts:
                 if current_depth == 0:
@@ -580,7 +580,7 @@ class Crawler:
                 continue
 
             # Wait for redirects and dynamic content
-            time.sleep(self.time_to_wait)
+            time.sleep(self.wait_time)
 
             # Get domain and CMP name
             if current_depth == 0:
@@ -797,7 +797,7 @@ class Crawler:
                         return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
-            time.sleep(self.time_to_wait)
+            time.sleep(self.wait_time)
 
             # Close all tabs except the first one
             while len(self.driver.window_handles) > 1:
@@ -811,7 +811,7 @@ class Crawler:
 
             # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
-            time.sleep(self.time_to_wait)
+            time.sleep(self.wait_time)
             if crawl_name:
                 self.extract_features(clickstream_path, crawl_name)
                 self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
