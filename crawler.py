@@ -163,7 +163,7 @@ class Crawler:
         self.total_get_attempts = total_get_attempts
 
         self.domain = domain
-        self.crawl_url = None # Must be resolved in a crawl_algo
+        self.url = None # Must be resolved in a crawl_algo
 
         # Where the crawl data is stored
         self.data_path = f"{config.CRAWL_PATH}{domain}/"
@@ -388,7 +388,7 @@ class Crawler:
                 interaction_type=BannerClick.REJECT,
             )
             if not self.results["interaction_success"]:  # unable to BannerClick reject
-                Crawler.logger.critical(f"BannerClick failed to reject '{self.crawl_url}'.")
+                Crawler.logger.critical(f"BannerClick failed to reject '{self.url}'.")
                 return
 
             # Log
@@ -412,9 +412,9 @@ class Crawler:
 
         # Domain -> URL Resolution
         self.driver = self.get_driver(enable_har=False)
-        self.crawl_url = self.resolve_domain(self.domain)
-        self.results["url"] = self.crawl_url
-        self.logger.info(f"Resolved domain '{self.domain}' to '{self.crawl_url}'.")
+        self.url = self.resolve_domain(self.domain)
+        self.results["url"] = self.url
+        self.logger.info(f"Resolved domain '{self.domain}' to '{self.url}'.")
         self.driver.quit()
 
         # Classification Algorithm
@@ -489,8 +489,8 @@ class Crawler:
             raise ValueError("Depth must be non-negative.")
 
         # Start with the landing page
-        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(self.crawl_url), 0)])  # (url, depth)
-        previous: dict[URL, Optional[str]] = {URL(self.crawl_url): None}  # map url to previous url
+        urls_to_visit: deque[tuple[URL, int]] = deque([(URL(self.url), 0)])  # (url, depth)
+        previous: dict[URL, Optional[str]] = {URL(self.url): None}  # map url to previous url
         redirects: set[URL] = set()  # set of URLs after redirect(s)
         domain = ""  # will be set after resolving landing page redirects
 
@@ -718,14 +718,14 @@ class Crawler:
         if set_request_interceptor:
             # Define request interceptor
             def request_interceptor(request: seleniumwire.request.Request):
-                interceptors.remove_third_party_interceptor(request, self.crawl_url)
+                interceptors.remove_third_party_interceptor(request, self.url)
                 # interceptors.remove_all_interceptor(request)
             self.driver.request_interceptor = request_interceptor
         else:
             del self.driver.request_interceptor
 
         try:
-            original_url = self.get(self.crawl_url)
+            original_url = self.get(self.url)
             self.results["landing_page_down"] = False
         except UrlDown:
             raise LandingPageDown()
@@ -966,4 +966,4 @@ class Crawler:
         """
         Return crawl_url in logs.
         """
-        return self.crawl_url
+        return self.url
