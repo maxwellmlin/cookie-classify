@@ -400,7 +400,7 @@ class Crawler:
             return
 
     @crawl_algo
-    def classification_algo(self, num_clickstreams: int = 10, clickstream_length: int = 5, control_screenshots: int = 1):
+    def classification_algo(self, total_actions: int = 50, clickstream_length: int = 5, control_screenshots: int = 1):
         """
         Cookie classification algorithm.
 
@@ -418,7 +418,8 @@ class Crawler:
         self.driver.quit()
 
         # Classification Algorithm
-        for _ in range(num_clickstreams):
+        current_actions = 0
+        while current_actions < total_actions:
             clickstream_path = self.data_path + f"{self.clickstream}/"
             Path(clickstream_path).mkdir(parents=True)
 
@@ -440,13 +441,14 @@ class Crawler:
 
             # Control group
             self.driver = self.get_driver()
-            self.crawl_clickstream(
+            control_clickstream = self.crawl_clickstream(
                 clickstream=clickstream,
-                clickstream_length=clickstream_length,
+                clickstream_length=len(clickstream),
                 crawl_name="control",
                 set_request_interceptor=False,
                 screenshots=control_screenshots,
             )
+            current_actions += len(control_clickstream)
             self.save_har(clickstream_path + "control.json")
             self.driver.quit()
 
@@ -454,7 +456,7 @@ class Crawler:
             self.driver = self.get_driver()
             self.crawl_clickstream(
                 clickstream=clickstream,
-                clickstream_length=clickstream_length,
+                clickstream_length=len(control_clickstream), # No need to traverse more than the control group
                 crawl_name="experimental",
                 set_request_interceptor=True,
                 screenshots=1,
@@ -699,13 +701,13 @@ class Crawler:
         Args:
             start_node: URL where traversal will begin.
             clickstream: List of CSS selectors/driver actions and their corresponding type. Defaults to None, where a clickstream is instead generated.
-            length: Maximum length of the clickstream. Defaults to 5.
+            clickstream_length: Maximum length of the clickstream. Defaults to 5.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             set_request_interceptor: Whether to set the request interceptor. Defaults to False.
             screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
-            The clickstream that was executed.
+            The clickstream that was generated/traversed.
         """
         if clickstream is None:
             clickstream = []
@@ -741,8 +743,7 @@ class Crawler:
         # Clickstream execution loop
         selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
         clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
-        i = 0
-        while i < clickstream_length:
+        for i in range(clickstream_length):
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
                 Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
@@ -784,12 +785,13 @@ class Crawler:
                     if generate_clickstream:
                         continue
                     else:  # skipcq: PYL-R1724
-                        Crawler.logger.critical(f"Failed executing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
+                        # Failure when traversing clickstream
+                        Crawler.logger.critical(f"Failed traversing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
 
                         if element_type is not None:
                             self.results["traversal_failures"][element_type] += 1
 
-                        return clickstream
+                        return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
@@ -814,8 +816,6 @@ class Crawler:
             if generate_clickstream:
                 clickstream.append((action, element_type))
                 selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
-
-            i += 1
 
         Crawler.logger.info(f"Completed clickstream {self.clickstream} ({crawl_name}).")
 

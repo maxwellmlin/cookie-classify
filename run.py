@@ -25,7 +25,7 @@ def init():
     meta = {
         "CRAWL_NAME": config.CRAWL_NAME,
         "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
-        "NUM_CLICKSTREAMS": config.NUM_CLICKSTREAMS,
+        "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
     }
     with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:

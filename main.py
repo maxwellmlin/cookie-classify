@@ -21,7 +21,7 @@ def worker(domain: str, queue: mp.Queue) -> None:
     crawler = Crawler(domain, headless=True, time_to_wait=config.TIME_TO_WAIT)
 
     # result = crawler.compliance_algo(config.DEPTH)
-    result = crawler.classification_algo(num_clickstreams=config.NUM_CLICKSTREAMS, clickstream_length=config.CLICKSTREAM_LENGTH)
+    result = crawler.classification_algo(total_actions=config.TOTAL_ACTIONS, clickstream_length=config.CLICKSTREAM_LENGTH)
 
     queue.put(result)
 
