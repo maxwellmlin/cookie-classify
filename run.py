@@ -3,6 +3,7 @@ import config
 import yaml
 import argparse
 import pathlib
+import subprocess
 
 SLURM_LOG_PATH = 'slurm_logs'
 
@@ -84,4 +85,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     init()
-    sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=3, cpus=2)
+
+    subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
+    # sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=3, cpus=2)
