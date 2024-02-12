@@ -420,14 +420,13 @@ class Crawler:
             return
 
     @crawl_algo
-    def classification_algo(self, total_actions: int = 50, clickstream_length: int = 5, control_screenshots: int = 1):
+    def classification_algo(self, total_actions: int = 50, clickstream_length: int = 5):
         """
         Cookie classification algorithm.
 
         Args:
             trials: Number of clickstreams to generate. Defaults to 10.
             length: Length of each clickstream. Defaults to 5.
-            screenshots: Number of screenshots to take for the control group. Defaults to 10.
         """
 
         # Domain -> URL Resolution
@@ -450,7 +449,6 @@ class Crawler:
                     clickstream_length=clickstream_length,
                     crawl_name="baseline",
                     set_request_interceptor=False,
-                    screenshots=1,
                 )
                 self.save_har(clickstream_path + "baseline.json")
                 self.driver.quit()
@@ -467,7 +465,6 @@ class Crawler:
                     clickstream_length=clickstream_length,
                     crawl_name="control",
                     set_request_interceptor=False,
-                    screenshots=control_screenshots,
                 )
                 current_actions += len(control_clickstream) + 1 # We add one since we count just getting the website as an action
                 self.save_har(clickstream_path + "control.json")
@@ -480,7 +477,6 @@ class Crawler:
                     clickstream_length=clickstream_length, # No need to traverse more than the control group
                     crawl_name="experimental",
                     set_request_interceptor=True,
-                    screenshots=1,
                 )
                 self.save_har(clickstream_path + "experimental.json")
                 self.driver.quit()
@@ -719,7 +715,6 @@ class Crawler:
             clickstream_length: int = 5,
             crawl_name: str = "",
             set_request_interceptor: bool = False,
-            screenshots: int = 1
     ) -> list[tuple[str | DriverAction, ClickableElement | None]]:
         """
         Crawl website using clickstream.
@@ -730,7 +725,6 @@ class Crawler:
             clickstream_length: Maximum length of the clickstream. Defaults to 5.
             crawl_name: Name of the crawl, used for file names. Defaults to "", where no files are created.
             set_request_interceptor: Whether to set the request interceptor. Defaults to False.
-            screenshots: Number of screenshots to take. Defaults to 1.
 
         Returns:
             The clickstream that was generated/traversed.
@@ -763,7 +757,7 @@ class Crawler:
         self.driver.execute_script("window.scrollTo(0, 0);")
         if crawl_name:
             self.extract_features(clickstream_path, crawl_name)
-            self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
+            self.save_screenshot(clickstream_path + f"{crawl_name}-0")
 
         # Clickstream execution loop
         selectors: list[tuple[str, str]] = self.get_clickable_elements() if generate_clickstream else []
@@ -831,7 +825,7 @@ class Crawler:
             time.sleep(self.wait_time)
             if crawl_name:
                 self.extract_features(clickstream_path, crawl_name)
-                self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}", screenshots=screenshots)
+                self.save_screenshot(clickstream_path + f"{crawl_name}-{i+1}")
 
             # Save action and generate new action
             if generate_clickstream:
@@ -862,44 +856,35 @@ class Crawler:
                 time.sleep(self.wait_time)
         raise JavascriptException(f"Failed to inject '{path}' after {ATTEMPTS} attempts.")
 
-    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
+    def save_screenshot(self, file_name: str, full_page: bool = False) -> None:
         """
         Save a screenshot of the viewport to a file.
 
         Args:
             file_name: Screenshot name.
             full_page: Whether to take a screenshot of the entire page. Defaults to False.
-            screenshots: Number of screenshots to take. Defaults to 1.
-            delay: Time to wait between screenshots. Defaults to 1 second.
         """
-        for i in range(screenshots):
-            if screenshots > 1:
-                file_path = f"{file_name}-{i+1}.png"
-            else:
-                file_path = f"{file_name}.png"
+        file_path = f"{file_name}.png"
 
-            if full_page:
-                el = self.driver.find_element_by_tag_name('body')
-                el.screenshot(file_path)
-            else:
-                # Take a screenshot of the viewport
-                ATTEMPTS = 3
-                for i in range(ATTEMPTS):
-                    try:
-                        # NOTE: Rarely, this command will fail
-                        # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-                        screenshot = self.driver.get_screenshot_as_png()
-                        # Save the screenshot to a file
-                        with open(file_path, "wb") as file:
-                            file.write(screenshot)
-                        return
-                    except WebDriverException:
-                        Crawler.logger.exception(f"Failed to take screenshot. Attempt {i+1}/{ATTEMPTS}.")
-                        if i < ATTEMPTS - 1:
-                            time.sleep(self.wait_time)
-
-            if i < screenshots - 1:
-                time.sleep(self.wait_time)
+        if full_page:
+            el = self.driver.find_element_by_tag_name('body')
+            el.screenshot(file_path)
+        else:
+            # Take a screenshot of the viewport
+            ATTEMPTS = 3
+            for i in range(ATTEMPTS):
+                try:
+                    # NOTE: Rarely, this command will fail
+                    # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                    screenshot = self.driver.get_screenshot_as_png()
+                    # Save the screenshot to a file
+                    with open(file_path, "wb") as file:
+                        file.write(screenshot)
+                    return
+                except WebDriverException:
+                    Crawler.logger.exception(f"Failed to take screenshot. Attempt {i+1}/{ATTEMPTS}.")
+                    if i < ATTEMPTS - 1:
+                        time.sleep(self.wait_time)
 
     def extract_features(self, path: pathlib.Path | str, crawl_name: str) -> None:
         """
