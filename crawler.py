@@ -317,7 +317,8 @@ class Crawler:
         """
         for url in [f"https://{domain}", f"https://www.{domain}", f"http://{domain}", f"http://www.{domain}"]:
             try:
-                return self.get(url)
+                self.get(url)
+                return url
             except UrlDown:
                 continue
         
