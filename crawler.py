@@ -24,7 +24,8 @@ from selenium.common.exceptions import (
     ElementNotInteractableException,
     ElementClickInterceptedException,
     InvalidSelectorException,
-    StaleElementReferenceException
+    StaleElementReferenceException,
+    InvalidSessionIdException
 )
 
 import bannerclick.bannerdetection as bc
@@ -291,9 +292,9 @@ class Crawler:
                 break  # If successful, break out of the loop
 
             except TimeoutException:
-                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{url}'.")
+                Crawler.logger.warning(f"Failed get attempt {attempt+1}/{self.total_get_attempts} for '{url}'.")
             except Exception:
-                Crawler.logger.warning(f"Failed get attempt {attempt}/{self.total_get_attempts} for '{url}'.", exc_info=True)
+                Crawler.logger.warning(f"Failed get attempt {attempt+1}/{self.total_get_attempts} for '{url}'.", exc_info=True)
 
             if attempt != self.total_get_attempts - 1:
                 time.sleep(self.wait_time)
@@ -439,53 +440,57 @@ class Crawler:
         # Classification Algorithm
         current_actions = 0
         while current_actions < total_actions:
-            clickstream_path = self.data_path + f"{self.clickstream}/"
-            Path(clickstream_path).mkdir(parents=True)
+            try:
+                clickstream_path = self.data_path + f"{self.clickstream}/"
+                Path(clickstream_path).mkdir(parents=True)
 
-            self.driver = self.get_driver()
-            clickstream = self.crawl_clickstream(
-                clickstream=None,
-                clickstream_length=clickstream_length,
-                crawl_name="baseline",
-                set_request_interceptor=False,
-                screenshots=1,
-            )
-            self.save_har(clickstream_path + "baseline.json")
-            self.driver.quit()
+                self.driver = self.get_driver()
+                clickstream = self.crawl_clickstream(
+                    clickstream=None,
+                    clickstream_length=clickstream_length,
+                    crawl_name="baseline",
+                    set_request_interceptor=False,
+                    screenshots=1,
+                )
+                self.save_har(clickstream_path + "baseline.json")
+                self.driver.quit()
 
-            if self.results["clickstream"] is not None:
-                self.results["clickstream"].append(clickstream)
-            else:
-                self.results["clickstream"] = [clickstream]
+                if self.results["clickstream"] is not None:
+                    self.results["clickstream"].append(clickstream)
+                else:
+                    self.results["clickstream"] = [clickstream]
 
-            # Control group
-            self.driver = self.get_driver()
-            control_clickstream = self.crawl_clickstream(
-                clickstream=clickstream,
-                clickstream_length=clickstream_length,
-                crawl_name="control",
-                set_request_interceptor=False,
-                screenshots=control_screenshots,
-            )
-            current_actions += len(control_clickstream) + 1 # We add one since we count just getting the website as an action
-            self.save_har(clickstream_path + "control.json")
-            self.driver.quit()
+                # Control group
+                self.driver = self.get_driver()
+                control_clickstream = self.crawl_clickstream(
+                    clickstream=clickstream,
+                    clickstream_length=clickstream_length,
+                    crawl_name="control",
+                    set_request_interceptor=False,
+                    screenshots=control_screenshots,
+                )
+                current_actions += len(control_clickstream) + 1 # We add one since we count just getting the website as an action
+                self.save_har(clickstream_path + "control.json")
+                self.driver.quit()
 
-            # Experimental group
-            self.driver = self.get_driver()
-            self.crawl_clickstream(
-                clickstream=clickstream,
-                clickstream_length=clickstream_length, # No need to traverse more than the control group
-                crawl_name="experimental",
-                set_request_interceptor=True,
-                screenshots=1,
-            )
-            self.save_har(clickstream_path + "experimental.json")
-            self.driver.quit()
+                # Experimental group
+                self.driver = self.get_driver()
+                self.crawl_clickstream(
+                    clickstream=clickstream,
+                    clickstream_length=clickstream_length, # No need to traverse more than the control group
+                    crawl_name="experimental",
+                    set_request_interceptor=True,
+                    screenshots=1,
+                )
+                self.save_har(clickstream_path + "experimental.json")
+                self.driver.quit()
+            except InvalidSessionIdException:
+                Crawler.logger.error(f"Driver encountered InvalidSessionIdException. Restarting.", exc_info=True)
+                self.driver.quit()
+            finally:
+                Crawler.logger.info(f"Data collected for {current_actions}/{total_actions} actions.")
+                self.clickstream += 1
 
-            Crawler.logger.info(f"Data collected for {current_actions}/{total_actions} actions.")
-
-            self.clickstream += 1
 
     @log
     def crawl_inner_pages(
@@ -846,7 +851,16 @@ class Crawler:
         with open(path, "r") as file:
             js = file.read()
 
-        return self.driver.execute_script(js)
+        ATTEMPTS = 3
+        for i in range(ATTEMPTS):
+            try:
+                return self.driver.execute_script(js)
+            except JavascriptException:
+                Crawler.logger.warning(f"Failed to inject '{path}'. Attempt {i+1}/{ATTEMPTS}.")
+            
+            if i < ATTEMPTS - 1:
+                time.sleep(self.wait_time)
+        raise JavascriptException(f"Failed to inject '{path}' after {ATTEMPTS} attempts.")
 
     def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1, delay: int = 1) -> None:
         """
