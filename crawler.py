@@ -797,7 +797,6 @@ class Crawler:
                         return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
-            time.sleep(self.wait_time)
 
             # Restrict within original domain
             while utils.get_domain(self.driver.current_url) != domain:
