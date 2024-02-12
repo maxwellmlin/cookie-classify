@@ -790,7 +790,7 @@ class Crawler:
                         continue
                     else:  # skipcq: PYL-R1724
                         # Failure when traversing clickstream
-                        Crawler.logger.critical(f"Failed traversing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
+                        Crawler.logger.warning(f"Failed traversing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
 
                         if element_type is not None:
                             self.results["traversal_failures"][element_type] += 1
