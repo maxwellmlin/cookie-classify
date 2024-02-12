@@ -16,10 +16,10 @@ def init():
         os.mkdir(SLURM_LOG_PATH)
 
     # Create crawl path
-    pathlib.Path(config.CRAWL_PATH).mkdir(parents=True, exist_ok=False)
+    pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
     # Initialize sites.json
-    with open(config.CRAWL_PATH + 'sites.json', 'w') as results:
+    with open(config.DATA_PATH + 'sites.json', 'w') as results:
         results.write("{}")
         
     # Initialize meta.yaml
@@ -29,11 +29,11 @@ def init():
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
     }
-    with open(config.CRAWL_PATH + 'meta.yaml', 'w') as outfile:
+    with open(config.DATA_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
         
     # Copy sites.txt to crawl path
-    os.system(f'cp {config.SITE_LIST_PATH} {config.CRAWL_PATH}')
+    os.system(f'cp {config.SITE_LIST_PATH} {config.DATA_PATH}')
 
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """

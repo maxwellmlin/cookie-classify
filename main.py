@@ -18,7 +18,7 @@ def worker(domain: str, queue: mp.Queue) -> None:
     See https://stackoverflow.com/questions/38164635/selenium-not-freeing-up-memory-even-after-calling-close-quit
     for more details.
     """    
-    crawler = Crawler(domain, headless=True, time_to_wait=config.TIME_TO_WAIT)
+    crawler = Crawler(domain, headless=True, wait_time=config.WAIT_TIME)
 
     # result = crawler.compliance_algo(config.DEPTH)
     result = crawler.classification_algo(total_actions=config.TOTAL_ACTIONS, clickstream_length=config.CLICKSTREAM_LENGTH)
@@ -35,7 +35,7 @@ def main(jobs=1):
     log_stream.setFormatter(formatter)
     logger.addHandler(log_stream)
 
-    log_file = logging.FileHandler(f'{config.CRAWL_PATH}/{SLURM_ARRAY_TASK_ID}.log', 'a')
+    log_file = logging.FileHandler(f'{config.DATA_PATH}/{SLURM_ARRAY_TASK_ID}.log', 'a')
     log_file.setLevel(logging.DEBUG)
     log_file.setFormatter(formatter)
     logger.addHandler(log_file)
@@ -52,7 +52,7 @@ def main(jobs=1):
     output = mp.Queue()
     data = {}
 
-    sites_path = config.CRAWL_PATH + 'sites.json'  # where to store results for individual sites
+    sites_path = config.DATA_PATH + 'sites.json'  # where to store results for individual sites
     sites_lock = FileLock(sites_path + '.lock', timeout=10)
 
     for i in range(SLURM_ARRAY_TASK_ID-1, len(sites), jobs):
