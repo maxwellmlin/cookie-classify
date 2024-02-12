@@ -312,9 +312,7 @@ for (item of items) {
         selectors.push(finder(item.element))
         types.push(item.type)
     }
-    catch (e) {
-        console.log(e)
-    }
+    catch (e) { }
 }
 
 return [selectors, types]
