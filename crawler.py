@@ -775,6 +775,7 @@ class Crawler:
                     # Find element
                     element = self.driver.find_element(By.CSS_SELECTOR, action)
                     # Click
+                    prev_url = self.driver.current_url
                     element.click()
                 except (
                     NoSuchElementException,
@@ -799,8 +800,8 @@ class Crawler:
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
             # Restrict within original domain
-            while utils.get_domain(self.driver.current_url) != domain:
-                self.back()
+            if utils.get_domain(self.driver.current_url) != domain:
+                self.get(prev_url)
 
             # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
