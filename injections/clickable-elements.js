@@ -308,8 +308,13 @@ function same(path, input) {
 selectors = []
 types = []
 for (item of items) {
-    selectors.push(finder(item.element))
-    types.push(item.type)
+    try {
+        selectors.push(finder(item.element))
+        types.push(item.type)
+    }
+    catch (e) {
+        console.log(e)
+    }
 }
 
 return [selectors, types]
