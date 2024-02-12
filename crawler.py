@@ -252,6 +252,23 @@ class Crawler:
 
         return wrapper
 
+    def get_clickable_elements(self) -> list[tuple[str, str]]:
+        """
+        Get all clickable elements on the current page.
+        
+        If no clickable elements are found, return an empty list.
+        """
+        ATTEMPTS = 3
+        for i in range(ATTEMPTS):
+            els = self.inject_script("injections/clickable-elements.js")
+            if els is not None:
+                return list(zip(*els))
+
+            if i < ATTEMPTS - 1:
+                time.sleep(self.wait_time)
+
+        return []
+
     def get(self, url: str) -> str:
         """
         Get the website at the given URL with multiple reattempts.
@@ -285,7 +302,7 @@ class Crawler:
             raise UrlDown()
 
         # If there are no clickable elements, the website is down
-        selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js")))
+        selectors: list[tuple[str, str]] = self.get_clickable_elements()
         if len(selectors) == 0:
             raise UrlDown()
         
@@ -743,7 +760,7 @@ class Crawler:
             self.save_screenshot(clickstream_path + f"{crawl_name}-0", screenshots=screenshots)
 
         # Clickstream execution loop
-        selectors: list[tuple[str, str]] = list(zip(*self.inject_script("injections/clickable-elements.js"))) if generate_clickstream else []
+        selectors: list[tuple[str, str]] = self.get_clickable_elements() if generate_clickstream else []
         clickstream_length = clickstream_length if generate_clickstream else min(clickstream_length, len(clickstream))  # cannot exceed length of clickstream
         i = 0
         while i < clickstream_length:  # Note: we need a while loop here since we don't want to increment i if we fail to click
@@ -813,7 +830,7 @@ class Crawler:
             # Save action and generate new action
             if generate_clickstream:
                 clickstream.append((action, element_type))
-                selectors = list(zip(*self.inject_script("injections/clickable-elements.js")))
+                selectors = self.get_clickable_elements()
             
             i += 1
 
