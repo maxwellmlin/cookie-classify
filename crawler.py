@@ -484,7 +484,7 @@ class Crawler:
                 )
                 self.save_har(clickstream_path + "experimental.json")
                 self.driver.quit()
-            except (InvalidSessionIdException, WebDriverException) as e:
+            except (InvalidSessionIdException, WebDriverException, JavascriptException) as e:
                 Crawler.logger.error(f"Driver encountered {type(e).__name__}. Restarting.", exc_info=True)
                 self.driver.quit()
             finally:
@@ -906,13 +906,16 @@ class Crawler:
             path: Directory to save the content.
             crawl_name: Name of the crawl (e.g., "baseline", "control", "experimental") used for file names.
         """
-        def extract_word_counts(innerText: str):
+        def extract_word_counts(innerText: str | None) -> dict:
             """
             Extract words from innerText and return a dictionary of word counts.
             
             Args:
                 innerText: The innerText of the page.
             """
+            if innerText is None:
+                return {}
+
             words = []
             lines = innerText.splitlines()
             for line in lines:
@@ -926,10 +929,13 @@ class Crawler:
                     counts[word] = 1
             return counts
         
-        def count_list_items(list: list) -> dict:
+        def count_list_items(list: list | None) -> dict:
             """
             Reduce a list to a dictionary of frequencies.
             """
+            if list is None:
+                return {}
+            
             frequencies: dict = {}
             for item in list:
                 if item in frequencies:
