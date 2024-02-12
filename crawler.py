@@ -799,12 +799,6 @@ class Crawler:
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
             time.sleep(self.wait_time)
 
-            # Close all tabs except the first one
-            while len(self.driver.window_handles) > 1:
-                self.driver.switch_to.window(self.driver.window_handles[1])
-                self.driver.close()
-            self.driver.switch_to.window(self.driver.window_handles[0])
-
             # Restrict within original domain
             while utils.get_domain(self.driver.current_url) != domain:
                 self.back()
