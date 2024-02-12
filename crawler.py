@@ -749,7 +749,7 @@ class Crawler:
         while i < clickstream_length:  # Note: we need a while loop here since we don't want to increment i if we fail to click
             # No more possible actions
             if generate_clickstream and not selectors and self.driver.current_url == original_url:
-                Crawler.logger.critical(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
+                Crawler.logger.warning(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             element_type = None
