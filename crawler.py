@@ -862,7 +862,7 @@ class Crawler:
                 time.sleep(self.wait_time)
         raise JavascriptException(f"Failed to inject '{path}' after {ATTEMPTS} attempts.")
 
-    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1, delay: int = 1) -> None:
+    def save_screenshot(self, file_name: str, full_page: bool = False, screenshots: int = 1) -> None:
         """
         Save a screenshot of the viewport to a file.
 
@@ -883,20 +883,23 @@ class Crawler:
                 el.screenshot(file_path)
             else:
                 # Take a screenshot of the viewport
-                try:
-                    # NOTE: Rarely, this command will fail
-                    # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
-                    screenshot = self.driver.get_screenshot_as_png()
-                except WebDriverException:
-                    Crawler.logger.exception("Failed to take screenshot.")
-                    return
-
-                # Save the screenshot to a file
-                with open(file_path, "wb") as file:
-                    file.write(screenshot)
+                ATTEMPTS = 3
+                for i in range(ATTEMPTS):
+                    try:
+                        # NOTE: Rarely, this command will fail
+                        # See: https://bugzilla.mozilla.org/show_bug.cgi?id=1493650
+                        screenshot = self.driver.get_screenshot_as_png()
+                        # Save the screenshot to a file
+                        with open(file_path, "wb") as file:
+                            file.write(screenshot)
+                        return
+                    except WebDriverException:
+                        Crawler.logger.exception(f"Failed to take screenshot. Attempt {i+1}/{ATTEMPTS}.")
+                        if i < ATTEMPTS - 1:
+                            time.sleep(self.wait_time)
 
             if i < screenshots - 1:
-                time.sleep(delay)
+                time.sleep(self.wait_time)
 
     def extract_features(self, path: pathlib.Path | str, crawl_name: str) -> None:
         """
