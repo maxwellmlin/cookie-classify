@@ -25,7 +25,8 @@ from selenium.common.exceptions import (
     ElementClickInterceptedException,
     InvalidSelectorException,
     StaleElementReferenceException,
-    InvalidSessionIdException
+    InvalidSessionIdException,
+    UnexpectedAlertPresentException
 )
 
 import bannerclick.bannerdetection as bc
@@ -480,7 +481,7 @@ class Crawler:
                 )
                 self.save_har(clickstream_path + "experimental.json")
                 self.driver.quit()
-            except (InvalidSessionIdException, WebDriverException, JavascriptException) as e:
+            except (InvalidSessionIdException, WebDriverException, JavascriptException, UnexpectedAlertPresentException) as e:
                 Crawler.logger.error(f"Driver encountered {type(e).__name__}. Restarting.", exc_info=True)
                 self.driver.quit()
             finally:
