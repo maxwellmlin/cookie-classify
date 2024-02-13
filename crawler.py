@@ -71,13 +71,6 @@ class CMP(str, Enum):
     TCF = "__tcfapi"
 
 
-class DriverAction(str, Enum):
-    """
-    Type of action to take on the driver.
-    """
-
-    BACK = "driver.back"  # Go back to the previous page
-
 class LandingPageDown(Exception):
     """
     This exception is raised when the landing page is down.
@@ -117,10 +110,9 @@ class CrawlResults(TypedDict):
     interaction_success: bool | None  # None if no interaction was attempted
 
     # Only set during classification_algo
-    # List of clickstreams where each clickstream is a list of CSS selectors (str) or DriverActions
+    # List of clickstreams where each clickstream is a list of CSS selectors (str)
     # Each CSS selector is paired with the type of element that was clicked (see clickable-elements.js)
-    # Each DriverAction is paired with None
-    clickstream: list[list[tuple[str | DriverAction, ClickableElement | None]]] | None
+    clickstream: list[list[tuple[str, ClickableElement]]] | None
     traversal_failures: dict[ClickableElement, int] # Number of click failures for each type of click
 
 
@@ -714,11 +706,11 @@ class Crawler:
     @log
     def crawl_clickstream(
             self,
-            clickstream: list[tuple[str | DriverAction, ClickableElement | None]] | None,
+            clickstream: list[tuple[str, ClickableElement]] | None,
             clickstream_length: int = 5,
             crawl_name: str = "",
             set_request_interceptor: bool = False,
-    ) -> list[tuple[str | DriverAction, ClickableElement | None]]:
+    ) -> list[tuple[str, ClickableElement]]:
         """
         Crawl website using clickstream.
 
@@ -768,66 +760,55 @@ class Crawler:
         i = 0
         while i < clickstream_length:  # Note: we need a while loop here since we don't want to increment i if we fail to click
             # No more possible actions
-            if generate_clickstream and not selectors and self.driver.current_url == original_url:
+            if generate_clickstream and not selectors:
                 Crawler.logger.warning(f"Unable to generate full clickstream. Generated length is {len(clickstream)}/{clickstream_length}.")
                 return clickstream
 
             element_type = None
             if generate_clickstream:
-                # Randomly click on an element; if all elements have been exhausted, go back
-                if selectors:
-                    action, _element_type = selectors.pop(random.randrange(len(selectors)))
-                    element_type = ClickableElement(_element_type)
-                else:
-                    action = DriverAction.BACK
+                # Randomly click on an element
+                action, _element_type = selectors.pop(random.randrange(len(selectors)))
+                element_type = ClickableElement(_element_type)
             else:
                 action, element_type = clickstream[i]
 
             #
             # Execute clickstream
             #
-            if type(action) is DriverAction:
-                if action == DriverAction.BACK:
-                    self.back()
+            try:
+                # Find element
+                element = self.driver.find_element(By.CSS_SELECTOR, action)
+                # Click
+                prev_url = self.driver.current_url
+                element.click()
+            except (
+                NoSuchElementException,
+                ElementNotInteractableException,
+                ElementClickInterceptedException,
+                InvalidSelectorException,
+                StaleElementReferenceException,
+                TimeoutException,
+                WebDriverException
+            ):
+                if generate_clickstream:
+                    continue
+                else:  # skipcq: PYL-R1724
+                    # Failure when traversing clickstream
+                    Crawler.logger.warning(f"Failed traversing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
 
-            else:
-                try:
-                    # Find element
-                    element = self.driver.find_element(By.CSS_SELECTOR, action)
-                    # Click
-                    prev_url = self.driver.current_url
-                    element.click()
-                except (
-                    NoSuchElementException,
-                    ElementNotInteractableException,
-                    ElementClickInterceptedException,
-                    InvalidSelectorException,
-                    StaleElementReferenceException,
-                    TimeoutException,
-                    WebDriverException
-                ):
-                    if generate_clickstream:
-                        continue
-                    else:  # skipcq: PYL-R1724
-                        # Failure when traversing clickstream
-                        Crawler.logger.warning(f"Failed traversing clickstream {self.clickstream} ({crawl_name}) on action {i+1}/{clickstream_length}.")
+                    if element_type is not None:
+                        self.results["traversal_failures"][element_type] += 1
 
-                        if element_type is not None:
-                            self.results["traversal_failures"][element_type] += 1
-
-                        return clickstream[:i]
+                    return clickstream[:i]
 
             Crawler.logger.info(f"Completed action {i+1}/{clickstream_length}.")
 
             # Restrict within original domain
             if utils.get_domain(self.driver.current_url) != domain:
                 try:
-                    self.get(prev_url)
+                    self.get(self.url)
                 except UrlDown:
-                    try:
-                        self.get(self.url)
-                    except UrlDown:
-                        raise LandingPageDown()
+                    raise LandingPageDown()
 
             # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
