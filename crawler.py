@@ -109,6 +109,7 @@ class CrawlResults(TypedDict):
     unexpected_exception: bool  # True iff an unexpected exception occurred
     total_time: int | None  # Time to crawl the website, initialized to None
     SLURM_ARRAY_TASK_ID: int | None  # Set by main.py
+    killed: bool  # If process was killed by main.py
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -185,6 +186,7 @@ class Crawler:
             "unexpected_exception": False,
             "total_time": None,
             "SLURM_ARRAY_TASK_ID": None,
+            "killed": False,
 
             "cmp_names": None,
             "interaction_type": None,

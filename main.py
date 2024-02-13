@@ -1,10 +1,12 @@
 import json
 import logging
 import multiprocessing as mp
-import pathlib
 import os
 import argparse
 from filelock import Timeout, FileLock
+from signal import signal, SIGTERM
+import sys
+import time
 
 from crawler import Crawler, CrawlDataEncoder, CrawlResults
 import config
@@ -19,6 +21,17 @@ def worker(domain: str, queue: mp.Queue) -> None:
     for more details.
     """    
     crawler = Crawler(domain, headless=True, wait_time=config.WAIT_TIME)
+    def before_exit(*args):
+        crawler.driver.quit()
+        
+        crawler.results["total_time"] = time.time() - crawler.start_time
+        crawler.results["killed"] = True
+
+        queue.put(crawler.results)
+
+        sys.exit(0)
+        
+    signal(SIGTERM, before_exit)
 
     # result = crawler.compliance_algo(config.DEPTH)
     result = crawler.classification_algo(total_actions=config.TOTAL_ACTIONS, clickstream_length=config.CLICKSTREAM_LENGTH)
@@ -60,6 +73,12 @@ def main(jobs=1):
         
         process = mp.Process(target=worker, args=(crawl_domain, output))
         process.start()
+        
+        TIMEOUT = 60 * 60  # 1 hour
+        process.join(TIMEOUT)
+        if process.is_alive():
+            logger.critical(f"Terminating process for '{crawl_domain}' due to timeout.")
+            process.terminate()
 
         result: CrawlResults = output.get()
 
