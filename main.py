@@ -77,8 +77,14 @@ def main(jobs=1):
         TIMEOUT = 60 * 60  # 1 hour
         process.join(TIMEOUT)
         if process.is_alive():
-            logger.critical(f"Terminating process for '{crawl_domain}' due to timeout.")
+            logger.warn(f"Terminating process for '{crawl_domain}' due to timeout.")
             process.terminate()
+            
+            time.sleep(60)
+            if process.is_alive():
+                logger.critical(f"SIGTERM failed, escalating to SIGKILL.")
+                process.kill()
+                continue
 
         result: CrawlResults = output.get()
 
