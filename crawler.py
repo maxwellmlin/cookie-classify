@@ -819,7 +819,13 @@ class Crawler:
 
             # Restrict within original domain
             if utils.get_domain(self.driver.current_url) != domain:
-                self.get(prev_url)
+                try:
+                    self.get(prev_url)
+                except UrlDown:
+                    try:
+                        self.get(self.url)
+                    except UrlDown:
+                        raise LandingPageDown()
 
             # Extract data
             self.driver.execute_script("window.scrollTo(0, 0);")
