@@ -5,10 +5,11 @@ import statistics
 from pathlib import Path
 import yaml
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from crawler import CrawlResults
 
-from utils.utils import get_directories
+from utils.utils import get_directories, get_domain
 from utils.image_shingle import ImageShingle
 
 pd.set_option('display.max_rows', None)
@@ -16,7 +17,7 @@ pd.set_option('display.max_columns', None)
 
 ##############################################################################
 
-CRAWL_NAME = 'feb-5'
+CRAWL_NAME = '3N76L-top-250'
 DATA_PATH = Path("/usr/project/xtmp/mml66/cookie-classify/") / CRAWL_NAME
 ANALYSIS_PATH = Path("analysis") / CRAWL_NAME
 ANALYSIS_PATH.mkdir(parents=True, exist_ok=True)
@@ -38,6 +39,15 @@ CLICKSTREAM_LENGTH = meta['CLICKSTREAM_LENGTH']
 print(meta)
 
 """
+CDN Domains
+"""
+cdn_domains = set()
+with open("inputs/cdn/cnamechain.json") as file:
+    data = json.load(file)
+    for cdn in data:
+        cdn_domains.add(get_domain(cdn[0]))
+
+"""
 Run Statistics
 """
 # Sites that we wanted to crawl
@@ -52,7 +62,6 @@ with open(DATA_PATH / "sites.json") as file:
 
 # Check whether we actually crawled all of the sites in our original site list. If not, it is likely that one of the workers hanged or was killed.
 print(f"Crawled {len(site_results)}/{len(sites_to_crawl)} sites.")
-print(f"Missing {[site for site in sites_to_crawl if site not in site_results]}.")
 
 """
 Check which crawled sites were actually successful.
@@ -66,6 +75,8 @@ for domain, result in site_results.items():
     if result["unexpected_exception"] is False and result["landing_page_down"] is False:
         successful_sites.append(domain)
 print(f"Successfully crawled {len(successful_sites)}/{len(site_results)} sites.")
+
+###
 
 def screenshot_comparison() -> pd.DataFrame:
     rows_list = []
@@ -91,8 +102,6 @@ def screenshot_comparison() -> pd.DataFrame:
                         screenshot_sims.append(ImageShingle.compare_with_control(baseline_shingle, control_shingle, experimental_shingle))
                     except ValueError as e:
                         print(e)
-                else:
-                    break
 
         if len(screenshot_sims) == 0:
             print(f"Skipping {domain} since no comparisons could be made.")
