@@ -482,7 +482,7 @@ class Crawler:
                 self.save_har(clickstream_path + "experimental.json")
                 self.driver.quit()
             except (InvalidSessionIdException, WebDriverException, JavascriptException, UnexpectedAlertPresentException) as e:
-                Crawler.logger.error(f"Driver encountered {type(e).__name__}. Restarting.", exc_info=True)
+                Crawler.logger.error(f"Driver encountered {type(e).__name__}. Restarting...", exc_info=True)
                 self.driver.quit()
             finally:
                 Crawler.logger.info(f"Data collected for {current_actions}/{total_actions} actions.")
