@@ -299,7 +299,7 @@ class Crawler:
             except Exception:
                 Crawler.logger.warning(f"Failed get attempt {attempt+1}/{self.total_get_attempts} for '{url}'.", exc_info=True)
 
-            if attempt != self.total_get_attempts - 1:
+            if attempt < self.total_get_attempts - 1:
                 time.sleep(self.wait_time)
         else:
             # Unable to get the website after all attempts
