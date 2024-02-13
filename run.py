@@ -28,6 +28,8 @@ def init():
         "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
+        "WAIT_TIME": config.WAIT_TIME,
+        "DATA_PATH": config.DATA_PATH,
     }
     with open(config.DATA_PATH + 'meta.yaml', 'w') as outfile:
         yaml.dump(meta, outfile, default_flow_style=False)
