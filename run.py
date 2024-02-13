@@ -86,5 +86,5 @@ if __name__ == "__main__":
     
     init()
 
-    subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    # sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=3, cpus=2)
+    # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
+    sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
