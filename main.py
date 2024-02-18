@@ -2,8 +2,7 @@ import json
 import logging
 import multiprocessing as mp
 import os
-import argparse
-from filelock import Timeout, FileLock
+from filelock import FileLock
 from signal import signal, SIGTERM
 import sys
 import time
