@@ -8,3 +8,5 @@ This directory contains data used in crawling or analysis.
 - `sites`: Domains to be crawled.
     - `detected_banner.txt`: Websites that have a cookie banner.
     - `onetrust.txt`: Websites that use the OneTrust CMP.
+- `cdn`: CDN lists.
+    - `cnamechain.json`: Obtained from [cdnfinder](https://github.com/turbobytes/cdnfinder/blob/master/assets/cnamechain.json). Maps hostname to CDN name.

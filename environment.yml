@@ -25,3 +25,6 @@ dependencies:
     - matplotlib
     - lxml
     - scipy
+    - filelock
+    - ipykernel
+    - pyyaml
