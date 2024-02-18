@@ -1,4 +1,4 @@
-CRAWL_NAME = f"3N76L-top-250"  # Name of crawl
+CRAWL_NAME = f"sigkill-test"  # Name of crawl
 SITE_LIST_PATH = "inputs/sites/3N76L-top-250.txt"  # Path to list of sites to crawl
 DEPTH = 0
 WAIT_TIME = 5

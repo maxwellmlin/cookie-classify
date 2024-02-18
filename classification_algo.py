@@ -109,11 +109,9 @@ def screenshot_comparison() -> pd.DataFrame:
 
         screenshot_similarity = statistics.mean(screenshot_sims)
         sceenshot_difference = 1 - screenshot_similarity
-        stdev = statistics.stdev(screenshot_sims)
         rows_list.append({
             "domain": domain,
             f"screenshot_difference": sceenshot_difference,
-            f"stdev": stdev,
             f"samples": len(screenshot_sims),
         })
 
