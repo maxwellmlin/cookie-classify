@@ -3,7 +3,8 @@ import config
 import yaml
 import argparse
 import pathlib
-import subprocess
+from filelock import Timeout, FileLock
+import json
 
 SLURM_LOG_PATH = 'slurm_logs'
 
@@ -19,8 +20,8 @@ def init():
     pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
     # Initialize sites.json
-    with open(config.DATA_PATH + 'sites.json', 'w') as results:
-        results.write("{}")
+    with open(config.DATA_PATH + 'sites.json', 'w') as f:
+        f.write("{}")
         
     # Initialize meta.yaml
     meta = {
@@ -37,6 +38,17 @@ def init():
     # Copy sites.txt to crawl path
     os.system(f'cp {config.SITE_LIST_PATH} {config.DATA_PATH}')
 
+    # Write sites to queue with lock
+    sites = []
+    with open(config.SITE_LIST_PATH) as file:
+        for line in file:
+            sites.append(line.strip())
+    queue_path = config.DATA_PATH + 'queue.json'
+    queue_lock = FileLock(queue_path + '.lock', timeout=10)
+    with queue_lock:
+        with open(queue_path, 'w') as f:
+            json.dump(sites, f)
+
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """
     Create a temporary bash script and run it with sbatch.
@@ -50,7 +62,7 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
     """
     shFile = [
         "#!/bin/bash",
-        "#SBATCH --array=1-%d" % jobs,
+        "#SBATCH --array=%s" % jobs,
         "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
         "#SBATCH --job-name=%s" % jobName,
@@ -81,7 +93,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--jobs',
-        type=int,
+        type=str,
         required=True
     )
     args = parser.parse_args()
@@ -89,4 +101,4 @@ if __name__ == "__main__":
     init()
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
+    sbatchRun(f'python3 main.py', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)

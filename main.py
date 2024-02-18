@@ -38,7 +38,7 @@ def worker(domain: str, queue: mp.Queue) -> None:
 
     queue.put(result)
 
-def main(jobs=1):
+def main():
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
@@ -53,8 +53,6 @@ def main(jobs=1):
     log_file.setFormatter(formatter)
     logger.addHandler(log_file)
 
-    logger.info(f"SLURM_ARRAY_TASK_ID: {SLURM_ARRAY_TASK_ID}")
-
     # Read sites from text file
     sites = []
     with open(config.SITE_LIST_PATH) as file:
@@ -68,8 +66,21 @@ def main(jobs=1):
     sites_path = config.DATA_PATH + 'sites.json'  # where to store results for individual sites
     sites_lock = FileLock(sites_path + '.lock', timeout=10)
 
-    for i in range(SLURM_ARRAY_TASK_ID-1, len(sites), jobs):
-        crawl_domain = sites[i]
+    queue_path = config.DATA_PATH + 'queue.json'  # where to store results for individual sites
+    queue_lock = FileLock(queue_path + '.lock', timeout=10)
+
+    while True:
+        # Get next site to crawl
+        with queue_lock:
+            with open(queue_path, 'r') as file:
+                sites = json.load(file)
+                if len(sites) == 0:
+                    logger.info("Queue is empty, exiting.")
+                    break
+                crawl_domain = sites.pop(0)
+            with open(queue_path, 'w') as file:
+                json.dump(sites, file)
+                
         
         process = mp.Process(target=worker, args=(crawl_domain, output))
         process.start()
@@ -90,26 +101,18 @@ def main(jobs=1):
 
         # Read existing data, update it, and write back
         with sites_lock:
-            with open(sites_path, 'r') as results:
-                data = json.load(results)
+            with open(sites_path, 'r') as f:
+                data = json.load(f)
 
         result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
         
         data[crawl_domain] = result
 
         with sites_lock:
-            with open(sites_path, 'w') as results:
-                json.dump(data, results, cls=CrawlDataEncoder)
+            with open(sites_path, 'w') as f:
+                json.dump(data, f, cls=CrawlDataEncoder)
 
         process.join()
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--jobs',
-        type=int,
-        required=True
-    )
-    args = parser.parse_args()
-    
-    main(jobs=args.jobs)
+if __name__ == "__main__":    
+    main()
