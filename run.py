@@ -20,7 +20,7 @@ def init():
     pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
     # Initialize sites.json
-    with open(config.DATA_PATH + 'results.json', 'w') as f:
+    with open(config.RESULTS_PATH, 'w') as f:
         f.write("{}")
         
     # Initialize meta.yaml
@@ -32,7 +32,7 @@ def init():
         "WAIT_TIME": config.WAIT_TIME,
         "DATA_PATH": config.DATA_PATH,
     }
-    with open(config.DATA_PATH + 'config.yaml', 'w') as outfile:
+    with open(config.CONFIG_PATH, 'w') as outfile:
         yaml.dump(config_dict, outfile, default_flow_style=False)
         
     # Copy sites.txt to crawl path
@@ -43,7 +43,7 @@ def init():
     with open(config.SITE_LIST_PATH) as file:
         for line in file:
             sites.append(line.strip())
-    queue_path = config.DATA_PATH + 'queue.json'
+    queue_path = config.QUEUE_PATH
     queue_lock = FileLock(queue_path + '.lock', timeout=10)
     with queue_lock:
         with open(queue_path, 'w') as f:

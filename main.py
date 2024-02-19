@@ -62,22 +62,20 @@ def main():
     output = mp.Queue()
     data = {}
 
-    results_path = config.DATA_PATH + 'results.json'  # where to store results for individual sites
-    results_lock = FileLock(results_path + '.lock', timeout=10)
+    results_lock = FileLock(config.RESULTS_PATH + '.lock', timeout=10)
 
-    queue_path = config.DATA_PATH + 'queue.json'  # where to store results for individual sites
-    queue_lock = FileLock(queue_path + '.lock', timeout=10)
+    queue_lock = FileLock(config.QUEUE_PATH + '.lock', timeout=10)
 
     while True:
         # Get next site to crawl
         with queue_lock:
-            with open(queue_path, 'r') as file:
+            with open(config.QUEUE_PATH, 'r') as file:
                 sites = json.load(file)
                 if len(sites) == 0:
                     logger.info("Queue is empty, exiting.")
                     break
                 crawl_domain = sites.pop(0)
-            with open(queue_path, 'w') as file:
+            with open(config.QUEUE_PATH, 'w') as file:
                 json.dump(sites, file)
                 
         
@@ -109,7 +107,7 @@ def main():
 
         # Read existing data, update it, and write back
         with results_lock:
-            with open(results_path, 'r') as f:
+            with open(config.RESULTS_PATH, 'r') as f:
                 data = json.load(f)
 
         result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
@@ -117,7 +115,7 @@ def main():
         data[crawl_domain] = result
 
         with results_lock:
-            with open(results_path, 'w') as f:
+            with open(config.RESULTS_PATH, 'w') as f:
                 json.dump(data, f, cls=CrawlDataEncoder)
 
         process.join()
