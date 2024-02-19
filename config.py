@@ -1,5 +1,6 @@
-CRAWL_NAME = f"queue-test"  # Name of crawl
-SITE_LIST_PATH = "inputs/sites/sites.txt"  # Path to list of sites to crawl
+# https://tranco-list.eu/list/KJ2GW/1000000
+CRAWL_NAME = f"KJ2GW"  # Name of crawl
+SITE_LIST_PATH = "inputs/sites/KJ2GW.txt"  # Path to list of sites to crawl
 DEPTH = 0
 WAIT_TIME = 5
 
