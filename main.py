@@ -62,8 +62,8 @@ def main():
     output = mp.Queue()
     data = {}
 
-    sites_path = config.DATA_PATH + 'sites.json'  # where to store results for individual sites
-    sites_lock = FileLock(sites_path + '.lock', timeout=10)
+    results_path = config.DATA_PATH + 'results.json'  # where to store results for individual sites
+    results_lock = FileLock(results_path + '.lock', timeout=10)
 
     queue_path = config.DATA_PATH + 'queue.json'  # where to store results for individual sites
     queue_lock = FileLock(queue_path + '.lock', timeout=10)
@@ -99,16 +99,16 @@ def main():
         result: CrawlResults = output.get()
 
         # Read existing data, update it, and write back
-        with sites_lock:
-            with open(sites_path, 'r') as f:
+        with results_lock:
+            with open(results_path, 'r') as f:
                 data = json.load(f)
 
         result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
         
         data[crawl_domain] = result
 
-        with sites_lock:
-            with open(sites_path, 'w') as f:
+        with results_lock:
+            with open(results_path, 'w') as f:
                 json.dump(data, f, cls=CrawlDataEncoder)
 
         process.join()

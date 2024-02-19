@@ -24,7 +24,7 @@ def init():
         f.write("{}")
         
     # Initialize meta.yaml
-    meta = {
+    config = {
         "CRAWL_NAME": config.CRAWL_NAME,
         "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
@@ -32,8 +32,8 @@ def init():
         "WAIT_TIME": config.WAIT_TIME,
         "DATA_PATH": config.DATA_PATH,
     }
-    with open(config.DATA_PATH + 'meta.yaml', 'w') as outfile:
-        yaml.dump(meta, outfile, default_flow_style=False)
+    with open(config.DATA_PATH + 'config.yaml', 'w') as outfile:
+        yaml.dump(config, outfile, default_flow_style=False)
         
     # Copy sites.txt to crawl path
     os.system(f'cp {config.SITE_LIST_PATH} {config.DATA_PATH}')
