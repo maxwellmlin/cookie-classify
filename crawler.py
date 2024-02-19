@@ -91,7 +91,7 @@ class UrlDown(Exception):
     """
     pass
 
-class CrawlResults(TypedDict):
+class CrawlResults(TypedDict, total=False):
     """
     Class for storing results about a crawl.
     """
@@ -100,17 +100,15 @@ class CrawlResults(TypedDict):
     data_path: str  # Where the crawl data is stored
     landing_page_down: bool | None  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
-    total_time: int | None  # Time to crawl the website, initialized to None
+    total_time: int  # Time to crawl the website
     SLURM_ARRAY_TASK_ID: int | None  # Set by main.py
     SIGTERM: bool  # If process was sent SIGTERM by main.py
     SIGKILL: bool  # If process was sent SIGKILL by main.py
 
-    """
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
-    """
 
     # Only set during classification_algo
     # List of clickstreams where each clickstream is a list of CSS selectors (str)
@@ -179,16 +177,13 @@ class Crawler:
             "data_path": self.data_path,
             "landing_page_down": None,
             "unexpected_exception": False,
-            "total_time": None,
             "SLURM_ARRAY_TASK_ID": None,
             "SIGTERM": False,
             "SIGKILL": False,
 
-            """
-            "cmp_names": None,
-            "interaction_type": None,
-            "interaction_success": None,
-            """
+            # "cmp_names": None,
+            # "interaction_type": None,
+            # "interaction_success": None,
 
             "clickstream": None,
             "traversal_failures": {
@@ -247,8 +242,6 @@ class Crawler:
                 self.results["unexpected_exception"] = True
 
             self.driver.quit()
-
-            self.results["total_time"] = time.time() - self.start_time
 
             return self.results
 

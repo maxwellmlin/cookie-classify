@@ -67,6 +67,8 @@ def main():
     queue_lock = FileLock(config.QUEUE_PATH + '.lock', timeout=10)
 
     while True:
+        start_time = time.time()
+        
         # Get next site to crawl
         with queue_lock:
             with open(config.QUEUE_PATH, 'r') as file:
@@ -74,19 +76,19 @@ def main():
                 if len(sites) == 0:
                     logger.info("Queue is empty, exiting.")
                     break
-                crawl_domain = sites.pop(0)
+                domain = sites.pop(0)
             with open(config.QUEUE_PATH, 'w') as file:
                 json.dump(sites, file)
                 
         
-        process = mp.Process(target=worker, args=(crawl_domain, output))
+        process = mp.Process(target=worker, args=(domain, output))
         process.start()
         
         TIMEOUT = 60 * 60  # 1 hour
         process.join(TIMEOUT)
         sigkill = False
         if process.is_alive():
-            logger.warn(f"Terminating process for '{crawl_domain}' due to timeout.")
+            logger.warn(f"Terminating process for '{domain}' due to timeout.")
             process.terminate()
             
             time.sleep(60)
@@ -101,18 +103,20 @@ def main():
             result = output.get()
         else:
             result = {
-                "data_path": config.DATA_PATH + crawl_domain,
+                "data_path": f"{config.DATA_PATH}{domain}/",
                 "SIGKILL": True,
             }
+            
+        result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
+        result['total_time'] = time.time() - start_time
 
         # Read existing data, update it, and write back
         with results_lock:
             with open(config.RESULTS_PATH, 'r') as f:
                 data = json.load(f)
 
-        result['SLURM_ARRAY_TASK_ID'] = SLURM_ARRAY_TASK_ID
         
-        data[crawl_domain] = result
+        data[domain] = result
 
         with results_lock:
             with open(config.RESULTS_PATH, 'w') as f:
