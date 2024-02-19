@@ -22,7 +22,7 @@ def init():
     # Initialize meta.yaml
     config_dict = {
         "CRAWL_NAME": config.CRAWL_NAME,
-        "SITE_LIST_PATH": config.DATA_PATH / pathlib.Path(config.SITE_LIST_PATH).name,
+        "SITE_LIST_PATH": config.DATA_PATH + pathlib.Path(config.SITE_LIST_PATH).name,
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
         "WAIT_TIME": config.WAIT_TIME,
