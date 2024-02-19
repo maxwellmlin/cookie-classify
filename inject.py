@@ -2,8 +2,12 @@ import config
 import json
 from filelock import FileLock
 
+if input("This is a destructive action if you are injecting duplicates. Are you sure you want to continue? (y/n) ") != "y":
+    print("Exiting.")
+    exit(0)
+
 SITES_TO_INJECT = [
-    "maxwellmlin.com"
+    "microsoft.com"
 ]
 
 queue_lock = FileLock(config.QUEUE_PATH + '.lock', timeout=10)
