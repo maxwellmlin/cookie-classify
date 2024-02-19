@@ -22,14 +22,12 @@ def worker(domain: str, queue: mp.Queue) -> None:
     crawler = Crawler(domain, headless=True, wait_time=config.WAIT_TIME)
     def before_exit(*args):
         crawler.driver.quit()
-        
-        crawler.results["total_time"] = time.time() - crawler.start_time
-        crawler.results["SIGTERM"] = True
 
+        crawler.results["SIGTERM"] = True
         queue.put(crawler.results)
 
         sys.exit(0)
-        
+
     signal(SIGTERM, before_exit)
 
     # result = crawler.compliance_algo(config.DEPTH)
@@ -68,7 +66,6 @@ def main():
             with open(config.QUEUE_PATH, 'w') as file:
                 json.dump(sites, file)
                 
-        
         process = mp.Process(target=worker, args=(domain, output))
         process.start()
         
@@ -103,7 +100,6 @@ def main():
             with open(config.RESULTS_PATH, 'r') as f:
                 data = json.load(f)
 
-        
         data[domain] = result
 
         with results_lock:
