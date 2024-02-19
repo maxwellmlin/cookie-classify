@@ -20,11 +20,11 @@ def init():
     pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
     # Initialize sites.json
-    with open(config.DATA_PATH + 'sites.json', 'w') as f:
+    with open(config.DATA_PATH + 'results.json', 'w') as f:
         f.write("{}")
         
     # Initialize meta.yaml
-    config = {
+    config_dict = {
         "CRAWL_NAME": config.CRAWL_NAME,
         "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
@@ -33,7 +33,7 @@ def init():
         "DATA_PATH": config.DATA_PATH,
     }
     with open(config.DATA_PATH + 'config.yaml', 'w') as outfile:
-        yaml.dump(config, outfile, default_flow_style=False)
+        yaml.dump(config_dict, outfile, default_flow_style=False)
         
     # Copy sites.txt to crawl path
     os.system(f'cp {config.SITE_LIST_PATH} {config.DATA_PATH}')
