@@ -42,28 +42,16 @@ def main():
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
 
-    log_stream = logging.StreamHandler()
-    log_stream.setLevel(logging.DEBUG)
-    log_stream.setFormatter(formatter)
-    logger.addHandler(log_stream)
-
     log_file = logging.FileHandler(f'{config.DATA_PATH}/{SLURM_ARRAY_TASK_ID}.log', 'a')
     log_file.setLevel(logging.DEBUG)
     log_file.setFormatter(formatter)
     logger.addHandler(log_file)
-
-    # Read sites from text file
-    sites = []
-    with open(config.SITE_LIST_PATH) as file:
-        for line in file:
-            sites.append(line.strip())
 
     # Create input for pool
     output = mp.Queue()
     data = {}
 
     results_lock = FileLock(config.RESULTS_PATH + '.lock', timeout=10)
-
     queue_lock = FileLock(config.QUEUE_PATH + '.lock', timeout=10)
 
     while True:
