@@ -91,18 +91,19 @@ class UrlDown(Exception):
     """
     pass
 
-class CrawlResults(TypedDict):
+class CrawlResults(TypedDict, total=False):
     """
     Class for storing results about a crawl.
     """
 
     url: str | None  # URL of the website being crawled. None if Domain->URL resolution failed.
     data_path: str  # Where the crawl data is stored
-    landing_page_down: bool | None  # True/False if landing page is down/up, None if not attempted
+    landing_page_down: bool  # True/False if landing page is down/up, None if not attempted
     unexpected_exception: bool  # True iff an unexpected exception occurred
-    total_time: int | None  # Time to crawl the website, initialized to None
-    SLURM_ARRAY_TASK_ID: int | None  # Set by main.py
-    killed: bool  # If process was killed by main.py
+    total_time: int  # Time (seconds) to crawl the website
+    SLURM_ARRAY_TASK_ID: int  # Set by main.py
+    SIGTERM: bool  # If process was sent SIGTERM by main.py
+    SIGKILL: bool  # If process was sent SIGKILL by main.py
 
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
@@ -112,7 +113,7 @@ class CrawlResults(TypedDict):
     # Only set during classification_algo
     # List of clickstreams where each clickstream is a list of CSS selectors (str)
     # Each CSS selector is paired with the type of element that was clicked (see clickable-elements.js)
-    clickstream: list[list[tuple[str, ClickableElement]]] | None
+    clickstream: list[list[tuple[str, ClickableElement]]]
     traversal_failures: dict[ClickableElement, int] # Number of click failures for each type of click
 
 
@@ -174,17 +175,14 @@ class Crawler:
         self.results: CrawlResults = {
             "url": None,
             "data_path": self.data_path,
-            "landing_page_down": None,
+            "landing_page_down": False,
             "unexpected_exception": False,
-            "total_time": None,
-            "SLURM_ARRAY_TASK_ID": None,
-            "killed": False,
 
-            "cmp_names": None,
-            "interaction_type": None,
-            "interaction_success": None,
+            # "cmp_names": None,
+            # "interaction_type": None,
+            # "interaction_success": None,
 
-            "clickstream": None,
+            "clickstream": [],
             "traversal_failures": {
                 ClickableElement.BUTTON: 0,
                 ClickableElement.LINK: 0,
@@ -241,8 +239,6 @@ class Crawler:
                 self.results["unexpected_exception"] = True
 
             self.driver.quit()
-
-            self.results["total_time"] = time.time() - self.start_time
 
             return self.results
 
@@ -448,10 +444,7 @@ class Crawler:
                 self.save_har(clickstream_path + "baseline.json")
                 self.driver.quit()
 
-                if self.results["clickstream"] is not None:
-                    self.results["clickstream"].append(clickstream)
-                else:
-                    self.results["clickstream"] = [clickstream]
+                self.results["clickstream"].append(clickstream)
 
                 # Control group
                 self.driver = self.get_driver()
@@ -565,9 +558,6 @@ class Crawler:
                 try:
                     # Attempt to get the website
                     self.driver.get(current_url.url)
-
-                    if current_depth == 0:
-                        self.results["landing_page_down"] = False
 
                     break  # If successful, break out of the loop
 
@@ -743,7 +733,6 @@ class Crawler:
 
         try:
             original_url = self.get(self.url)
-            self.results["landing_page_down"] = False
         except UrlDown:
             raise LandingPageDown()
 

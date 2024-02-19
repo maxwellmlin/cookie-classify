@@ -3,7 +3,8 @@ import config
 import yaml
 import argparse
 import pathlib
-import subprocess
+from filelock import Timeout, FileLock
+import json
 
 SLURM_LOG_PATH = 'slurm_logs'
 
@@ -11,19 +12,15 @@ def init():
     """
     Initialize everything needed for all workers.
     """
-    # Create directory for slurm logs
-    if not os.path.exists(SLURM_LOG_PATH):
-        os.mkdir(SLURM_LOG_PATH)
-
     # Create crawl path
     pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
-    # Initialize sites.json
-    with open(config.DATA_PATH + 'sites.json', 'w') as results:
-        results.write("{}")
+    # Initialize results
+    with open(config.RESULTS_PATH, 'w') as f:
+        f.write("{}")
         
     # Initialize meta.yaml
-    meta = {
+    config_dict = {
         "CRAWL_NAME": config.CRAWL_NAME,
         "SITE_LIST_PATH": pathlib.Path(config.SITE_LIST_PATH).name,
         "TOTAL_ACTIONS": config.TOTAL_ACTIONS,
@@ -31,11 +28,22 @@ def init():
         "WAIT_TIME": config.WAIT_TIME,
         "DATA_PATH": config.DATA_PATH,
     }
-    with open(config.DATA_PATH + 'meta.yaml', 'w') as outfile:
-        yaml.dump(meta, outfile, default_flow_style=False)
+    with open(config.CONFIG_PATH, 'w') as outfile:
+        yaml.dump(config_dict, outfile, default_flow_style=False)
         
     # Copy sites.txt to crawl path
     os.system(f'cp {config.SITE_LIST_PATH} {config.DATA_PATH}')
+
+    # Write sites to queue with lock
+    sites = []
+    with open(config.SITE_LIST_PATH) as file:
+        for line in file:
+            sites.append(line.strip())
+    queue_path = config.QUEUE_PATH
+    queue_lock = FileLock(queue_path + '.lock', timeout=10)
+    with queue_lock:
+        with open(queue_path, 'w') as f:
+            json.dump(sites, f)
 
 def sbatchRun(command, jobName, jobs, memory, cpus):
     """
@@ -48,9 +56,13 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         memory: The amount of memory to allocate to each job.
         cpus: The number of cpus to allocate to each job.
     """
+    # Create directory for slurm logs
+    if not os.path.exists(SLURM_LOG_PATH):
+        os.mkdir(SLURM_LOG_PATH)
+    
     shFile = [
         "#!/bin/bash",
-        "#SBATCH --array=1-%d" % jobs,
+        "#SBATCH --array=%s" % jobs,
         "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
         "#SBATCH --job-name=%s" % jobName,
@@ -77,16 +89,25 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
     # Run bash script with sbatch
     os.system('sbatch %s' % shFileName)
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--jobs',
-        type=int,
+        type=str,
         required=True
+    )
+    parser.add_argument(
+        '--skip-init',
+        action='store_true',
     )
     args = parser.parse_args()
     
-    init()
+    if not args.skip_init:
+        init()
+    else:
+        if input("This is a destructive action if worker arrays are not disjoint. Are you sure you want to continue? (y/n) ") != "y":
+            print("Exiting.")
+            exit(0)
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 main.py --jobs {args.jobs}', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
+    sbatchRun(f'python3 main.py', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
