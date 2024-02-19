@@ -27,6 +27,9 @@ def init():
         "CLICKSTREAM_LENGTH": config.CLICKSTREAM_LENGTH,
         "WAIT_TIME": config.WAIT_TIME,
         "DATA_PATH": config.DATA_PATH,
+        "RESULTS_PATH": config.RESULTS_PATH,
+        "QUEUE_PATH": config.QUEUE_PATH,
+        "CONFIG_PATH": config.CONFIG_PATH,
     }
     with open(config.CONFIG_PATH, 'w') as outfile:
         yaml.dump(config_dict, outfile, default_flow_style=False)
