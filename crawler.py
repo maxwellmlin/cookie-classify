@@ -102,12 +102,15 @@ class CrawlResults(TypedDict):
     unexpected_exception: bool  # True iff an unexpected exception occurred
     total_time: int | None  # Time to crawl the website, initialized to None
     SLURM_ARRAY_TASK_ID: int | None  # Set by main.py
-    killed: bool  # If process was killed by main.py
+    SIGTERM: bool  # If process was sent SIGTERM by main.py
+    SIGKILL: bool  # If process was sent SIGKILL by main.py
 
+    """
     # Only set during compliance_algo
     cmp_names: set[CMP] | None  # Empty if no CMPs found, None if CMP detection not attempted
     interaction_type: BannerClick | CMP | None  # None if no interaction was attempted
     interaction_success: bool | None  # None if no interaction was attempted
+    """
 
     # Only set during classification_algo
     # List of clickstreams where each clickstream is a list of CSS selectors (str)
@@ -178,11 +181,14 @@ class Crawler:
             "unexpected_exception": False,
             "total_time": None,
             "SLURM_ARRAY_TASK_ID": None,
-            "killed": False,
+            "SIGTERM": False,
+            "SIGKILL": False,
 
+            """
             "cmp_names": None,
             "interaction_type": None,
             "interaction_success": None,
+            """
 
             "clickstream": None,
             "traversal_failures": {

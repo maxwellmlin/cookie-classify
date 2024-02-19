@@ -24,7 +24,7 @@ def worker(domain: str, queue: mp.Queue) -> None:
         crawler.driver.quit()
         
         crawler.results["total_time"] = time.time() - crawler.start_time
-        crawler.results["killed"] = True
+        crawler.results["SIGTERM"] = True
 
         queue.put(crawler.results)
 
@@ -86,6 +86,7 @@ def main():
         
         TIMEOUT = 60 * 60  # 1 hour
         process.join(TIMEOUT)
+        sigkill = False
         if process.is_alive():
             logger.warn(f"Terminating process for '{crawl_domain}' due to timeout.")
             process.terminate()
@@ -94,9 +95,17 @@ def main():
             if process.is_alive():
                 logger.critical(f"SIGTERM failed, escalating to SIGKILL.")
                 process.kill()
-                continue
+                
+                sigkill = True
 
-        result: CrawlResults = output.get()
+        result: CrawlResults
+        if not sigkill:
+            result = output.get()
+        else:
+            result = {
+                "data_path": config.DATA_PATH + crawl_domain,
+                "SIGKILL": True,
+            }
 
         # Read existing data, update it, and write back
         with results_lock:
