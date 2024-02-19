@@ -18,7 +18,8 @@ def worker(domain: str, queue: mp.Queue) -> None:
     We need to use multiprocessing to explicitly free up memory after each crawl.
     See https://stackoverflow.com/questions/38164635/selenium-not-freeing-up-memory-even-after-calling-close-quit
     for more details.
-    """    
+    """
+    logger.info(f"Starting crawl for '{domain}'.")
     crawler = Crawler(domain, headless=True, wait_time=config.WAIT_TIME)
     def before_exit(*args):
         crawler.driver.quit()
