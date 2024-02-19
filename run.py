@@ -12,14 +12,10 @@ def init():
     """
     Initialize everything needed for all workers.
     """
-    # Create directory for slurm logs
-    if not os.path.exists(SLURM_LOG_PATH):
-        os.mkdir(SLURM_LOG_PATH)
-
     # Create crawl path
     pathlib.Path(config.DATA_PATH).mkdir(parents=True, exist_ok=False)
 
-    # Initialize sites.json
+    # Initialize results
     with open(config.RESULTS_PATH, 'w') as f:
         f.write("{}")
         
@@ -60,6 +56,10 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         memory: The amount of memory to allocate to each job.
         cpus: The number of cpus to allocate to each job.
     """
+    # Create directory for slurm logs
+    if not os.path.exists(SLURM_LOG_PATH):
+        os.mkdir(SLURM_LOG_PATH)
+    
     shFile = [
         "#!/bin/bash",
         "#SBATCH --array=%s" % jobs,
@@ -96,9 +96,14 @@ if __name__ == "__main__":
         type=str,
         required=True
     )
+    parser.add_argument(
+        '--skip-init',
+        action='store_true',
+    )
     args = parser.parse_args()
     
-    init()
+    if not args.skip_init:
+        init()
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
     sbatchRun(f'python3 main.py', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
