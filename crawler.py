@@ -309,8 +309,7 @@ class Crawler:
         """
         for url in [f"https://{domain}", f"https://www.{domain}", f"http://{domain}", f"http://www.{domain}"]:
             try:
-                self.get(url)
-                return url
+                return self.get(url)
             except UrlDown:
                 continue
         
@@ -732,11 +731,11 @@ class Crawler:
             del self.driver.request_interceptor
 
         try:
-            original_url = self.get(self.url)
+            self.get(self.url)
         except UrlDown:
             raise LandingPageDown()
 
-        domain = utils.get_domain(original_url)
+        domain = utils.get_domain(self.url)
 
         self.driver.execute_script("window.scrollTo(0, 0);")
         if crawl_name:
