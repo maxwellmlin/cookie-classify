@@ -72,17 +72,22 @@ def main():
         
         TIMEOUT = 60 * 60  # 1 hour
         process.join(TIMEOUT)
+        logger.info(f"Joining process for '{domain}'.")
+        
         sigkill = False
-        if process.is_alive():
+        if process.exitcode is None:
             logger.warn(f"Terminating process for '{domain}' due to timeout.")
             process.terminate()
+            process.join()
             
             time.sleep(60)
-            if process.is_alive():
+            if process.exitcode is None:
                 logger.critical(f"SIGTERM failed, escalating to SIGKILL.")
                 process.kill()
+                process.join()
                 
                 sigkill = True
+
 
         result: CrawlResults
         if not sigkill:
@@ -106,8 +111,6 @@ def main():
         with results_lock:
             with open(config.RESULTS_PATH, 'w') as f:
                 json.dump(data, f, cls=CrawlDataEncoder)
-
-        process.join()
 
 if __name__ == "__main__":    
     main()
