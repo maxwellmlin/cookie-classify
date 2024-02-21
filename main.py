@@ -91,7 +91,14 @@ def main():
 
         result: CrawlResults
         if not sigkill:
-            result = output.get()
+            try:
+                result = output.get(timeout=60)
+            except mp.queues.Empty:
+                logger.critical(f"Queue for '{domain}' is empty.")
+                result = {
+                    "data_path": f"{config.DATA_PATH}{domain}/",
+                    "SIGTERM": True,
+                }
         else:
             result = {
                 "data_path": f"{config.DATA_PATH}{domain}/",
