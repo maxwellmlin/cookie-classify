@@ -49,35 +49,34 @@ with results_lock:
 """
 Simple sanity checks
 """
-WORKERS = 25
-missing_sites = len(site_list) - (WORKERS + len(set(site_queue + list(site_results.keys()))))
-if missing_sites > 0:
-    print(f"WARNING: {missing_sites} Missing sites!")
-else:
-    print("All sites accounted for.")
-
 print(f"Crawled {len(site_results)}/{len(site_list)} sites.")
+count = 0
+our_sites = set(list(site_results.keys()) + site_queue)
+for site in set(site_list):
+    if site not in our_sites:
+        count += 1
+        print(f"Missing site: '{site}'.")
+print(f"{count} missing sites.")
 
 """
 Check which crawled sites were actually successful.
 A successful site must have:
-1. an available landing page
+1. a successful domain -> url resolution
 2. no unexpected crawl exceptions
+3. was not terminated via SIGKILL
 """
-_keys = set()
 successful_sites = []
 for domain, result in site_results.items():
-    _keys.update(result.keys())
     result: CrawlResults
-    if not result.get("unexpected_exception") and not result.get("landing_page_down") and not result.get("SIGKILL"):
+    if not result.get("unexpected_exception") and not result.get("url") and not result.get("SIGKILL"):
         successful_sites.append(domain)
 print(f"{len(successful_sites)} successful sites.")
-print(_keys)
 
-def screenshot_comparison() -> pd.DataFrame:
-    rows_list = []
+###########
 
-    for i, domain in enumerate(successful_sites):
+def screenshot_comparison(sites: list) -> pd.DataFrame:
+    results = []
+    for i, domain in enumerate(sites):
         print(f"Analyzing site {i+1}/{len(successful_sites)}.")
 
         clickstreams = get_directories(site_results[domain]["data_path"])
@@ -105,15 +104,13 @@ def screenshot_comparison() -> pd.DataFrame:
 
         screenshot_similarity = statistics.mean(screenshot_sims)
         sceenshot_difference = 1 - screenshot_similarity
-        stdev = statistics.stdev(screenshot_sims)
-        rows_list.append({
+        results.append({
             "domain": domain,
-            f"screenshot_difference": sceenshot_difference,
-            f"stdev": stdev,
+            "screenshot_difference": sceenshot_difference,
             f"samples": len(screenshot_sims),
         })
 
-    return pd.DataFrame(rows_list)
+    return pd.DataFrame(results)
 
 screenshots = screenshot_comparison()
 screenshots.to_csv(ANALYSIS_PATH / "screenshots.csv", index=False)
