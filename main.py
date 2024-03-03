@@ -97,7 +97,7 @@ def main():
                 logger.critical(f"Queue for '{domain}' is empty.")
                 result = {
                     "data_path": f"{config.DATA_PATH}{domain}/",
-                    "SIGTERM": True,
+                    "SIGKILL": True,
                 }
         else:
             result = {
