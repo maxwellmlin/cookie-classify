@@ -17,7 +17,7 @@ CRAWL_NAME = 'KJ2GW'
 
 DATA_PATH = Path("/usr/project/xtmp/mml66/cookie-classify/") / CRAWL_NAME
 ANALYSIS_PATH = Path("analysis") / CRAWL_NAME
-ANALYSIS_PATH.mkdir(parents=True, exist_ok=True)
+(ANALYSIS_PATH / "slurm").mkdir(parents=True, exist_ok=True)
 
 # Config
 with open(DATA_PATH / "config.yaml", "r") as stream:
@@ -68,12 +68,15 @@ print(keys)
 
 ##############################################################################
 
-array = split(successful_sites, 25)
-SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
+array = list(split(successful_sites, 25))
+try:
+    SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
+except Exception:
+    SLURM_ARRAY_TASK_ID = 0
 
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     results = []
-    for i, domain in enumerate(sites):
+    for i, domain in enumerate(sites[0:1]):
         print(f"Analyzing site {i+1}/{len(successful_sites)}.")
 
         clickstreams = get_directories(site_results[domain]["data_path"])
@@ -111,5 +114,4 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 
 start_time = time.time()
 screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
-screenshots.to_csv(ANALYSIS_PATH / "screenshots.csv", index=False)
-print(f"{time.time() - start_time} ellapsed time.")
+screenshots.to_csv(ANALYSIS_PATH / f"slurm/screenshot-comparison-{SLURM_ARRAY_TASK_ID}.csv", index=False)
