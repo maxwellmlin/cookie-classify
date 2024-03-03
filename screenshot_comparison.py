@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from filelock import FileLock
 from crawler import CrawlResults
-from utils.utils import get_directories, get_domain
+from utils.utils import get_directories, get_domain, split
 from utils.image_shingle import ImageShingle
 import time
 
@@ -73,6 +73,9 @@ for domain, result in site_results.items():
         successful_sites.append(domain)
 print(f"{len(successful_sites)} successful sites.")
 
+array = split(successful_sites, 25)
+SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
+
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     results = []
     for i, domain in enumerate(sites):
@@ -111,7 +114,9 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 
     return pd.DataFrame(results)
 
+
+
 start_time = time.time()
-screenshots = screenshot_comparison(successful_sites)
+screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
 screenshots.to_csv(ANALYSIS_PATH / "screenshots.csv", index=False)
 print(f"{time.time() - start_time} ellapsed time.")
