@@ -10,6 +10,7 @@ SITES_TO_INJECT = [
     "safety.google"
 ]
 print(SITES_TO_INJECT)
+print(len(set(SITES_TO_INJECT)))
 
 if (
     input(
