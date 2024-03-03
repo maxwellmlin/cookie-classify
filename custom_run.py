@@ -2,13 +2,13 @@ import os
 import argparse
 import config
 
-def sbatchRun(command, job_name, memory, cpus):
+def sbatch_run(command: str, job_name: str, memory: int, cpus: int):
     """
     Create a temporary bash script and run it with sbatch.
 
     Args:
         command: The command to run.
-        jobs: The number of jobs to run.
+        job_name: The name of the job.
         memory: The amount of memory to allocate to each job.
         cpus: The number of cpus to allocate to each job.
     """
@@ -46,6 +46,4 @@ if __name__ == "__main__":
     parser.add_argument("script", help="Script to submit to slurm.")
     args = parser.parse_args()
 
-    # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 -u {args.script}', job_name=args.script, memory=4, cpus=2)
-    
+    sbatch_run(f'python3 -u {args.script}', job_name=args.script, memory=4, cpus=2)

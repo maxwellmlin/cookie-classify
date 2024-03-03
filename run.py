@@ -46,14 +46,14 @@ def init():
         with open(queue_path, 'w') as f:
             json.dump(sites, f)
 
-def sbatchRun(command: str, job_name: str, jobs: str, memory: int, cpus: int):
+def sbatch_run(command: str, job_name: str, jobs: str, memory: int, cpus: int):
     """
     Create a temporary bash script and run it with sbatch.
 
     Args:
         command: The command to run.
-        commandName: The name of the command.
-        jobs: The number of jobs to run.
+        job_name: The name of the job.
+        jobs: The number of jobs to run. Must be in array format (e.g. 1-25).
         memory: The amount of memory to allocate to each job.
         cpus: The number of cpus to allocate to each job.
     """
@@ -112,4 +112,4 @@ if __name__ == "__main__":
         init()
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 main.py', job_name='cookie', jobs=args.jobs, memory=4, cpus=2)
+    sbatch_run(f'python3 main.py', job_name='cookie', jobs=args.jobs, memory=4, cpus=2)
