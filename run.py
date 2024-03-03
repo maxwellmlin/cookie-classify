@@ -46,7 +46,7 @@ def init():
         with open(queue_path, 'w') as f:
             json.dump(sites, f)
 
-def sbatchRun(command, job_name, jobs, memory, cpus):
+def sbatchRun(command: str, job_name: str, jobs: str, memory: int, cpus: int):
     """
     Create a temporary bash script and run it with sbatch.
 
