@@ -68,7 +68,7 @@ A successful site must have:
 successful_sites = []
 for domain, result in site_results.items():
     result: CrawlResults
-    if not result.get("unexpected_exception") and not result.get("url") and not result.get("SIGKILL"):
+    if result.get("url") and not result.get("unexpected_exception") and not result.get("SIGKILL"):
         successful_sites.append(domain)
 print(f"{len(successful_sites)} successful sites.")
 
