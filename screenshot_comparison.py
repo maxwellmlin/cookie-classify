@@ -11,8 +11,7 @@ from crawler import CrawlResults
 from utils.utils import get_directories, get_domain, split
 from utils.image_shingle import ImageShingle
 import time
-
-##############################################################################
+import numpy as np
 
 CRAWL_NAME = 'KJ2GW'
 
@@ -20,12 +19,9 @@ DATA_PATH = Path("/usr/project/xtmp/mml66/cookie-classify/") / CRAWL_NAME
 ANALYSIS_PATH = Path("analysis") / CRAWL_NAME
 ANALYSIS_PATH.mkdir(parents=True, exist_ok=True)
 
-##############################################################################
-
+# Config
 with open(DATA_PATH / "config.yaml", "r") as stream:
     config = yaml.safe_load(stream)
-
-##############################################################################
 
 # Site list
 site_list = []
@@ -45,33 +41,32 @@ with results_lock:
     with open(config["RESULTS_PATH"]) as file:
         site_results: dict[str, CrawlResults] = json.load(file)
 
-##############################################################################
-
 """
-Simple sanity checks
+Check crawl completion.
 """
 print(f"Crawled {len(site_results)}/{len(site_list)} sites.")
-count = 0
-our_sites = set(list(site_results.keys()) + site_queue)
-for site in set(site_list):
-    if site not in our_sites:
-        count += 1
-        print(f"Missing site: '{site}'.")
-print(f"{count} missing sites.")
 
 """
-Check which crawled sites were actually successful.
+Reduce the number of sites to analyze.
 A successful site must have:
 1. a successful domain -> url resolution
-2. no unexpected crawl exceptions
 3. was not terminated via SIGKILL
+2. no unexpected crawl exceptions
 """
 successful_sites = []
+unsuccessful_sites = []
+keys = set()
 for domain, result in site_results.items():
     result: CrawlResults
-    if result.get("url") and not result.get("unexpected_exception") and not result.get("SIGKILL"):
+    keys.update(result.keys())
+    if result.get("url") and not result.get("SIGKILL") and not result.get("unexpected_exception"):
         successful_sites.append(domain)
+    else:
+        unsuccessful_sites.append(domain)
 print(f"{len(successful_sites)} successful sites.")
+print(keys)
+
+##############################################################################
 
 array = split(successful_sites, 25)
 SLURM_ARRAY_TASK_ID = int(os.getenv('SLURM_ARRAY_TASK_ID')) # type: ignore
@@ -113,8 +108,6 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
         })
 
     return pd.DataFrame(results)
-
-
 
 start_time = time.time()
 screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
