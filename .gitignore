@@ -5,6 +5,7 @@ playground.js
 crawls
 sites.txt
 .lock
+analysis
 
 # slurm
 slurm_logs
