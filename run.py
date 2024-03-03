@@ -93,6 +93,10 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
     os.system('sbatch %s' % shFileName)
 
 if __name__ == "__main__":    
+    if input("This is a destructive action if worker arrays are not disjoint. Are you sure you want to continue? (y/n) ") != "y":
+        print("Exiting.")
+        exit(0)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--jobs',
@@ -107,10 +111,6 @@ if __name__ == "__main__":
     
     if not args.skip_init:
         init()
-    else:
-        if input("This is a destructive action if worker arrays are not disjoint. Are you sure you want to continue? (y/n) ") != "y":
-            print("Exiting.")
-            exit(0)
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
     sbatchRun(f'python3 main.py', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
