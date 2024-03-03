@@ -112,5 +112,5 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 
     return pd.DataFrame(results)
 
-screenshots = screenshot_comparison()
+screenshots = screenshot_comparison(successful_sites)
 screenshots.to_csv(ANALYSIS_PATH / "screenshots.csv", index=False)
