@@ -18,7 +18,7 @@ def sbatch_run(command: str, job_name: str, memory: int, cpus: int):
     
     shFile = [
         "#!/bin/bash",
-        "#SBATCH --array=1-25",
+        "#SBATCH --array=0-24",
         "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
         "#SBATCH --job-name=%s" % job_name,
