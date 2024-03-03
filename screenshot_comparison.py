@@ -10,6 +10,7 @@ from filelock import FileLock
 from crawler import CrawlResults
 from utils.utils import get_directories, get_domain
 from utils.image_shingle import ImageShingle
+import time
 
 ##############################################################################
 
@@ -72,8 +73,6 @@ for domain, result in site_results.items():
         successful_sites.append(domain)
 print(f"{len(successful_sites)} successful sites.")
 
-###########
-
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     results = []
     for i, domain in enumerate(sites):
@@ -112,5 +111,7 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 
     return pd.DataFrame(results)
 
+start_time = time.time()
 screenshots = screenshot_comparison(successful_sites)
 screenshots.to_csv(ANALYSIS_PATH / "screenshots.csv", index=False)
+print(f"{time.time() - start_time} ellapsed time.")
