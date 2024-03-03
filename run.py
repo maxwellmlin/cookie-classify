@@ -6,8 +6,6 @@ import pathlib
 from filelock import Timeout, FileLock
 import json
 
-SLURM_LOG_PATH = 'slurm_logs'
-
 def init():
     """
     Initialize everything needed for all workers.
@@ -48,7 +46,7 @@ def init():
         with open(queue_path, 'w') as f:
             json.dump(sites, f)
 
-def sbatchRun(command, jobName, jobs, memory, cpus):
+def sbatchRun(command, job_name, jobs, memory, cpus):
     """
     Create a temporary bash script and run it with sbatch.
 
@@ -60,15 +58,15 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         cpus: The number of cpus to allocate to each job.
     """
     # Create directory for slurm logs
-    if not os.path.exists(SLURM_LOG_PATH):
-        os.mkdir(SLURM_LOG_PATH)
+    if not os.path.exists(config.SLURM_LOG_PATH):
+        os.mkdir(config.SLURM_LOG_PATH)
     
     shFile = [
         "#!/bin/bash",
         "#SBATCH --array=%s" % jobs,
         "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
-        "#SBATCH --job-name=%s" % jobName,
+        "#SBATCH --job-name=%s" % job_name,
         "#SBATCH --time=28-00:00:00",
         
         # All standard output is redundant since we log to file
@@ -76,7 +74,7 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         f'#SBATCH -e /dev/null',
 
         # Uncomment this line if something is breaking before the logger is initialized
-        # f"#SBATCH -o {SLURM_LOG_PATH}/slurm-%j.out",
+        # f"#SBATCH -o {config.SLURM_LOG_PATH}/slurm-%j.out",
 
         # Load conda environment
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
@@ -114,4 +112,4 @@ if __name__ == "__main__":
         init()
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 main.py', jobName='cookie', jobs=args.jobs, memory=4, cpus=2)
+    sbatchRun(f'python3 main.py', job_name='cookie', jobs=args.jobs, memory=4, cpus=2)

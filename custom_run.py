@@ -1,30 +1,30 @@
 import os
 import argparse
+import config
 
-SLURM_LOG_PATH = 'slurm_logs'
-
-def sbatchRun(command, jobName):
+def sbatchRun(command, job_name, memory, cpus):
     """
     Create a temporary bash script and run it with sbatch.
 
     Args:
         command: The command to run.
-        commandName: The name of the command.
         jobs: The number of jobs to run.
         memory: The amount of memory to allocate to each job.
         cpus: The number of cpus to allocate to each job.
     """
     # Create directory for slurm logs
-    if not os.path.exists(SLURM_LOG_PATH):
-        os.mkdir(SLURM_LOG_PATH)
+    if not os.path.exists(config.SLURM_LOG_PATH):
+        os.mkdir(config.SLURM_LOG_PATH)
     
     shFile = [
         "#!/bin/bash",
-        "#SBATCH --job-name=%s" % jobName,
-        "#SBATCH --mem=8G",
-        "#SBATCH --cpus-per-task=2",
+        "#SBATCH --array=1-25",
+        "#SBATCH --cpus-per-task=%d" % cpus,
+        "#SBATCH --mem-per-cpu=%dG" % memory,
+        "#SBATCH --job-name=%s" % job_name,
+        "#SBATCH --time=28-00:00:00",
         
-        f"#SBATCH -o {SLURM_LOG_PATH}/slurm-%j.out",
+        f"#SBATCH -o {config.SLURM_LOG_PATH}/slurm-%j.out",
 
         # Load conda environment
         "eval \"$(command conda 'shell.bash' 'hook' 2> /dev/null)\"",
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # subprocess.run(f'python3 main.py --jobs {args.jobs}', shell=True)
-    sbatchRun(f'python3 -u {args.script}', jobName=args.script)
+    sbatchRun(f'python3 -u {args.script}', job_name=args.script, memory=4, cpus=2)
     
