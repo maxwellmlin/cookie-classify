@@ -69,6 +69,7 @@ def sbatchRun(command, jobName, jobs, memory, cpus):
         "#SBATCH --cpus-per-task=%d" % cpus,
         "#SBATCH --mem-per-cpu=%dG" % memory,
         "#SBATCH --job-name=%s" % jobName,
+        "#SBATCH --time=28-00:00:00",
         
         # All standard output is redundant since we log to file
         f"#SBATCH -o /dev/null",
