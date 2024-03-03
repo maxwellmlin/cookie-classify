@@ -76,7 +76,7 @@ except Exception:
 
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     results = []
-    for i, domain in enumerate(sites[0:1]):
+    for i, domain in enumerate(sites):
         print(f"Analyzing site {i+1}/{len(successful_sites)}.")
 
         clickstreams = get_directories(site_results[domain]["data_path"])
@@ -115,3 +115,4 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 start_time = time.time()
 screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
 screenshots.to_csv(ANALYSIS_PATH / f"slurm/screenshot-comparison-{SLURM_ARRAY_TASK_ID}.csv", index=False)
+print(f"Completed in {time.time() - start_time} seconds.")
