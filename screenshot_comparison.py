@@ -17,7 +17,8 @@ CRAWL_NAME = 'KJ2GW'
 
 DATA_PATH = Path("/usr/project/xtmp/mml66/cookie-classify/") / CRAWL_NAME
 ANALYSIS_PATH = Path("analysis") / CRAWL_NAME
-(ANALYSIS_PATH / "slurm").mkdir(parents=True, exist_ok=True)
+for name in ["innerText", "links", "img", "screenshots"]:
+    (ANALYSIS_PATH / "slurm" / name).mkdir(parents=True, exist_ok=True)
 
 # Config
 with open(DATA_PATH / "config.yaml", "r") as stream:
@@ -75,6 +76,9 @@ except Exception:
     SLURM_ARRAY_TASK_ID = 0
 
 def screenshot_comparison(sites: list) -> pd.DataFrame:
+    """
+    Compare screenshots of sites using baseline, control, and experimental images.
+    """
     results = []
     for i, domain in enumerate(sites):
         print(f"Analyzing site {i+1}/{len(sites)}.")
@@ -114,5 +118,5 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
 
 start_time = time.time()
 screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
-screenshots.to_csv(ANALYSIS_PATH / f"slurm/screenshot-comparison-{SLURM_ARRAY_TASK_ID}.csv", index=False)
+screenshots.to_csv(ANALYSIS_PATH / f"slurm/screenshots/{SLURM_ARRAY_TASK_ID}.csv", index=False)
 print(f"Completed in {time.time() - start_time} seconds.")
