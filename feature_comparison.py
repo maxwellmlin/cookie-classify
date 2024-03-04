@@ -112,7 +112,7 @@ def compare_features(sites, feature: str, comparison: tuple[str, str]) -> pd.Dat
     """
     rows_list = []
 
-    for i, domain in enumerate(sites[0:5]):
+    for i, domain in enumerate(sites):
         print(f"Analyzing site {i+1}/{len(sites)}.")
         clickstreams = get_directories(site_results[domain]["data_path"])
 
