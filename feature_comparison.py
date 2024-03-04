@@ -89,7 +89,7 @@ def jaccard_similarity(dict1, dict2):
 
     # Calculate Jaccard similarity
     if union_sum == 0:
-        return ValueError("The union of the two dictionaries is empty.")
+        raise ValueError("The union of the two dictionaries is empty.")
 
     return intersection_sum / union_sum
 
@@ -147,15 +147,15 @@ def compare_features(sites, feature: str, comparison: tuple[str, str]) -> pd.Dat
 
     return pd.DataFrame(rows_list)
 
-def merge_experiments(feature: str):
-    control = compare_features(successful_sites, feature, ("baseline", "control"))
-    experimental = compare_features(successful_sites, feature, ("baseline", "experimental"))
+def merge_experiments(sites, feature: str):
+    control = compare_features(sites, feature, ("baseline", "control"))
+    experimental = compare_features(sites, feature, ("baseline", "experimental"))
     df = pd.merge(control, experimental, on="domain")
     df["diff_in_diff"] = df["experimental_diff"] - df["control_diff"]
     return df
 
 start_time = time.time()
 for feature in ["innerText", "links", "img"]:
-    df = merge_experiments(feature)
+    df = merge_experiments(array[SLURM_ARRAY_TASK_ID], feature)
     df.to_csv(ANALYSIS_PATH / f"slurm/{feature}/{SLURM_ARRAY_TASK_ID}.csv", index=False)
 print(f"Completed in {time.time() - start_time} seconds.")
