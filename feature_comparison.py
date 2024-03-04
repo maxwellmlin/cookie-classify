@@ -125,7 +125,10 @@ def compare_features(sites, feature: str, comparison: tuple[str, str]) -> pd.Dat
                 continue
             
             with open(data_path) as data:
-                data = json.load(data)
+                try:
+                    data = json.load(data)
+                except Exception:
+                    continue
                 
             # Skip if any of the data is missing
             if data[feature].get("baseline") is None or data[feature].get("control") is None or data[feature].get("experimental") is None:
