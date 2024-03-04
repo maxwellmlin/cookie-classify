@@ -77,7 +77,7 @@ except Exception:
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     results = []
     for i, domain in enumerate(sites):
-        print(f"Analyzing site {i+1}/{len(successful_sites)}.")
+        print(f"Analyzing site {i+1}/{len(sites)}.")
 
         clickstreams = get_directories(site_results[domain]["data_path"])
         screenshot_sims = []
