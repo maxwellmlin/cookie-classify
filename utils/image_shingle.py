@@ -147,6 +147,8 @@ class ImageShingle:
         """
         if self.chunk_size != other_shingles.chunk_size:
             raise ValueError("Shingles must have the same chunk size.")
+        if len(self.shingles) == 0 and len(other_shingles.shingles) == 0:
+            raise ValueError("Shingles must not be empty.")
 
         matches = 0
 
