@@ -78,6 +78,20 @@ except Exception:
 def screenshot_comparison(sites: list) -> pd.DataFrame:
     """
     Compare screenshots of sites using baseline, control, and experimental images.
+    
+    Result schema:
+    {
+        domain: {
+            clickstream: {
+                depth: {
+                    "bce_diff": float,
+                    "control_diff": float,
+                    "experimental_diff": float,
+                    "diff_in_diff": float
+                }
+            }
+        }
+    }
     """
     results = {}
     for i, domain in enumerate(sites):
@@ -88,7 +102,10 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
         clickstreams = get_directories(site_results[domain]["data_path"])
         screenshot_sims = []
         for clickstream in clickstreams:
+            results[domain][clickstream.name] = {}
             for num_action in range(config["CLICKSTREAM_LENGTH"]+1):
+                results[domain][clickstream.name][num_action] = {}
+                
                 baseline_path = clickstream / f"baseline-{num_action}.png"
                 control_path = clickstream / f"control-{num_action}.png"
                 experimental_path = clickstream / f"experimental-{num_action}.png"
@@ -99,24 +116,28 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
                     control_shingle = ImageShingle(control_path, chunk_size = CHUNK_SIZE)
                     experimental_shingle = ImageShingle(experimental_path, chunk_size = CHUNK_SIZE)
 
+                    diffs = {}
+
                     # Baseline, Control, Experimental (BCE) Difference
                     try:
                         bce_diff = ImageShingle.compare_with_control(baseline_shingle, control_shingle, experimental_shingle)
-                        results[domain][num_action]["bce_diff"] = bce_diff
+                        diffs["bce_diff"] = bce_diff
                     except ValueError as e:
                         print(e)
                         
                     # Baseline/Control - Baseline/Experimental Difference in Difference
                     try:
                         control_diff = baseline_shingle.compute_difference(control_shingle)
-                        experimental_diff = baseline_shingle.compute_difference(experimental_diff)
+                        experimental_diff = baseline_shingle.compute_difference(experimental_shingle)
 
-                        results[domain][num_action]["control_diff"] = control_diff
-                        results[domain][num_action]["experimental_diff"] = experimental_diff
-                        results[domain][num_action]["diff_in_diff"] = experimental_diff - control_diff
-                        
+                        diffs["control_diff"] = control_diff
+                        diffs["experimental_diff"] = experimental_diff
+                        diffs["diff_in_diff"] = experimental_diff - control_diff
+                    
                     except ValueError as e:
                         print(e)
+
+                    results[domain][clickstream.name][num_action] = diffs
 
     return results
 
