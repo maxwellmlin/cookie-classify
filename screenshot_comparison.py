@@ -79,8 +79,10 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
     """
     Compare screenshots of sites using baseline, control, and experimental images.
     """
-    results = []
+    results = {}
     for i, domain in enumerate(sites):
+        results[domain] = {}
+        
         print(f"Analyzing site {i+1}/{len(sites)}.")
 
         clickstreams = get_directories(site_results[domain]["data_path"])
@@ -97,26 +99,31 @@ def screenshot_comparison(sites: list) -> pd.DataFrame:
                     control_shingle = ImageShingle(control_path, chunk_size = CHUNK_SIZE)
                     experimental_shingle = ImageShingle(experimental_path, chunk_size = CHUNK_SIZE)
 
+                    # Baseline, Control, Experimental (BCE) Difference
                     try:
-                        screenshot_sims.append(ImageShingle.compare_with_control(baseline_shingle, control_shingle, experimental_shingle))
+                        bce_diff = ImageShingle.compare_with_control(baseline_shingle, control_shingle, experimental_shingle)
+                        results[domain][num_action]["bce_diff"] = bce_diff
+                    except ValueError as e:
+                        print(e)
+                        
+                    # Baseline/Control - Baseline/Experimental Difference in Difference
+                    try:
+                        control_diff = baseline_shingle.compute_difference(control_shingle)
+                        experimental_diff = baseline_shingle.compute_difference(experimental_diff)
+
+                        results[domain][num_action]["control_diff"] = control_diff
+                        results[domain][num_action]["experimental_diff"] = experimental_diff
+                        results[domain][num_action]["diff_in_diff"] = experimental_diff - control_diff
+                        
                     except ValueError as e:
                         print(e)
 
-        if len(screenshot_sims) == 0:
-            print(f"Skipping {domain} since no comparisons could be made.")
-            continue
-
-        screenshot_similarity = statistics.mean(screenshot_sims)
-        sceenshot_difference = 1 - screenshot_similarity
-        results.append({
-            "domain": domain,
-            "screenshot_difference": sceenshot_difference,
-            f"samples": len(screenshot_sims),
-        })
-
-    return pd.DataFrame(results)
+    return results
 
 start_time = time.time()
 screenshots = screenshot_comparison(array[SLURM_ARRAY_TASK_ID])
-screenshots.to_csv(ANALYSIS_PATH / f"slurm/screenshots/{SLURM_ARRAY_TASK_ID}.csv", index=False)
+# Save the dictionary to a JSON file
+with open(ANALYSIS_PATH / f"slurm/screenshots/{SLURM_ARRAY_TASK_ID}.json", 'w') as f:
+    json.dump(screenshots, f)
 print(f"Completed in {time.time() - start_time} seconds.")
+
