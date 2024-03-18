@@ -204,7 +204,7 @@ class ImageShingle:
 
         # Baseline and control are completely different
         if total == 0:
-            raise ValueError("Baseline and control are completely different.")
+            return 0
 
         similarity = matches / total
         return 1 - similarity
