@@ -75,37 +75,6 @@ try:
 except Exception:
     SLURM_ARRAY_TASK_ID = 0
 
-def jaccard_similarity(dict1, dict2):
-    """
-    Computes the Jaccard similarity between two frequency dictionaries.
-    """
-    # Calculate the intersection of keys
-    intersection_keys = set(dict1.keys()).intersection(set(dict2.keys()))
-    intersection_sum = sum(min(dict1.get(k, 0), dict2.get(k, 0)) for k in intersection_keys)
-
-    # Calculate the union of keys
-    union_keys = set(dict1.keys()).union(set(dict2.keys()))
-    union_sum = sum(max(dict1.get(k, 0), dict2.get(k, 0)) for k in union_keys)
-
-    # Calculate Jaccard similarity
-    if union_sum == 0:
-        raise ValueError("The union of the two dictionaries is empty.")
-
-    return intersection_sum / union_sum
-
-def compare(list1: list[dict], list2: list[dict]):
-    """
-    Return a list of Jaccard similarities between two lists of dictionaries.
-    """
-    action_sims = []
-    for dict1, dict2 in zip(list1, list2):
-        try:
-            action_sims.append(jaccard_similarity(dict1, dict2))
-        except ValueError as e:
-            print(e)
-
-    return action_sims
-
 def compare_features(sites, feature: str, comparison: tuple[str, str]) -> pd.DataFrame:
     """
     Compute difference in difference of features.
@@ -124,17 +93,17 @@ def compare_features(sites, feature: str, comparison: tuple[str, str]) -> pd.Dat
             if not data_path.is_file():
                 continue
             
-            with open(data_path) as data:
+            with open(data_path) as features:
                 try:
-                    data = json.load(data)
+                    features = json.load(features)
                 except Exception:
                     continue
                 
             # Skip if any of the data is missing
-            if data[feature].get("baseline") is None or data[feature].get("control") is None or data[feature].get("experimental") is None:
+            if features[feature].get("baseline") is None or features[feature].get("control") is None or features[feature].get("experimental") is None:
                 continue
 
-            all_action_sims.extend(compare(data[feature][comparison[0]], data[feature][comparison[1]]))
+            all_action_sims.extend(compare(features[feature][comparison[0]], features[feature][comparison[1]]))
 
         if len(all_action_sims) == 0:
             print(f"Skipping {domain} since no comparisons could be made.")
