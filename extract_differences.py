@@ -100,7 +100,7 @@ def jaccard_diff(dict1, dict2):
 
     # Calculate Jaccard difference
     if union_sum == 0:
-        raise ValueError("The union of the two dictionaries is empty.")
+        return 0
 
     sim = intersection_sum / union_sum
     return 1 - sim
@@ -186,17 +186,14 @@ def extract_differences(sites: list) -> dict:
                     if features[feature].get("baseline") is None or features[feature].get("control") is None or features[feature].get("experimental") is None:
                         continue
                     for action, (baseline, control, experimental) in enumerate(zip(features[feature]["baseline"], features[feature]["control"], features[feature]["experimental"])):
-                        try:
-                            control_diff = jaccard_diff(baseline, control)
-                            experimental_diff = jaccard_diff(baseline, experimental)
-                            diff_dict = {
-                                f"{feature}_control_diff": control_diff,
-                                f"{feature}_experimental_diff": experimental_diff,
-                                f"{feature}_did": experimental_diff - control_diff
-                            }
-                            res[domain][int(clickstream.name)][action].update(diff_dict)
-                        except ValueError:
-                            logger.exception(f"Failed to compare {feature} for {domain} ({clickstream.name}, {action}).")
+                        control_diff = jaccard_diff(baseline, control)
+                        experimental_diff = jaccard_diff(baseline, experimental)
+                        diff_dict = {
+                            f"{feature}_control_diff": control_diff,
+                            f"{feature}_experimental_diff": experimental_diff,
+                            f"{feature}_did": experimental_diff - control_diff
+                        }
+                        res[domain][int(clickstream.name)][action].update(diff_dict)
                 
             #
             # SCREENSHOT COMPARISON
@@ -219,8 +216,8 @@ def extract_differences(sites: list) -> dict:
                     try:
                         bce_diff = ImageShingle.compare_with_control(baseline_shingle, control_shingle, experimental_shingle)
                         diff_dict["bce_diff"] = bce_diff
-                    except ValueError:
-                        logger.exception(f"Failed to compute BCE difference for {domain} ({clickstream.name}, {num_action}).")
+                    except ValueError as e:
+                        logger.error(f"Failed to compute bce_diff for {domain} ({clickstream.name}, {num_action}). Reason: {e}")
                         
                     # Screenshots Difference in Difference
                     try:
@@ -229,8 +226,8 @@ def extract_differences(sites: list) -> dict:
                         diff_dict["shingle_control_diff"] = control_diff
                         diff_dict["shingle_experimental_diff"] = experimental_diff
                         diff_dict["shingle_did"] = experimental_diff - control_diff
-                    except ValueError:
-                        logger.exception(f"Failed to compute shingle DID for {domain} ({clickstream.name}, {num_action}).")
+                    except ValueError as e:
+                        logger.error(f"Failed to compute shingle_did for {domain} ({clickstream.name}, {num_action}). Reason: {e}")
 
                     # Update results
                     res[domain][int(clickstream.name)][num_action].update(diff_dict)
