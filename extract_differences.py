@@ -237,7 +237,7 @@ def extract_differences(sites: list) -> dict:
 start_time = time.time()
 res = extract_differences(array[SLURM_ARRAY_TASK_ID])
 # Save the dictionary to a JSON file
-with open(ANALYSIS_PATH / f"slurm/screenshots/{SLURM_ARRAY_TASK_ID}.json", 'w') as f:
+with open(ANALYSIS_PATH / f"slurm/differences/{SLURM_ARRAY_TASK_ID}.json", 'w') as f:
     json.dump(res, f)
 print(f"Completed in {time.time() - start_time} seconds.")
 
