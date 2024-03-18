@@ -18,8 +18,7 @@ CRAWL_NAME = 'KJ2GW'
 
 DATA_PATH = Path("/usr/project/xtmp/mml66/cookie-classify/") / CRAWL_NAME
 ANALYSIS_PATH = Path("analysis") / CRAWL_NAME
-for name in ["innerText", "links", "img", "screenshots"]:
-    (ANALYSIS_PATH / "slurm" / name).mkdir(parents=True, exist_ok=True)
+(ANALYSIS_PATH / "slurm/differences").mkdir(parents=True, exist_ok=True)
 
 # Config
 with open(DATA_PATH / "config.yaml", "r") as stream:
