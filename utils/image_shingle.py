@@ -132,32 +132,6 @@ class ImageShingle:
 
         return map_
 
-    def compute_difference(self, other_shingles: Self) -> float:
-        """
-        Compare two shingles and return the percentage of differences.
-
-        Args:
-            other_shingles: Another set of shingles.
-
-        Raises:
-            ValueError: If the shingles do not have the same chunk size.
-
-        Returns:
-            Percentage of shingles that are different.
-        """
-        if self.chunk_size != other_shingles.chunk_size:
-            raise ValueError("Shingles must have the same chunk size.")
-        if len(self.shingles) == 0 and len(other_shingles.shingles) == 0:
-            raise ValueError("Shingles must not be empty.")
-
-        matches = 0
-
-        for shingle, count in self.shingle_count.items():
-            if shingle in other_shingles.shingle_count:
-                matches += min(count, other_shingles.shingle_count[shingle])  # Add the number of matches
-
-        similarity = matches / max(len(self.shingles), len(other_shingles.shingles))  # Return the percentage of matches
-        return 1 - similarity
 
     @staticmethod
     def compare_with_control(baseline: ImageShingle, control: ImageShingle, experimental: ImageShingle) -> float | None:
