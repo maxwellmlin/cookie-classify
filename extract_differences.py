@@ -85,7 +85,7 @@ try:
 except Exception:
     SLURM_ARRAY_TASK_ID = 0
 
-def jaccard_diff(dict1, dict2):
+def jaccard_distance(dict1, dict2):
     """
     Computes the Jaccard difference between two frequency dictionaries.
     """
@@ -185,8 +185,8 @@ def extract_differences(sites: list) -> dict:
                     if features[feature].get("baseline") is None or features[feature].get("control") is None or features[feature].get("experimental") is None:
                         continue
                     for action, (baseline, control, experimental) in enumerate(zip(features[feature]["baseline"], features[feature]["control"], features[feature]["experimental"])):
-                        control_diff = jaccard_diff(baseline, control)
-                        experimental_diff = jaccard_diff(baseline, experimental)
+                        control_diff = jaccard_distance(baseline, control)
+                        experimental_diff = jaccard_distance(baseline, experimental)
                         diff_dict = {
                             f"{feature}_control_diff": control_diff,
                             f"{feature}_experimental_diff": experimental_diff,
@@ -220,8 +220,8 @@ def extract_differences(sites: list) -> dict:
                         
                     # Screenshots Difference in Difference
                     try:
-                        control_diff = baseline_shingle.compute_difference(control_shingle)
-                        experimental_diff = baseline_shingle.compute_difference(experimental_shingle)
+                        control_diff = jaccard_distance(baseline_shingle.shingle_count, control_shingle.shingle_count)
+                        experimental_diff = jaccard_distance(baseline_shingle.shingle_count, experimental_shingle.shingle_count)
                         diff_dict["shingle_control_diff"] = control_diff
                         diff_dict["shingle_experimental_diff"] = experimental_diff
                         diff_dict["shingle_did"] = experimental_diff - control_diff
