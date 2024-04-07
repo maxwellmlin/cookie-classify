@@ -31,13 +31,13 @@ with open(config["SITE_LIST_PATH"]) as file:
         site_list.append(line.strip())
 
 # Site queue
-queue_lock = FileLock(config["QUEUE_PATH"] + '.lock', timeout=10)
+queue_lock = FileLock(config["QUEUE_PATH"] + '.lock', timeout=60)
 with queue_lock:
     with open(config["QUEUE_PATH"], 'r') as file:
         site_queue = json.load(file)
 
 # Site results
-results_lock = FileLock(config["RESULTS_PATH"] + '.lock', timeout=10)
+results_lock = FileLock(config["RESULTS_PATH"] + '.lock', timeout=60)
 with results_lock:
     with open(config["RESULTS_PATH"]) as file:
         site_results: dict[str, CrawlResults] = json.load(file)
