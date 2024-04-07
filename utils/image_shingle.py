@@ -178,7 +178,7 @@ class ImageShingle:
 
         # Baseline and control are completely different
         if total == 0:
-            return 0
+            raise ValueError("No comparisons can be made.")
 
         similarity = matches / total
         return 1 - similarity
