@@ -12,3 +12,5 @@ LOGGER_NAME = CRAWL_NAME
 RESULTS_PATH = DATA_PATH + "results.json"
 QUEUE_PATH = DATA_PATH + "queue.json"
 CONFIG_PATH = DATA_PATH + "config.yaml"
+
+SLURM_LOG_PATH = "slurm_logs"

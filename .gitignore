@@ -4,6 +4,7 @@ playground.py
 playground.js
 crawls
 sites.txt
+.lock
 
 # slurm
 slurm_logs

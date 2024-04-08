@@ -70,3 +70,10 @@ def get_directories(root: str) -> list[Path]:
     # List all directories in the path
     directories = [entry for entry in p.iterdir() if entry.is_dir()]
     return directories
+
+def split(list: list, n: int):
+    """
+    Split list into n equally sized chunks.
+    """
+    k, m = divmod(len(list), n)
+    return (list[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
