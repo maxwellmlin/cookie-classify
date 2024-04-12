@@ -1,7 +1,9 @@
 # Cookie Classify
 This repository contains web crawling and analysis code for the Duke Independent Study project "Automated HTTP Cookie Classification and Enforcement".
 
-Read our [initial paper](https://maxwellmlin.com/assets/pdf/cookie-2023.pdf).
+Read our papers:
+- [Understanding Website Compliance with Web Cookie Privacy Laws](https://maxwellmlin.com/assets/pdf/cookie-2023.pdf)
+- [Evaluating Cookieless Browsing using Automated HTTP Cookie Classification](https://maxwellmlin.com/assets/pdf/cookie-2024.pdf)
 
 ## Setup
 Only Ubuntu 20.04 LTS is officially supported.
